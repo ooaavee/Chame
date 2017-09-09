@@ -25,12 +25,12 @@ namespace Chame
         public ContentCategory Category { get; }
 
         /// <summary>
-        /// Optional filter
+        /// Filter (optional)
         /// </summary>
         public string Filter { get; }
 
         /// <summary>
-        /// Optional HTTP ETag
+        /// HTTP ETag (optional)
         /// </summary>
         public string ETag { get; }
 

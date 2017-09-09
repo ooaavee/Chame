@@ -24,8 +24,8 @@ namespace Chame
             {
                 throw new ArgumentNullException(nameof(httpContext));
             }
-
-            // TODO: Logging
+         
+            _logger.LogDebug("started to handle the current HTTP request");
 
             context = null;
 
@@ -35,8 +35,12 @@ namespace Chame
             {
                 string path = httpContext.Request.Path.Value.ToLower();
 
-                if (path.StartsWith("/chame/"))
+                if (path.StartsWith("/chame/js") || path.StartsWith("/chame/css"))
                 {
+                    valid = true;
+
+                    _logger.LogInformation(string.Format("started to handle the current HTTP request (path = {0})", path));
+
                     string[] tokens = path.Split('/');
 
                     // Parse catagory
@@ -47,67 +51,73 @@ namespace Chame
                         {
                             case "js":
                                 category = ContentCategory.Js;
-                                valid = true;
                                 break;
                             case "css":
                                 category = ContentCategory.Css;
-                                valid = true;
                                 break;
                         }
                     }
 
-                    if (valid)
+                    // Parse filter (optional)
+                    string filter = null;
+                    if (tokens.Length == 4 && !string.IsNullOrEmpty(tokens[3]))
                     {
-                        // Parse filter (optional)
-                        string filter = null;
-                        if (tokens.Length == 4 && !string.IsNullOrEmpty(tokens[3]))
+                        filter = tokens[3];
+                    }
+
+                    // Resolve content loaders
+                    IContentLoader[] loaders = null;
+                    switch (category)
+                    {
+                        case ContentCategory.Js:
+                            loaders = httpContext.RequestServices.GetServices<IJsLoader>().ToArray();
+                            break;
+                        case ContentCategory.Css:
+                            loaders = httpContext.RequestServices.GetServices<ICssLoader>().ToArray();
+                            break;
+                    }
+
+                    int loaderCount = loaders?.Length ?? 0;
+
+                    if (loaderCount == 0)
+                    {
+                        _logger.LogCritical("no content loaders found");
+                        valid = false;
+                    }
+                    else
+                    {
+                        _logger.LogInformation(string.Format("found {0} content loader(s)", loaderCount));
+
+                        // Sort content loaders if required
+                        if (loaderCount > 1)
                         {
-                            filter = tokens[3];
+                            _options.SortContentLoaders(loaders);
                         }
 
-                        IContentLoader[] loaders;
-                        switch (category)
+                        // HTTP ETag is not supported if there are multiple content loader!
+                        string eTag = null;
+                        if (_options.ETagEnabled)
                         {
-                            case ContentCategory.Js:
-                                loaders = httpContext.RequestServices.GetServices<IJsLoader>().ToArray();
-                                break;
-                            case ContentCategory.Css:
-                                loaders = httpContext.RequestServices.GetServices<ICssLoader>().ToArray();
-                                break;
-                            default:
-                                throw new InvalidOperationException("fuck");
-                        }
-
-                        int loaderCount = loaders.Length;
-
-                        if (loaderCount == 0)
-                        {
-                            // TODO: Kirjoita lokille, että ei löydy yhtään loaderia!
-                            valid = false;
-                        }
-                        else
-                        {
-                            // Sort content loaders if required
-                            if (loaderCount > 1)
-                            {
-                                loaders = _options.SortContentLoaders(loaders);
-                            }
-
-                            // HTTP ETag is not supported if there are multiple content loader!
-                            string eTag = null;
                             if (loaderCount == 1)
                             {
                                 if (httpContext.Request.Headers.ContainsKey("If-None-Match"))
                                 {
                                     eTag = httpContext.Request.Headers["If-None-Match"].First();
+
+                                    _logger.LogInformation(string.Format("using HTTP ETag {0}", eTag));
                                 }
                             }
-
-                            // Finally create the context object
-                            context = new ChameContext(httpContext, category, filter, eTag, loaders);
                         }
 
+                        // Finally create the context object
+                        context = new ChameContext(httpContext, category, filter, eTag, loaders);
+
+                        _logger.LogDebug("ChameContext created for the current HTTP request");
                     }
+                }
+                else
+                {
+                    _logger.LogDebug("ignoring the current HTTP request: request method is not GET and path doesn't start with /chame/js or /chame/css");
                 }
             }
 

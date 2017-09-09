@@ -8,18 +8,23 @@ namespace Chame
 {
     public class ChameOptions
     {
-        public delegate IContentLoader[] ContentLoaderSorterDelegate(IContentLoader[] loaders);
+        public const string DefaultThemeName = "default";
+
+        public delegate void ContentLoaderSorterDelegate(IContentLoader[] loaders);
 
         public static ChameOptions CreateDefault()
         {
             return new ChameOptions
             {
-                Theme = "default",
-                SortContentLoaders = ChameOptions.SortContentLoadersByPriority
+                Theme = DefaultThemeName,
+                ETagEnabled = true,
+                SortContentLoaders = SortContentLoadersByPriority
             };
         }
 
         public virtual string Theme { get; set; }
+
+        public virtual bool ETagEnabled { get; set; }
 
         public virtual ContentLoaderSorterDelegate SortContentLoaders { get; set; }
 
@@ -27,15 +32,9 @@ namespace Chame
         /// This is the default sorter for IContentLoader implementations.
         /// Implementations are sorted by priority.
         /// </summary>
-        private static IContentLoader[] SortContentLoadersByPriority(IContentLoader[] loaders)
+        private static void SortContentLoadersByPriority(IContentLoader[] loaders)
         {
-            if (loaders == null)
-            {
-                throw new ArgumentNullException(nameof(loaders));
-            }
-
             Array.Sort(loaders, (loader1, loader2) => loader1.Priority.CompareTo(loader2.Priority));
-            return loaders;
         }
 
     }

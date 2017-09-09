@@ -7,20 +7,24 @@ using Chame.Loaders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 
 namespace Chame
 {
     public class DefaultChameRequestHandler : IChameRequestHandler
     {
+        private readonly ChameOptions _options;
         private readonly ILogger<DefaultChameRequestHandler> _logger;
 
-        public DefaultChameRequestHandler(ILogger<DefaultChameRequestHandler> logger)
+        public DefaultChameRequestHandler(ChameOptions options, ILogger<DefaultChameRequestHandler> logger)
         {
+            _options = options;
             _logger = logger;
         }
 
         public async Task<bool> HandleAsync(ChameContext context)
         {
+            // TODO: Loggins
             List<ResponseContent> responses = new List<ResponseContent>();
 
             foreach (IContentLoader loader in context.Loaders)
@@ -32,33 +36,43 @@ namespace Chame
                 }
             }
 
-            if (responses.Any())
+            int responseCount = responses.Count;
+
+            if (responseCount > 0)
             {
                 ResponseContent response = ResponseContent.Merge(responses);
-                await WriteResponseAsync(context, response);
+
+                switch (context.Category)
+                {
+                    case ContentCategory.Js:
+                        context.HttpContext.Response.ContentType = "application/javascript";
+                        break;
+                    case ContentCategory.Css:
+                        context.HttpContext.Response.ContentType = "text/css";
+                        break;
+                    default:
+                        throw new InvalidOperationException("Unable to resolve content-type.");
+                }
+
+                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
+
+                if (_options.ETagEnabled)
+                {
+                    if (responseCount == 1)
+                    {
+                        if (!string.IsNullOrEmpty(response.ETag))
+                        {
+                            context.HttpContext.Response.Headers.Add("ETag", new StringValues("response.ETag"));
+                        }
+                    }
+                }
+
+                await context.HttpContext.Response.WriteAsync(response.Content, response.Encoding);
+
                 return true;
             }
 
             return false;
-        }
-
-        private static async Task WriteResponseAsync(ChameContext context, ResponseContent response)
-        {
-            switch (context.Category)
-            {
-                case ContentCategory.Js:
-                    context.HttpContext.Response.ContentType = "application/javascript";
-                    break;
-                case ContentCategory.Css:
-                    context.HttpContext.Response.ContentType = "text/css";
-                    break;
-                default:
-                    throw new InvalidOperationException("Unable to resolve content-type.");
-            }
-
-            context.HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
-
-            await context.HttpContext.Response.WriteAsync(response.Content, response.Encoding);
         }
 
     }
