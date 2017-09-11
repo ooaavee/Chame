@@ -4,6 +4,6 @@ namespace Chame
 {
     public interface IChameRequestHandler
     {
-        Task<bool> HandleAsync(ChameContext context);
+        Task HandleAsync(ChameContext context);
     }
 }

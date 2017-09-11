@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Chame.Extensions;
 using Chame.Loaders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,12 +21,7 @@ namespace Chame
 
         public bool TryCreateContext(HttpContext httpContext, out ChameContext context)
         {
-            if (httpContext == null)
-            {
-                throw new ArgumentNullException(nameof(httpContext));
-            }
-         
-            _logger.LogDebug("started to handle the current HTTP request");
+            _logger.LogDebug("Started to handle the current HTTP request.");
 
             context = null;
 
@@ -39,7 +35,7 @@ namespace Chame
                 {
                     valid = true;
 
-                    _logger.LogInformation(string.Format("started to handle the current HTTP request (path = {0})", path));
+                    _logger.LogInformation(string.Format("Started to handle the current HTTP request (path = {0}).", path));
 
                     string[] tokens = path.Split('/');
 
@@ -81,43 +77,76 @@ namespace Chame
 
                     if (loaderCount == 0)
                     {
-                        _logger.LogCritical("no content loaders found");
+                        _logger.LogCritical("No content loaders found.");
                         valid = false;
                     }
                     else
                     {
-                        _logger.LogInformation(string.Format("found {0} content loader(s)", loaderCount));
+                        _logger.LogInformation(string.Format("Found {0} content loader(s).", loaderCount));
 
                         // Sort content loaders if required
                         if (loaderCount > 1)
                         {
-                            _options.SortContentLoaders(loaders);
+                            Action<IContentLoader[]> sorter = _options.Events.ContentLoaderSorter;
+                            if (sorter != null)
+                            {
+                                sorter(loaders);
+                            }
+                            else
+                            {
+                                _logger.LogWarning("No content loader sorter available, using content loaders in arbitrary order.");
+                            }
                         }
 
                         // HTTP ETag is not supported if there are multiple content loader!
                         string eTag = null;
-                        if (_options.ETagEnabled)
+                        if (_options.UseETag)
                         {
-                            if (loaderCount == 1)
+                            if (httpContext.Request.Headers.ContainsKey("If-None-Match"))
                             {
-                                if (httpContext.Request.Headers.ContainsKey("If-None-Match"))
+                                if (loaderCount == 1)
                                 {
                                     eTag = httpContext.Request.Headers["If-None-Match"].First();
-
-                                    _logger.LogInformation(string.Format("using HTTP ETag {0}", eTag));
+                                    _logger.LogDebug(string.Format("HTTP ETag {0} found from request headers.", eTag));
+                                }
+                                else
+                                {
+                                    _logger.LogDebug("HTTP ETag {0} found from request headers, but won't be used, because there are multiple content loaders.");
                                 }
                             }
                         }
 
-                        // Finally create the context object
-                        context = new ChameContext(httpContext, category, filter, eTag, loaders);
+                        // Resolve theme
+                        string theme = null;
+                        Func<ThemeResolverEventArgs, string> resolver = _options.Events.ThemeResolver;
+                        if (resolver != null)
+                        {
+                            theme = resolver(new ThemeResolverEventArgs
+                            {
+                                HttpContext = httpContext,
+                                Category = category,
+                                Filter = filter
+                            });
 
-                        _logger.LogDebug("ChameContext created for the current HTTP request");
+                            _logger.LogDebug(theme == null
+                                ? "Theme resolver returned a null value, the default theme will be used."
+                                : string.Format("Theme resolver retuned theme '{0}', we'll use that.", theme));
+                        }
+
+                        if (theme == null)
+                        {
+                            theme = _options.DefaultTheme ?? ChameOptions.DefaultThemeName;
+                        }
+
+                        // Finally create the context object
+                        context = new ChameContext(httpContext, category, filter, eTag, theme, loaders);
+
+                        _logger.LogDebug("ChameContext created for the current HTTP request.");
                     }
                 }
                 else
                 {
-                    _logger.LogDebug("ignoring the current HTTP request: request method is not GET and path doesn't start with /chame/js or /chame/css");
+                    _logger.LogDebug("Ignoring the current HTTP request, because request method is not GET and path doesn't start with '/chame/js' or '/chame/css'.");
                 }
             }
 

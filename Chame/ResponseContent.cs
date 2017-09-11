@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Chame
 {
     public class ResponseContent
     {
+        public static readonly Encoding DefaultEncoding = Encoding.UTF8;
+
         /// <summary>
         /// Response content
         /// </summary>
@@ -16,7 +15,7 @@ namespace Chame
         /// <summary>
         /// Encoding for response content
         /// </summary>
-        public Encoding Encoding { get; set; } = Encoding.UTF8;
+        public Encoding Encoding { get; set; }
 
         /// <summary>
         /// HTTP ETag for response content (optional)
@@ -24,13 +23,98 @@ namespace Chame
         public string ETag { get; set; }
 
         /// <summary>
-        /// Merges multiple ResponseContent objects.
+        /// Response status
         /// </summary>
-        public static ResponseContent Merge(IEnumerable<ResponseContent> items)
-        {
-            throw new NotImplementedException();
+        public ResponseContentStatus Status { get; set; }
 
-            return null;
+
+        /// <summary>
+        /// Creates a new 'not found' response content.
+        /// </summary>
+        /// <returns></returns>
+        public static ResponseContent NotFound()
+        {
+            return new ResponseContent { Status = ResponseContentStatus.NotFound };
+        }
+
+        /// <summary>
+        /// Creates a new 'not modified' response content.
+        /// </summary>
+        public static ResponseContent NotModified()
+        {
+            return new ResponseContent { Status = ResponseContentStatus.NotModified };
+        }
+
+        /// <summary>
+        /// Creates a new 'ok' response content.
+        /// </summary>
+        public static ResponseContent Ok(string content)
+        {
+            if (content == null)
+            {
+                throw new ArgumentNullException(nameof(content));
+            }
+
+            return new ResponseContent { Status = ResponseContentStatus.Ok, Content = content, Encoding = DefaultEncoding };
+        }
+
+        /// <summary>
+        /// Creates a new 'ok' response content.
+        /// </summary>
+        public static ResponseContent Ok(string content, Encoding encoding)
+        {
+            if (content == null)
+            {
+                throw new ArgumentNullException(nameof(content));
+            }
+
+            if (encoding == null)
+            {
+                throw new ArgumentNullException(nameof(encoding));
+            }
+
+            return new ResponseContent { Status = ResponseContentStatus.Ok, Content = content, Encoding = encoding };
+        }
+
+        /// <summary>
+        /// Creates a new 'ok' response content.
+        /// </summary>
+        public static ResponseContent Ok(string content, Encoding encoding, string eTag)
+        {
+            if (content == null)
+            {
+                throw new ArgumentNullException(nameof(content));
+            }
+
+            if (encoding == null)
+            {
+                throw new ArgumentNullException(nameof(encoding));
+            }
+
+            if (eTag == null)
+            {
+                throw new ArgumentNullException(nameof(eTag));
+            }
+
+            return new ResponseContent { Status = ResponseContentStatus.Ok, Content = content, Encoding = encoding, ETag = eTag };
+        }
+
+        /// <summary>
+        /// Creates a new 'ok' response content.
+        /// </summary>
+        public static ResponseContent Ok(string content, string eTag)
+        {
+            if (content == null)
+            {
+                throw new ArgumentNullException(nameof(content));
+            }
+
+            if (eTag == null)
+            {
+                throw new ArgumentNullException(nameof(eTag));
+            }
+
+            return new ResponseContent { Status = ResponseContentStatus.Ok, Content = content, ETag = eTag };
         }
 
     }

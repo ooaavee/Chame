@@ -9,7 +9,25 @@ namespace Chame.Loaders.FileSystem
     {
         public static FileSystemContentLoaderOptions CreateDefault()
         {
-            return new FileSystemContentLoaderOptions();
+            FileSystemContentLoaderOptions options = new FileSystemContentLoaderOptions();
+
+            options.JsDirectory = @"\js";
+
+            options.CssDirectory = @"\css";
+
+            return options;
         }
+
+        public virtual string JsDirectory { get; set; }
+
+        public virtual string CssDirectory { get; set; }
+
+        public virtual bool UseChameJson { get; set; }
+
+
+        //          //   var sss = ;
+
+
+
     }
 }

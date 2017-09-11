@@ -58,7 +58,7 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
 
-        public static IServiceCollection AddFileSystemContentLoader(this IServiceCollection services, Action<FileSystemContentLoaderOptions> setup)
+        public static IServiceCollection AddChameFileSystemLoader(this IServiceCollection services, Action<FileSystemContentLoaderOptions> setup)
         {
             if (services == null)
             {
@@ -73,10 +73,10 @@ namespace Microsoft.Extensions.DependencyInjection
             var options = FileSystemContentLoaderOptions.CreateDefault();
             setup(options);
 
-            return AddFileSystemContentLoader(services, options);
+            return AddChameFileSystemLoader(services, options);
         }
 
-        public static IServiceCollection AddFileSystemContentLoader(this IServiceCollection services)
+        public static IServiceCollection AddChameFileSystemLoader(this IServiceCollection services)
         {
             if (services == null)
             {
@@ -85,10 +85,10 @@ namespace Microsoft.Extensions.DependencyInjection
 
             var options = FileSystemContentLoaderOptions.CreateDefault();
 
-            return AddFileSystemContentLoader(services, options);
+            return AddChameFileSystemLoader(services, options);
         }
 
-        public static IServiceCollection AddFileSystemContentLoader(this IServiceCollection services, FileSystemContentLoaderOptions options)
+        public static IServiceCollection AddChameFileSystemLoader(this IServiceCollection services, FileSystemContentLoaderOptions options)
         {
             if (services == null)
             {

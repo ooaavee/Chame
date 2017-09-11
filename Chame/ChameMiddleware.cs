@@ -18,13 +18,12 @@ namespace Chame
 
             if (contextFactory.TryCreateContext(httpContext, out context))
             {
-                if (await requestHandler.HandleAsync(context))
-                {
-                    return;
-                }
+                await requestHandler.HandleAsync(context);
             }
-
-            await _next(httpContext);
+            else
+            {
+                await _next(httpContext);
+            }
         }
     }
 }

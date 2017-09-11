@@ -5,13 +5,14 @@ namespace Chame
 {
     public class ChameContext
     {
-        public ChameContext(HttpContext httpContext, ContentCategory category, string filter, string eTag, IContentLoader[] loaders)
+        public ChameContext(HttpContext httpContext, ContentCategory category, string filter, string eTag, string theme, IContentLoader[] loaders)
         {
             HttpContext = httpContext;
             Category = category;
             Filter = filter;
             ETag = eTag;
             Loaders = loaders;
+            Theme = theme;
         }
 
         /// <summary>
@@ -33,6 +34,8 @@ namespace Chame
         /// HTTP ETag (optional)
         /// </summary>
         public string ETag { get; }
+
+        public string Theme { get; }
 
         /// <summary>
         /// Content loaders

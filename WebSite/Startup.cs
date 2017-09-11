@@ -29,8 +29,10 @@ namespace WebSite
         {
             services.AddChame(options =>
             {
-                options.Theme = "default";
-            }).AddFileSystemContentLoader(options =>
+                options.DefaultTheme = "default";
+            });
+
+            services.AddChameFileSystemLoader(options =>
             {
                 
             });
@@ -61,9 +63,7 @@ namespace WebSite
 
             app.UseMvc(routes =>
             {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                routes.MapRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
         }
     }
