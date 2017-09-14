@@ -9,6 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="wwwroot\chame.json" />
+    <Content Include="wwwroot\css\StyleSheet1.css" />
+    <Content Include="wwwroot\css\StyleSheet2.css" />
+    <Content Include="wwwroot\js\JavaScript1.js" />
+    <Content Include="wwwroot\js\JavaScript2.js" />
     <Content Include="wwwroot\Properties\launchSettings.json" />
   </ItemGroup>
   <ItemGroup>

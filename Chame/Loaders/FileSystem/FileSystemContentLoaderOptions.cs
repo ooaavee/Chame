@@ -11,18 +11,16 @@ namespace Chame.Loaders.FileSystem
         {
             FileSystemContentLoaderOptions options = new FileSystemContentLoaderOptions();
 
-            options.JsDirectory = @"\js";
-
-            options.CssDirectory = @"\css";
+            options.UseSetupFile = true;
+            options.SetupFilePath = @"\chame.json";
 
             return options;
         }
 
-        public virtual string JsDirectory { get; set; }
 
-        public virtual string CssDirectory { get; set; }
+        public virtual string SetupFilePath { get; set; }
 
-        public virtual bool UseChameJson { get; set; }
+        public virtual bool UseSetupFile { get; set; }
 
 
         //          //   var sss = ;

@@ -1,0 +1,15 @@
+﻿{
+    "themes": [
+        {
+            "name": "default",
+            "css": [
+                "css/StyleSheet1.css",
+                "css/StyleSheet2.css"
+            ],
+            "js": [
+                "js/StyleSheet1.css",
+                "js/StyleSheet2.css"
+            ]
+        }
+    ]
+}

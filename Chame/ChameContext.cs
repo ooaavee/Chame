@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace Chame
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class ChameContext
     {
         public ChameContext(HttpContext httpContext, ContentCategory category, string filter, string eTag, string theme, IContentLoader[] loaders)
