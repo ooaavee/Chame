@@ -104,6 +104,8 @@ namespace Microsoft.Extensions.DependencyInjection
             services.TryAddSingleton<IJsLoader, FileSystemContentLoader>();
             services.TryAddSingleton<ICssLoader, FileSystemContentLoader>();
 
+         //   services.AddMemoryCache();
+
             return services;
         }
 

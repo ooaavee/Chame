@@ -28,28 +28,46 @@ namespace Chame.Loaders.FileSystem
 
         public Task<ResponseContent> LoadAsync(ChameContext context)
         {
-            Setup setup;
-            if (!TryGetSetup(out setup))
+            
+            Setup.ThemedBundle bundle = GetThemedBundle(context);
+            if (bundle == null)
+            {
+                return Task.FromResult(ResponseContent.NotFound());
+            }
+
+            List<Setup.BundleFile> paths;
+            switch (context.Category)
+            {
+                case ContentCategory.Css:
+                    paths = bundle.Css;
+                    break;
+                case ContentCategory.Js:
+                    paths = bundle.Js;
+                    break;
+                default:
+                    throw new InvalidOperationException("fuck");
+            }
+
+            if (paths == null || !paths.Any())
             {
                 return null;
             }
 
-            string theme = "";
+            
 
-            string[] paths;
 
-            switch (context.Category)
-            {
-                case ContentCategory.Css:
-                    paths = setup.
-                    break;
-                case ContentCategory.Js:
-                    break;
-                default:
-                    break;
-                    ;
-            }
+            //Setup setup;
+            //if (!TryGetSetup(out setup))
+            //{
+            //    _logger.LogError("Unable to find setup for the file system content loader.");
+            //    return null;
+            //}
 
+            //Setup.ThemedBundle bundle = setup.Themes.FirstOrDefault(theme => theme.Name == context.Theme);
+            //if (bundle == null)
+            //{
+            //    return null;
+            //}
 
             //var sss1 = _env.WebRootFileProvider.GetDirectoryContents(_options2.JsDirectory).ToArray();
 
@@ -59,51 +77,55 @@ namespace Chame.Loaders.FileSystem
             return null;
         }
 
-        private bool TryGetSetup(out Setup setup)
+        private Setup.ThemedBundle GetThemedBundle(ChameContext context)
         {
-            setup = null;
+            string theme = context.Theme;
 
             if (_options2.UseSetupFile)
             {
-                if (!TryGetSetupFromFile(out setup))
+                Setup setup = LoadSetupFromFile();
+                Setup.ThemedBundle bundle = setup?.Themes.FirstOrDefault(x => x.Name == theme);
+                if (bundle != null)
                 {
-                    _logger.LogError("Unable to read setup from file system.");
-                    return false;
+                    return bundle;
                 }
             }
-            else
-            {
-                return false;
-            }
 
-            return true;
+            _logger.LogWarning(string.Format("Unable to find setup for the file system content loader. The requested theme was '{0}'.", theme));
+            return null;
         }
-
+    
         /// <summary>
-        /// Tries to load setup file.
+        /// Loads setup file for the file system content loader.
         /// </summary>
-        private bool TryGetSetupFromFile(out Setup setup)
+        private Setup LoadSetupFromFile()
         {
-            setup = null;
+            if (string.IsNullOrEmpty(_options2.SetupFilePath))
+            {
+                _logger.LogError("SetupFilePath is missing.");
+                return null;
+            }
 
             // Check if file exists.
             IFileInfo file = _env.WebRootFileProvider.GetFileInfo(_options2.SetupFilePath);
             if (!file.Exists)
             {
-                return false;
+                _logger.LogError(string.Format("Requested setup file '{0}' does not exist.", _options2.SetupFilePath));
+                return null;
             }
 
             // Read file content.
             string content = System.IO.File.ReadAllText(file.PhysicalPath);
 
             // Deserialize file content.
-            setup = JsonConvert.DeserializeObject<Setup>(content);
+            Setup setup = JsonConvert.DeserializeObject<Setup>(content);
             if (setup == null)
             {
-                return false;
+                _logger.LogError(string.Format("Unable to deserialize JSON content from the requested setup file '{0}' does not exist.", _options2.SetupFilePath));
+                return null;
             }
 
-            return true;
+            return setup;
         }
 
     }

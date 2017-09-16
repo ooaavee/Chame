@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace Chame.Loaders.FileSystem
 {
-    public sealed class Setup
+    internal sealed class Setup
     {
         /// <summary>
         /// All themes
@@ -23,14 +23,30 @@ namespace Chame.Loaders.FileSystem
             /// Css files
             /// </summary>
             [JsonProperty("css")]
-            public List<string> Css { get; set; } = new List<string>();
+            public List<BundleFile> Css { get; set; } = new List<BundleFile>();
 
             /// <summary>
             /// JavaScript files
             /// </summary>
             [JsonProperty("js")]
-            public List<string> Js { get; set; } = new List<string>();
+            public List<BundleFile> Js { get; set; } = new List<BundleFile>();
 
         }
+
+        public sealed class BundleFile
+        {
+            /// <summary>
+            /// File path
+            /// </summary>
+            [JsonProperty("path")]
+            public string Path { get; set; }
+
+            /// <summary>
+            /// Filter (Regex)
+            /// </summary>
+            [JsonProperty("filter")]
+            public string Filter { get; set; }
+        }
+
     }
 }

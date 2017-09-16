@@ -3,12 +3,26 @@
         {
             "name": "default",
             "css": [
-                "css/StyleSheet1.css",
-                "css/StyleSheet2.css"
+                {
+                    "path": "lib/bootstrap/dist/css/bootstrap.css",
+                    "filter": "vendor"
+                },
+                {
+                    "path": "css/site.css"
+                }
             ],
             "js": [
-                "js/StyleSheet1.css",
-                "js/StyleSheet2.css"
+                {
+                    "path": "lib/jquery/dist/jquery.js",
+                    "filter": "vendor"
+                },
+                {
+                    "path": "lib/bootstrap/dist/js/bootstrap.js",
+                    "filter": "vendor"
+                },
+                {
+                    "path": "js/site.js"
+                }
             ]
         }
     ]
