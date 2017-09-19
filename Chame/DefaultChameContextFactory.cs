@@ -5,6 +5,7 @@ using Chame.Loaders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Chame
 {
@@ -13,9 +14,9 @@ namespace Chame
         private readonly ChameOptions _options;
         private readonly ILogger<DefaultChameContextFactory> _logger;
 
-        public DefaultChameContextFactory(ChameOptions options, ILogger<DefaultChameContextFactory> logger)
+        public DefaultChameContextFactory(IOptions<ChameOptions> options, ILogger<DefaultChameContextFactory> logger)
         {
-            _options = options;
+            _options = options.Value;
             _logger = logger;
         }
 

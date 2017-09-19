@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Chame.Extensions;
 using Chame.Loaders;
-using Microsoft.AspNetCore.Http;
 
 namespace Chame
 {
@@ -12,24 +8,18 @@ namespace Chame
     {
         public const string DefaultThemeName = "default";
 
-        public static ChameOptions CreateDefault()
+        public ChameOptions()
         {
-            ChameOptions options = new ChameOptions();
-
-            options.Events = new DefaultChameEvents();
-            options.Events.ContentLoaderSorter = SortContentLoadersByPriority;
-            options.DefaultTheme = DefaultThemeName;
-            options.UseETag = true;
-
-            return options;
+            Events = new DefaultChameEvents { ContentLoaderSorter = SortContentLoadersByPriority };
+            DefaultTheme = DefaultThemeName;
+            UseETag = true;
         }
 
-        public virtual IChameEvents Events { get; set; }
+        public IChameEvents Events { get; set; }
 
-        public virtual string DefaultTheme { get; set; }
+        public string DefaultTheme { get; set; }
         
-        public virtual bool UseETag { get; set; }
-
+        public bool UseETag { get; set; }
         
         /// <summary>
         /// This is the default sorter for IContentLoader implementations.

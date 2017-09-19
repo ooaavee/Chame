@@ -8,107 +8,53 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddChame(this IServiceCollection services, Action<ChameOptions> setup)
+        public static IServiceCollection AddChame(this IServiceCollection services, Action<ChameOptions> configureOptions = null)
         {
             if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
-            if (setup == null)
+            if (configureOptions == null)
             {
-                throw new ArgumentNullException(nameof(setup));
+                configureOptions = options => { };
             }
 
-            var options = ChameOptions.CreateDefault();
-            setup(options);
+            // options
+            services.Configure<ChameOptions>(configureOptions);
 
-            return AddChame(services, options);
-        }
-
-        public static IServiceCollection AddChame(this IServiceCollection services)
-        {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            var options = ChameOptions.CreateDefault();
-
-            return AddChame(services, options);
-        }
-
-        public static IServiceCollection AddChame(this IServiceCollection services, ChameOptions options)
-        {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
-
-            services.TryAddSingleton<ChameOptions>(x => options);
+            // own services
             services.TryAddSingleton<IChameContextFactory, DefaultChameContextFactory>();
             services.TryAddSingleton<IChameRequestHandler, DefaultChameRequestHandler>();
 
             return services;
         }
 
-
-        public static IServiceCollection AddChameFileSystemLoader(this IServiceCollection services, Action<FileSystemContentLoaderOptions> setup)
+        public static IServiceCollection AddChameFileSystemLoader(this IServiceCollection services, Action<FileSystemContentLoaderOptions> configureOptions = null)
         {
             if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
-            if (setup == null)
+            if (configureOptions == null)
             {
-                throw new ArgumentNullException(nameof(setup));
+                configureOptions = options => { };
             }
 
-            var options = FileSystemContentLoaderOptions.CreateDefault();
-            setup(options);
+            // options
+            services.Configure<FileSystemContentLoaderOptions>(configureOptions);
 
-            return AddChameFileSystemLoader(services, options);
-        }
-
-        public static IServiceCollection AddChameFileSystemLoader(this IServiceCollection services)
-        {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            var options = FileSystemContentLoaderOptions.CreateDefault();
-
-            return AddChameFileSystemLoader(services, options);
-        }
-
-        public static IServiceCollection AddChameFileSystemLoader(this IServiceCollection services, FileSystemContentLoaderOptions options)
-        {
-            if (services == null)
-            {
-                throw new ArgumentNullException(nameof(services));
-            }
-
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
-
-            services.TryAddSingleton<FileSystemContentLoaderOptions>(x => options);
+            // own services
             services.TryAddSingleton<IJsLoader, FileSystemContentLoader>();
             services.TryAddSingleton<ICssLoader, FileSystemContentLoader>();
+            services.TryAddSingleton<Cache>();
+            services.TryAddSingleton<ThemeBundleResolver>();
 
-         //   services.AddMemoryCache();
+            // framework services
+            services.AddMemoryCache();
 
             return services;
         }
-
-
     }
 }

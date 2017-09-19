@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Chame.Loaders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
 namespace Chame
@@ -16,17 +17,17 @@ namespace Chame
         private readonly ChameOptions _options;
         private readonly ILogger<DefaultChameRequestHandler> _logger;
 
-        public DefaultChameRequestHandler(ChameOptions options, ILogger<DefaultChameRequestHandler> logger)
+        public DefaultChameRequestHandler(IOptions<ChameOptions> options, ILogger<DefaultChameRequestHandler> logger)
         {
-            _options = options;
+            _options = options.Value;
             _logger = logger;
         }
 
         public async Task HandleAsync(ChameContext context)
         {
-            List<ResponseContent> responses = new List<ResponseContent>();
+            var responses = new List<ResponseContent>();
 
-            foreach (IContentLoader loader in context.Loaders)
+            foreach (var loader in context.Loaders)
             {
                 _logger.LogDebug(string.Format("Loading content by using '{0}' loader.", loader.GetType().FullName));
 
@@ -49,7 +50,7 @@ namespace Chame
                 else if (response.Status == ResponseContentStatus.Ok)
                 {
                     // Validate loaded content
-                    bool valid = true;
+                    var valid = true;
                     if (response.Content == null)
                     {
                         valid = false;
@@ -80,9 +81,7 @@ namespace Chame
                 }
             }
 
-            int responseCount = responses.Count;
-
-            if (responseCount == 0)
+            if (responses.Count == 0)
             {
                 _logger.LogDebug("None of loader(s) found any content.");
 
@@ -92,9 +91,9 @@ namespace Chame
                 // Reponse content
                 await context.HttpContext.Response.WriteAsync("", ResponseContent.DefaultEncoding);
             }
-            else if (responseCount > 0)
+            else if (responses.Count > 0)
             {
-                ResponseContent response = responseCount > 1 ? Merge(responses) : responses.First();
+                ResponseContent response = responses.Count > 1 ? Merge(responses) : responses.First();
 
                 // Content-Type
                 string contentType;
@@ -107,15 +106,15 @@ namespace Chame
                         contentType = "text/css";
                         break;
                     default:
-                        string error = "Unable to resolve content-type.";
-                        _logger.LogError(error);
-                        throw new InvalidOperationException(error);
+                        var message = "Unable to resolve content-type.";
+                        _logger.LogError(message);
+                        throw new InvalidOperationException(message);
                 }
+
                 context.HttpContext.Response.ContentType = contentType;
 
                 // HTTP ETag
-                if (_options.UseETag && response.Status == ResponseContentStatus.Ok && responseCount == 1 &&
-                    !string.IsNullOrEmpty(response.ETag))
+                if (_options.UseETag && response.Status == ResponseContentStatus.Ok && responses.Count == 1 && !string.IsNullOrEmpty(response.ETag))
                 {
                     context.HttpContext.Response.Headers.Add("ETag", new StringValues(response.ETag));
                 }
@@ -130,16 +129,19 @@ namespace Chame
                     case ResponseContentStatus.NotModified:
                         statusCode = HttpStatusCode.NotModified;
                         break;
-                    default:
+                    case ResponseContentStatus.NotFound:
                         statusCode = HttpStatusCode.NotFound;
                         break;
+                    default:
+                        throw new InvalidOperationException("fuck");
                 }
+
                 context.HttpContext.Response.StatusCode = (int) statusCode;
 
                 // Reponse content
-                string content = response.Status == ResponseContentStatus.Ok ? response.Content : "";
-                Encoding encoding = response.Status == ResponseContentStatus.Ok ? response.Encoding : ResponseContent.DefaultEncoding;
-                await context.HttpContext.Response.WriteAsync(content, encoding);
+                await context.HttpContext.Response.WriteAsync(
+                    response.Status == ResponseContentStatus.Ok ? response.Content : "",
+                    response.Status == ResponseContentStatus.Ok ? response.Encoding : ResponseContent.DefaultEncoding);
             }
         }
 
@@ -150,33 +152,30 @@ namespace Chame
         {
             _logger.LogDebug("Merging content from multiple loaders.");
 
-            ResponseContent response = new ResponseContent
+            var response = new ResponseContent
             {
                 Encoding = null,
                 ETag = null,
                 Status = ResponseContentStatus.Ok
             };
 
-            StringBuilder buffer = new StringBuilder();
+            var buf = new StringBuilder();
 
-            foreach (ResponseContent item in items)
+            foreach (var item in items)
             {
-                if (response.Encoding != null)
+                if (response.Encoding != null && response.Encoding.EncodingName != item.Encoding.EncodingName)
                 {
-                    if (response.Encoding.EncodingName != item.Encoding.EncodingName)
-                    {
-                        string error = string.Format("Failed to merge ResponseContent object because multiple encondings were used ({0} and {1}).", response.Encoding.EncodingName, item.Encoding.EncodingName);
-                        _logger.LogError(error);
-                        throw new InvalidOperationException(error);
-                    }
+                    var message = string.Format("Failed to merge ResponseContent object because multiple encondings were used ({0} and {1}).", response.Encoding.EncodingName, item.Encoding.EncodingName);
+                    _logger.LogError(message);
+                    throw new InvalidOperationException(message);
                 }
 
-                buffer.Append(item.Content);
+                buf.Append(item.Content);
 
                 response.Encoding = item.Encoding;
             }
 
-            response.Content = buffer.ToString();
+            response.Content = buf.ToString();
 
             return response;
         }

@@ -27,18 +27,12 @@ namespace WebSite
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddChame(options =>
-            {
-                options.DefaultTheme = "default";
-            });
-
-            services.AddChameFileSystemLoader(options =>
-            {
-                
-            });
+            services.AddChame();
+            services.AddChameFileSystemLoader();
 
             // Add framework services.
             services.AddMvc();
+            services.AddMemoryCache();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

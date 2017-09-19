@@ -1,31 +1,25 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Chame.Loaders.FileSystem
 {
     public class FileSystemContentLoaderOptions
     {
-        public static FileSystemContentLoaderOptions CreateDefault()
+
+        public FileSystemContentLoaderOptions()
         {
-            FileSystemContentLoaderOptions options = new FileSystemContentLoaderOptions();
-
-            options.UseSetupFile = true;
-            options.SetupFilePath = @"\chame.json";
-
-            return options;
+            UseSetupFile = true;
+            SetupFilePath = @"\chame.json";
+            UseCache = true;
+            CacheAbsoluteExpirationRelativeToNow = new TimeSpan(0, 0, 1, 0);
         }
 
+        public string SetupFilePath { get; set; }
 
-        public virtual string SetupFilePath { get; set; }
+        public bool UseSetupFile { get; set; }
 
-        public virtual bool UseSetupFile { get; set; }
+        public bool UseCache { get; set; }
 
-
-        //          //   var sss = ;
-
-
+        public TimeSpan CacheAbsoluteExpirationRelativeToNow { get; set; }
 
     }
 }

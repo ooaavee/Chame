@@ -9,19 +9,21 @@ using Newtonsoft.Json;
 
 namespace Chame.Loaders.FileSystem
 {
-    public class FileSystemContentLoader : IJsLoader, ICssLoader
+    internal class FileSystemContentLoader : IJsLoader, ICssLoader
     {
-        private readonly ChameOptions _options1;
-        private readonly FileSystemContentLoaderOptions _options2;
-        private readonly IHostingEnvironment _env;
+        //private readonly ChameOptions _options1;
+        //private readonly FileSystemContentLoaderOptions _options2;
+        private readonly ThemeBundleResolver _resolver;
+        //private readonly IHostingEnvironment _env;
         private readonly ILogger<FileSystemContentLoader> _logger;
 
-        public FileSystemContentLoader(ChameOptions options1, FileSystemContentLoaderOptions options2, IHostingEnvironment env, ILogger<FileSystemContentLoader> logger)
+        public FileSystemContentLoader(ThemeBundleResolver resolver, ILogger<FileSystemContentLoader> logger)
         {
-            _options1 = options1;
-            _options2 = options2;
-            _env = env;
+            //_options1 = options1;
+            //_options2 = options2;
+            //_env = env;
             _logger = logger;
+            _resolver = resolver;
         }
 
         public int Priority => 1073741823;
@@ -29,13 +31,13 @@ namespace Chame.Loaders.FileSystem
         public Task<ResponseContent> LoadAsync(ChameContext context)
         {
             
-            Setup.ThemedBundle bundle = GetThemedBundle(context);
+            ThemeBundle bundle = _resolver.GetThemedBundle(context);
             if (bundle == null)
             {
                 return Task.FromResult(ResponseContent.NotFound());
             }
 
-            List<Setup.BundleFile> paths;
+            List<ThemeBundle.BundleFile> paths;
             switch (context.Category)
             {
                 case ContentCategory.Css:
@@ -50,10 +52,11 @@ namespace Chame.Loaders.FileSystem
 
             if (paths == null || !paths.Any())
             {
-                return null;
+                // TODO: onko oikein?
+                return Task.FromResult(ResponseContent.NotFound());
             }
 
-            
+
 
 
             //Setup setup;
@@ -74,59 +77,60 @@ namespace Chame.Loaders.FileSystem
             //var sss2 = _env.WebRootFileProvider.GetDirectoryContents(_options2.CssDirectory).ToArray();
 
 
-            return null;
+            // TODO: onko oikein?
+            return Task.FromResult(ResponseContent.NotFound());
         }
 
-        private Setup.ThemedBundle GetThemedBundle(ChameContext context)
-        {
-            string theme = context.Theme;
+        //private ThemeBundle GetThemedBundle(ChameContext context)
+        //{
+        //    string theme = context.Theme;
 
-            if (_options2.UseSetupFile)
-            {
-                Setup setup = LoadSetupFromFile();
-                Setup.ThemedBundle bundle = setup?.Themes.FirstOrDefault(x => x.Name == theme);
-                if (bundle != null)
-                {
-                    return bundle;
-                }
-            }
+        //    if (_options2.UseSetupFile)
+        //    {
+        //        Setup setup = LoadSetupFromFile();
+        //        ThemeBundle bundle = setup?.Themes.FirstOrDefault(x => x.Name == theme);
+        //        if (bundle != null)
+        //        {
+        //            return bundle;
+        //        }
+        //    }
 
-            _logger.LogWarning(string.Format("Unable to find setup for the file system content loader. The requested theme was '{0}'.", theme));
-            return null;
-        }
-    
-        /// <summary>
-        /// Loads setup file for the file system content loader.
-        /// </summary>
-        private Setup LoadSetupFromFile()
-        {
-            if (string.IsNullOrEmpty(_options2.SetupFilePath))
-            {
-                _logger.LogError("SetupFilePath is missing.");
-                return null;
-            }
+        //    _logger.LogWarning(string.Format("Unable to find setup for the file system content loader. The requested theme was '{0}'.", theme));
+        //    return null;
+        //}
 
-            // Check if file exists.
-            IFileInfo file = _env.WebRootFileProvider.GetFileInfo(_options2.SetupFilePath);
-            if (!file.Exists)
-            {
-                _logger.LogError(string.Format("Requested setup file '{0}' does not exist.", _options2.SetupFilePath));
-                return null;
-            }
+        ///// <summary>
+        ///// Loads setup file for the file system content loader.
+        ///// </summary>
+        //private Setup LoadSetupFromFile()
+        //{
+        //    if (string.IsNullOrEmpty(_options2.SetupFilePath))
+        //    {
+        //        _logger.LogError("SetupFilePath is missing.");
+        //        return null;
+        //    }
 
-            // Read file content.
-            string content = System.IO.File.ReadAllText(file.PhysicalPath);
+        //    // Check if file exists.
+        //    IFileInfo file = _env.WebRootFileProvider.GetFileInfo(_options2.SetupFilePath);
+        //    if (!file.Exists)
+        //    {
+        //        _logger.LogError(string.Format("Requested setup file '{0}' does not exist.", _options2.SetupFilePath));
+        //        return null;
+        //    }
 
-            // Deserialize file content.
-            Setup setup = JsonConvert.DeserializeObject<Setup>(content);
-            if (setup == null)
-            {
-                _logger.LogError(string.Format("Unable to deserialize JSON content from the requested setup file '{0}' does not exist.", _options2.SetupFilePath));
-                return null;
-            }
+        //    // Read file content.
+        //    string content = System.IO.File.ReadAllText(file.PhysicalPath);
 
-            return setup;
-        }
+        //    // Deserialize file content.
+        //    Setup setup = JsonConvert.DeserializeObject<Setup>(content);
+        //    if (setup == null)
+        //    {
+        //        _logger.LogError(string.Format("Unable to deserialize JSON content from the requested setup file '{0}' does not exist.", _options2.SetupFilePath));
+        //        return null;
+        //    }
+
+        //    return setup;
+        //}
 
     }
 }
