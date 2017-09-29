@@ -1,6 +1,5 @@
 ﻿using System;
 using Chame.Extensions;
-using Chame.Loaders;
 
 namespace Chame
 {
@@ -10,5 +9,4 @@ namespace Chame
 
         Action<IContentLoader[]> ContentLoaderSorter { get; set; }
     }
-
 }

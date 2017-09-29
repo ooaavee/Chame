@@ -1,48 +1,75 @@
-﻿using Chame.Loaders;
+﻿using System;
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 
 namespace Chame
 {
     /// <summary>
-    /// 
+    /// Encapsulates information about an individual Chame request.
     /// </summary>
     public class ChameContext
     {
-        public ChameContext(HttpContext httpContext, ContentCategory category, string filter, string eTag, string theme, IContentLoader[] loaders)
+        public static ChameContext Create(HttpContext httpContext, ContentCategory category, string filter, string eTag, string theme, IContentLoader[] loaders)
         {
-            HttpContext = httpContext;
-            Category = category;
-            Filter = filter;
-            ETag = eTag;
-            Loaders = loaders;
-            Theme = theme;
+            if (httpContext == null)
+            {
+                throw  new ArgumentNullException(nameof(httpContext));
+            }
+
+            if (theme == null)
+            {
+                throw new ArgumentNullException(nameof(theme));
+            }
+
+            if (loaders == null)
+            {
+                throw new ArgumentNullException(nameof(loaders));
+            }
+
+            if (!loaders.Any() || loaders.Any(x => x == null))
+            {
+                throw new ArgumentException("At least one loader must be specified.", nameof(loaders));
+            }
+
+            return new ChameContext
+            {
+                HttpContext = httpContext,
+                Category = category,
+                Filter = filter,
+                ETag = eTag,
+                Theme = theme,
+                Loaders = loaders
+            };
         }
 
         /// <summary>
-        /// Http context
+        /// The current HTTP context.
         /// </summary>
-        public HttpContext HttpContext { get; }
-      
+        public virtual HttpContext HttpContext { get; internal set; }
+
         /// <summary>
-        /// What kind of content was requested
+        /// Defines what kind of content was requested.
         /// </summary>
-        public ContentCategory Category { get; }
+        public virtual ContentCategory Category { get; internal set; }
 
         /// <summary>
         /// Filter (optional)
         /// </summary>
-        public string Filter { get; }
+        public virtual string Filter { get; internal set; }
 
         /// <summary>
         /// HTTP ETag (optional)
         /// </summary>
-        public string ETag { get; }
+        public virtual string ETag { get; internal set; }
 
-        public string Theme { get; }
+        /// <summary>
+        /// Theme (optional)
+        /// </summary>
+        public virtual string Theme { get; internal set; }
 
         /// <summary>
         /// Content loaders
         /// </summary>
-        public IContentLoader[] Loaders { get; }
+        public virtual IContentLoader[] Loaders { get; internal set; }
     }
 }

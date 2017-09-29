@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Net;
 
 namespace Chame
 {
     public enum ResponseContentStatus
     {
-        NotFound,
-        NotModified,
-        Ok
+        OK = HttpStatusCode.OK,
+        NotFound = HttpStatusCode.NotFound,
+        NotModified = HttpStatusCode.NotModified
     }
 }

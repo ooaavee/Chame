@@ -1,5 +1,5 @@
 ﻿using System;
-using Chame;
+using Chame.Middlewares;
 
 namespace Microsoft.AspNetCore.Builder
 {
@@ -12,7 +12,7 @@ namespace Microsoft.AspNetCore.Builder
                 throw new ArgumentNullException(nameof(app));
             }
 
-            app.UseMiddleware<ChameMiddleware>();
+            app.UseMiddleware<Middleware>();
 
             return app;
         }

@@ -28,9 +28,8 @@ namespace Chame
         /// </summary>
         public ResponseContentStatus Status { get; set; }
 
-
         /// <summary>
-        /// Creates a new 'not found' response content.
+        /// Creates a new 'NotFound' response content.
         /// </summary>
         /// <returns></returns>
         public static ResponseContent NotFound()
@@ -39,7 +38,7 @@ namespace Chame
         }
 
         /// <summary>
-        /// Creates a new 'not modified' response content.
+        /// Creates a new 'NotModified' response content.
         /// </summary>
         public static ResponseContent NotModified()
         {
@@ -47,7 +46,7 @@ namespace Chame
         }
 
         /// <summary>
-        /// Creates a new 'ok' response content.
+        /// Creates a new 'Ok' response content.
         /// </summary>
         public static ResponseContent Ok(string content)
         {
@@ -56,11 +55,11 @@ namespace Chame
                 throw new ArgumentNullException(nameof(content));
             }
 
-            return new ResponseContent { Status = ResponseContentStatus.Ok, Content = content, Encoding = DefaultEncoding };
+            return new ResponseContent { Status = ResponseContentStatus.OK, Content = content, Encoding = DefaultEncoding };
         }
 
         /// <summary>
-        /// Creates a new 'ok' response content.
+        /// Creates a new 'Ok' response content.
         /// </summary>
         public static ResponseContent Ok(string content, Encoding encoding)
         {
@@ -74,11 +73,11 @@ namespace Chame
                 throw new ArgumentNullException(nameof(encoding));
             }
 
-            return new ResponseContent { Status = ResponseContentStatus.Ok, Content = content, Encoding = encoding };
+            return new ResponseContent { Status = ResponseContentStatus.OK, Content = content, Encoding = encoding };
         }
 
         /// <summary>
-        /// Creates a new 'ok' response content.
+        /// Creates a new 'Ok' response content.
         /// </summary>
         public static ResponseContent Ok(string content, Encoding encoding, string eTag)
         {
@@ -97,11 +96,11 @@ namespace Chame
                 throw new ArgumentNullException(nameof(eTag));
             }
 
-            return new ResponseContent { Status = ResponseContentStatus.Ok, Content = content, Encoding = encoding, ETag = eTag };
+            return new ResponseContent { Status = ResponseContentStatus.OK, Content = content, Encoding = encoding, ETag = eTag };
         }
 
         /// <summary>
-        /// Creates a new 'ok' response content.
+        /// Creates a new 'Ok' response content.
         /// </summary>
         public static ResponseContent Ok(string content, string eTag)
         {
@@ -115,7 +114,12 @@ namespace Chame
                 throw new ArgumentNullException(nameof(eTag));
             }
 
-            return new ResponseContent { Status = ResponseContentStatus.Ok, Content = content, ETag = eTag };
+            return new ResponseContent { Status = ResponseContentStatus.OK, Content = content, ETag = eTag };
+        }
+
+        public Task<ResponseContent> AsTask()
+        {
+            return Task.FromResult(this);
         }
     }
 }
