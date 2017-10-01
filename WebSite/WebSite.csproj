@@ -9,6 +9,10 @@
     <UserSecretsId>1c8f1c63-cb7b-42f4-ab88-ef5b62c198e0</UserSecretsId>
     <AssemblyName>Chame.WebSite</AssemblyName>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="ClientApp\less\vendor.less" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore" Version="2.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.0.0" />
@@ -28,6 +32,9 @@
     <Content Update="Properties\launchSettings.json">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="wwwroot\css\" />
   </ItemGroup>
 
 </Project>

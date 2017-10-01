@@ -28,7 +28,7 @@ namespace Chame.FileSystem.Services
             _chameOptions = chameOptions.Value;
             _loaderOptions = loaderOptions.Value;
             _cache = cache;
-            _env = env;
+            _env = env;          
             _logger = logger;
         }
 
@@ -37,7 +37,7 @@ namespace Chame.FileSystem.Services
         public Task<ResponseContent> LoadAsync(ChameContext context)
         {
             // First try to use cached content.
-            if (_loaderOptions.UseCache)
+            if (_loaderOptions.IsCachingEnabled(_env))
             {
                 BundleContent cached = _cache.Get<BundleContent>(Cache.Block.BundleContent, context);
                 if (cached != null)
@@ -74,9 +74,11 @@ namespace Chame.FileSystem.Services
                 return ResponseContent.NotFound().AsTask();
             }
 
+
             // Read bundle content and optionally cache it.
             BundleContent content = ReadBundleContent(bundleFiles, context);
-            if (_loaderOptions.UseCache)
+            bool useCache = _loaderOptions.IsCachingEnabled(_env);
+            if (useCache)
             {
                 _cache.Set<BundleContent>(content, Cache.Block.BundleContent, context);
             }

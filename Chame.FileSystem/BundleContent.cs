@@ -18,6 +18,5 @@ namespace Chame.FileSystem
         /// HTTP ETag
         /// </summary>
         public string ETag { get; set; }
-
     }
 }

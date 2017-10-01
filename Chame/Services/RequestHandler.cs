@@ -69,7 +69,7 @@ namespace Chame.Services
                 }
                 else if (response.Status == ResponseContentStatus.NotModified)
                 {
-                    if (_options.UseETag && !string.IsNullOrEmpty(context.ETag) && context.Loaders.Length == 1)
+                    if (_options.UseETag && !string.IsNullOrEmpty(context.ETag) && context.Loaders.Count == 1)
                     {
                         responses.Add(response);
                     }

@@ -28,7 +28,8 @@ namespace Chame.FileSystem.Services
         {
             ThemeBundle bundle = null;
 
-            if (_options.UseCache)
+            bool useCache = _options.IsCachingEnabled(_env);
+            if (useCache)
             {
                 bundle = _cache.Get<ThemeBundle>(Cache.Block.ThemeBundle, context);
             }
@@ -36,14 +37,16 @@ namespace Chame.FileSystem.Services
             if (bundle == null && _options.UseSetupFile)
             {
                 Setup setup = LoadSetup();
+
                 if (setup != null)
                 {
                     bundle = setup.Themes.FirstOrDefault(x => x.Name == context.Theme);
-                    if (bundle != null && _options.UseCache)
+                    if (bundle != null && useCache)
                     {
                         _cache.Set<ThemeBundle>(bundle, Cache.Block.ThemeBundle, context);
                     }
                 }
+
             }
 
             if (bundle == null)

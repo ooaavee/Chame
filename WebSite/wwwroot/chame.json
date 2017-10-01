@@ -4,7 +4,7 @@
             "name": "default",
             "css": [
                 {
-                    "path": "vendor/css/bootstrap.bootswatch.css",
+                    "path": "css/vendor.css",
                     "filter": "vendor"
                 },
                 {
@@ -13,11 +13,11 @@
             ],
             "js": [
                 {
-                    "path": "vendor/js/jquery.js",
+                    "path": "js/jquery.js",
                     "filter": "vendor"
                 },
                 {
-                    "path": "vendor/js/bootstrap.js",
+                    "path": "js/bootstrap.js",
                     "filter": "vendor"
                 },
                 {

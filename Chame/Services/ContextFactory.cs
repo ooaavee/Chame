@@ -31,7 +31,7 @@ namespace Chame.Services
             {
                 string path = httpContext.Request.Path.Value.ToLower();
 
-                if (path.StartsWith("/chame/js") || path.StartsWith("/chame/css"))
+                if (path.StartsWith("/chame-js-loader") || path.StartsWith("/chame-css-loader"))
                 {
                     valid = true;
 
@@ -41,14 +41,14 @@ namespace Chame.Services
 
                     // Parse catagory
                     ContentCategory category = default(ContentCategory);
-                    if (tokens.Length == 3 || tokens.Length == 4)
+                    if (tokens.Length == 2 || tokens.Length == 3)
                     {
-                        switch (tokens[2])
+                        switch (tokens[1])
                         {
-                            case "js":
+                            case "chame-js-loader":
                                 category = ContentCategory.Js;
                                 break;
-                            case "css":
+                            case "chame-css-loader":
                                 category = ContentCategory.Css;
                                 break;
                         }
@@ -56,9 +56,9 @@ namespace Chame.Services
 
                     // Parse filter (optional)
                     string filter = null;
-                    if (tokens.Length == 4 && !string.IsNullOrEmpty(tokens[3]))
+                    if (tokens.Length == 3 && !string.IsNullOrEmpty(tokens[2]))
                     {
-                        filter = tokens[3];
+                        filter = tokens[2];
                     }
 
                     // Resolve content loaders
@@ -144,7 +144,7 @@ namespace Chame.Services
                 }
                 else
                 {
-                    _logger.LogDebug("Ignoring the current HTTP request, because request method is not GET and path doesn't start with '/chame/js' or '/chame/css'.");
+                    _logger.LogDebug("Ignoring the current HTTP request, because request method is not GET and path doesn't start with '/chame-js-loader' or '/chame-css-loader'.");
                 }
             }
 

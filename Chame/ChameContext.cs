@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 
@@ -9,7 +10,7 @@ namespace Chame
     /// </summary>
     public class ChameContext
     {
-        public static ChameContext Create(HttpContext httpContext, ContentCategory category, string filter, string eTag, string theme, IContentLoader[] loaders)
+        public static ChameContext Create(HttpContext httpContext, ContentCategory category, string filter, string eTag, string theme, IReadOnlyCollection<IContentLoader> loaders)
         {
             if (httpContext == null)
             {
@@ -70,6 +71,6 @@ namespace Chame
         /// <summary>
         /// Content loaders
         /// </summary>
-        public virtual IContentLoader[] Loaders { get; internal set; }
+        public virtual IReadOnlyCollection<IContentLoader> Loaders { get; internal set; }
     }
 }
