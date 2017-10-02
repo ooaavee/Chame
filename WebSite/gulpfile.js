@@ -11,8 +11,8 @@ var gulp = require('gulp'),
 
 
 gulp.task('watch', function () {
-    gulp.watch('wwwroot/css/site.less', ['lessVendor']);
-    gulp.watch('wwwroot/css/vendor.less', ['lessSite']);
+    gulp.watch('wwwroot/css/site.less', ['lessSite']);
+    gulp.watch('wwwroot/css/bootstrap.less', ['lessBootstrap']);
 });
 
 gulp.task('lessSite', function () {
@@ -26,8 +26,8 @@ gulp.task('lessSite', function () {
         .pipe(gulp.dest('wwwroot/css/'));
 });
 
-gulp.task('lessVendor', function () {
-    return gulp.src('ClientApp/less/vendor.less')
+gulp.task('lessBootstrap', function () {
+    return gulp.src('ClientApp/less/bootstrap.less')
         .pipe(less().on('error', function (err) {
             console.log(err);
         }))
@@ -49,4 +49,4 @@ gulp.task('lessVendor', function () {
 //        .pipe(gulp.dest('wwwroot/css/'));
 //});
 
-gulp.task('default', ['lessSite', 'lessVendor', 'watch']);
+gulp.task('default', ['lessSite', 'lessBootstrap', 'watch']);

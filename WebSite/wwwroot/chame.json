@@ -4,7 +4,7 @@
             "name": "default",
             "css": [
                 {
-                    "path": "css/vendor.css",
+                    "path": "css/bootstrap.css",
                     "filter": "vendor"
                 },
                 {
