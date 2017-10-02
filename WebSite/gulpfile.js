@@ -11,11 +11,12 @@ var gulp = require('gulp'),
 
 
 gulp.task('watch', function () {
-    gulp.watch('wwwroot/css/site.less', ['lessSite']);
-    gulp.watch('wwwroot/css/bootstrap.less', ['lessBootstrap']);
+    gulp.watch('wwwroot/css/site.less', ['site']);
+    gulp.watch('wwwroot/css/bootstrap.less', ['bootstrap']);
+    gulp.watch('wwwroot/css/fontawesome.less', ['fontawesome']);
 });
 
-gulp.task('lessSite', function () {
+gulp.task('site', function () {
     return gulp.src('ClientApp/less/site.less')
         .pipe(less().on('error', function (err) {
             console.log(err);
@@ -26,7 +27,7 @@ gulp.task('lessSite', function () {
         .pipe(gulp.dest('wwwroot/css/'));
 });
 
-gulp.task('lessBootstrap', function () {
+gulp.task('bootstrap', function () {
     return gulp.src('ClientApp/less/bootstrap.less')
         .pipe(less().on('error', function (err) {
             console.log(err);
@@ -37,7 +38,16 @@ gulp.task('lessBootstrap', function () {
         .pipe(gulp.dest('wwwroot/css/'));
 });
 
-
+gulp.task('fontawesome', function () {
+    return gulp.src('ClientApp/less/fontawesome.less')
+        .pipe(less().on('error', function (err) {
+            console.log(err);
+        }))
+        .pipe(cssmin().on('error', function (err) {
+            console.log(err);
+        }))
+        .pipe(gulp.dest('wwwroot/css/'));
+});
 //gulp.task('less vendor', function () {
 //    return gulp.src('ClientApp/less/vendor.less')
 //        .pipe(less().on('error', function (err) {
@@ -49,4 +59,4 @@ gulp.task('lessBootstrap', function () {
 //        .pipe(gulp.dest('wwwroot/css/'));
 //});
 
-gulp.task('default', ['lessSite', 'lessBootstrap', 'watch']);
+gulp.task('default', ['site', 'bootstrap', 'fontawesome', 'watch']);

@@ -10,8 +10,9 @@
         "gulp-rename": "1.2.2"
     },
     "dependencies": {
-        "bootstrap": "3.3.6",
-        "bootswatch-less": "3.3.4"
+        "bootstrap": "3.3.7",
+        "bootswatch-less": "3.3.4",
+        "font-awesome": "4.7.0"
     }
     
 }

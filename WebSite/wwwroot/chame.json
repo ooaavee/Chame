@@ -8,6 +8,10 @@
                     "filter": "vendor"
                 },
                 {
+                    "path": "css/fontawesome.css",
+                    "filter": "vendor"
+                },
+                {
                     "path": "css/site.css"
                 }
             ],
