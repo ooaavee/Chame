@@ -10,7 +10,7 @@ namespace Chame
         {
             UseThemeContainerFile = true;
             ThemeContainerFile = @"\chame-files.json";
-            CachingMode = CachingModes.EnabledButDisabledOnDevelopment;
+            CachingMode = CachingModes.DisabledOnDevelopmentOtherwiseEnabled;
             CacheAbsoluteExpirationRelativeToNow = new TimeSpan(0, 0, 1, 0);
         }
 
@@ -30,7 +30,7 @@ namespace Chame
         public Func<ThemeContainer> ThemeContainerGetter { get; set; }
 
         /// <summary>
-        /// Current caching mode.
+        /// Caching mode, the default value is <see cref="CachingModes.DisabledOnDevelopmentOtherwiseEnabled"/>.
         /// </summary>
         public CachingModes CachingMode { get; set; }
 
@@ -44,48 +44,24 @@ namespace Chame
         /// </summary>
         internal bool IsCachingEnabled(IHostingEnvironment env)
         {
-            if (env == null)
-            {
-                throw new ArgumentNullException(nameof(env));
-            }
-
             switch (CachingMode)
             {
                 case CachingModes.Disabled:
                     return false;
+
                 case CachingModes.Enabled:
                     return true;
-                case CachingModes.EnabledButDisabledOnDevelopment:
+
+                case CachingModes.DisabledOnDevelopmentOtherwiseEnabled:
                     if (env.IsDevelopment())
                     {
                         return false;
                     }
                     return true;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
-
-        /// <summary>
-        /// Caching modes
-        /// </summary>
-        public enum CachingModes
-        {
-            /// <summary>
-            /// Caching is disabled.
-            /// </summary>
-            Disabled,
-
-            /// <summary>
-            /// Caching is enabled.
-            /// </summary>
-            Enabled,
-
-            /// <summary>
-            /// Caching is enabled, but disabled when working on development environment.
-            /// </summary>
-            EnabledButDisabledOnDevelopment
-        }
-
     }
 }

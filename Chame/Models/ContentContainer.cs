@@ -13,6 +13,11 @@ namespace Chame.Models
             ETag = eTag;
         }
 
+        public static ContentContainer Empty()
+        {
+            return new ContentContainer("", null);
+        }
+
         /// <summary>
         /// Response content
         /// </summary>

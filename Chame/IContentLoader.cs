@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Chame.Services
+namespace Chame
 {
     public interface IContentLoader
     {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Chame;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -28,7 +29,10 @@ namespace WebSite
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddChame()
-                .AddFileSystemLoader();
+                .AddFileSystemLoader(x =>
+                {
+                    x.CachingMode = CachingModes.Enabled;
+                });
 
             // Add framework services.
             services.AddMvc();

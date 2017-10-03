@@ -9,6 +9,6 @@ namespace Chame.Models
         /// All themes
         /// </summary>
         [JsonProperty("themes")]
-        public List<Theme> Themes { get; set; } = new List<Theme>();
+        public virtual List<Theme> Themes { get; set; } = new List<Theme>();
     }
 }

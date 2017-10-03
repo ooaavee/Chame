@@ -7,6 +7,9 @@ using Microsoft.Extensions.Primitives;
 
 namespace Chame.Services
 {
+    /// <summary>
+    /// This is a factory class for building ChameContext objects.
+    /// </summary>
     internal sealed class ChameContextFactory
     {
         private readonly ChameOptions _options;
@@ -18,7 +21,7 @@ namespace Chame.Services
             _logger = logger;
         }
 
-        public bool TryCreateContext(HttpContext httpContext, out ChameContext context)
+        public bool TryCreate(HttpContext httpContext, out ChameContext context)
         {
             _logger.LogDebug("Started to handle the current HTTP request.");
 

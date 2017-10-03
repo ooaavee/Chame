@@ -5,6 +5,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+    /// <summary>
+    /// IServiceCollection extension methods
+    /// </summary>
     public static class IServiceCollectionExtensions
     {
         public static IChameBuilder AddChame(this IServiceCollection services, Action<ChameOptions> configureOptions = null)
@@ -26,7 +29,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             // my services
             builder.Services.TryAddSingleton<ChameContextFactory, ChameContextFactory>();
-            builder.Services.TryAddSingleton<ChameContextHandler, ChameContextHandler>();
+            builder.Services.TryAddSingleton<ChameContextProcessor, ChameContextProcessor>();
 
             return builder;
         }

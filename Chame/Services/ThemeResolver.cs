@@ -15,9 +15,9 @@ namespace Chame.Services
         private readonly FileSystemLoaderOptions _options;
         private readonly IHostingEnvironment _env;
         private readonly ILogger<ThemeResolver> _logger;
-        private readonly ContentCache _cache;
+        private readonly SimpleCache _cache;
 
-        public ThemeResolver(IOptions<FileSystemLoaderOptions> options, IHostingEnvironment env, ILogger<ThemeResolver> logger, ContentCache cache)
+        public ThemeResolver(IOptions<FileSystemLoaderOptions> options, IHostingEnvironment env, ILogger<ThemeResolver> logger, SimpleCache cache)
         {
             _options = options.Value;
             _env = env;
@@ -27,12 +27,10 @@ namespace Chame.Services
 
         public Theme GetTheme(ChameContext context)
         {
-            bool useCache = _options.IsCachingEnabled(_env);
-
             // First try to get theme content from the cache.
-            if (useCache)
+            if (UseCache)
             {
-                Theme theme = _cache.Get<Theme>(ContentCache.Block.Theme, context);
+                Theme theme = _cache.Get<Theme>(context);
                 if (theme != null)
                 {
                     return theme;
@@ -48,9 +46,9 @@ namespace Chame.Services
                     Theme theme = container.Themes.FirstOrDefault(x => x.Name == context.Theme);
                     if (theme != null)
                     {
-                        if (useCache)
+                        if (UseCache)
                         {
-                            _cache.Set<Theme>(theme, ContentCache.Block.Theme, context);
+                            _cache.Set<Theme>(theme, _options.CacheAbsoluteExpirationRelativeToNow, context);
                         }
                         return theme;
                     }
@@ -80,6 +78,11 @@ namespace Chame.Services
             _logger.LogWarning(string.Format("No content found for the requested theme '{0}'.", context.Theme));
 
             return null;
+        }
+
+        private bool UseCache
+        {
+            get { return _options.IsCachingEnabled(_env); }
         }
 
         /// <summary>

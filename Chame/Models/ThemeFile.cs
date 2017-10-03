@@ -8,12 +8,12 @@ namespace Chame.Models
         /// File path
         /// </summary>
         [JsonProperty("path")]
-        public string Path { get; set; }
+        public virtual string Path { get; set; }
 
         /// <summary>
         /// Filter (Regex)
         /// </summary>
         [JsonProperty("filter")]
-        public string Filter { get; set; }
+        public virtual string Filter { get; set; }
     }
 }

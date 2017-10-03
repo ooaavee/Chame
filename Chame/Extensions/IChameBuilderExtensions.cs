@@ -5,6 +5,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+    /// <summary>
+    /// IChameBuilder extension methods
+    /// </summary>
     public static class IChameBuilderExtensions
     {
         public static IChameBuilder AddFileSystemLoader(this IChameBuilder builder, Action<FileSystemLoaderOptions> configureOptions = null)
@@ -25,7 +28,7 @@ namespace Microsoft.Extensions.DependencyInjection
             // my services
             builder.Services.TryAddSingleton<IJsLoader, FileSystemLoader>();
             builder.Services.TryAddSingleton<ICssLoader, FileSystemLoader>();
-            builder.Services.TryAddSingleton<ContentCache>();
+            builder.Services.TryAddSingleton<SimpleCache>();
             builder.Services.TryAddSingleton<ThemeResolver>();
 
             // framework services

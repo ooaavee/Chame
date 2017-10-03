@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Chame
 {
@@ -115,11 +114,6 @@ namespace Chame
             }
 
             return new ResponseContent { Status = ResponseContentStatus.OK, Content = content, ETag = eTag };
-        }
-
-        public Task<ResponseContent> AsTask()
-        {
-            return Task.FromResult(this);
         }
     }
 }

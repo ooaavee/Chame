@@ -11,18 +11,21 @@ using Microsoft.Extensions.Primitives;
 
 namespace Chame.Services
 {
-    internal sealed class ChameContextHandler
+    /// <summary>
+    /// A processor for ChameContext objects.
+    /// </summary>
+    internal sealed class ChameContextProcessor
     {
         private readonly ChameOptions _options;
-        private readonly ILogger<ChameContextHandler> _logger;
+        private readonly ILogger<ChameContextProcessor> _logger;
 
-        public ChameContextHandler(IOptions<ChameOptions> options, ILogger<ChameContextHandler> logger)
+        public ChameContextProcessor(IOptions<ChameOptions> options, ILogger<ChameContextProcessor> logger)
         {
             _options = options.Value;
             _logger = logger;
         }
 
-        public async Task HandleAsync(ChameContext context)
+        public async Task ProcessAsync(ChameContext context)
         {
             var responses = new List<ResponseContent>();
 

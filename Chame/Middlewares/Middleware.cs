@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace Chame.Middlewares
 {
+    /// <summary>
+    /// A middleware for handling Chame web-requests.
+    /// </summary>
     internal sealed class Middleware
     {
         private readonly RequestDelegate _next;
@@ -13,13 +16,11 @@ namespace Chame.Middlewares
             _next = next;
         }
 
-        public async Task Invoke(HttpContext httpContext, ChameContextFactory factory, ChameContextHandler handler)
+        public async Task Invoke(HttpContext httpContext, ChameContextFactory factory, ChameContextProcessor processor)
         {
-            ChameContext context;
-
-            if (factory.TryCreateContext(httpContext, out context))
+            if (factory.TryCreate(httpContext, out ChameContext context))
             {
-                await handler.HandleAsync(context);
+                await processor.ProcessAsync(context);
             }
             else
             {

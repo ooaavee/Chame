@@ -19,11 +19,11 @@ namespace Chame.Services
         private readonly ThemeResolver _resolver;
         private readonly ChameOptions _chameOptions;
         private readonly FileSystemLoaderOptions _fileSystemLoaderOptions;
-        private readonly ContentCache _cache;
+        private readonly SimpleCache _cache;
         private readonly IHostingEnvironment _env;
         private readonly ILogger<FileSystemLoader> _logger;
 
-        public FileSystemLoader(ThemeResolver resolver, IOptions<ChameOptions> chameOptions, IOptions<FileSystemLoaderOptions> fileSystemLoaderOptions, ContentCache cache, IHostingEnvironment env, ILogger<FileSystemLoader> logger)
+        public FileSystemLoader(ThemeResolver resolver, IOptions<ChameOptions> chameOptions, IOptions<FileSystemLoaderOptions> fileSystemLoaderOptions, SimpleCache cache, IHostingEnvironment env, ILogger<FileSystemLoader> logger)
         {
             _resolver = resolver;
             _chameOptions = chameOptions.Value;
@@ -33,17 +33,28 @@ namespace Chame.Services
             _logger = logger;
         }
 
+        private bool UseCache
+        {
+            get { return _fileSystemLoaderOptions.IsCachingEnabled(_env); }
+        }
+
         public int Priority => 1073741823;
 
         public Task<ResponseContent> LoadAsync(ChameContext context)
         {
+            ResponseContent response = Load(context);
+            return Task.FromResult(response);
+        }
+
+        private ResponseContent Load(ChameContext context)
+        {
             // First try to use cached content.
-            if (_fileSystemLoaderOptions.IsCachingEnabled(_env))
+            if (UseCache)
             {
-                ContentContainer cached = _cache.Get<ContentContainer>(ContentCache.Block.ContentContainer, context);
+                ContentContainer cached = _cache.Get<ContentContainer>(context);
                 if (cached != null)
                 {
-                    return GetResponseContent(cached, context).AsTask();
+                    return GetResponseContent(cached, context);
                 }
             }
 
@@ -52,7 +63,7 @@ namespace Chame.Services
             Theme theme = _resolver.GetTheme(context);
             if (theme == null)
             {
-                return ResponseContent.NotFound().AsTask();
+                return ResponseContent.NotFound();
             }
 
             // Get files to use.
@@ -69,25 +80,23 @@ namespace Chame.Services
                     throw new InvalidOperationException("fuck");
             }
 
-            //
-            // JOS THEMESSA EI OLE FILEJÄ --->> PALAUTETAAN BLANKKO, EI NOT FOUNDIA!
-            //
-
-            // Return HTTP NotFound if there are no files in the theme.         
-            if (files == null || !files.Any())
-            {
-                return ResponseContent.NotFound().AsTask();
-            }
+            ContentContainer content;
 
             // Read bundle content and optionally cache it.
-            ContentContainer content = ReadBundleContent(files, context);
-            bool useCache = _fileSystemLoaderOptions.IsCachingEnabled(_env);
-            if (useCache)
+            if (files != null && files.Any())
             {
-                _cache.Set<ContentContainer>(content, ContentCache.Block.ContentContainer, context);
+                content = ReadBundleContent(files, context);
+                if (UseCache)
+                {
+                    _cache.Set<ContentContainer>(content, _fileSystemLoaderOptions.CacheAbsoluteExpirationRelativeToNow, context);
+                }
+            }
+            else
+            {
+                content = ContentContainer.Empty();
             }
 
-            return GetResponseContent(content, context).AsTask();
+            return GetResponseContent(content, context);
         }
 
         private ResponseContent GetResponseContent(ContentContainer container, ChameContext context)

@@ -1,4 +1,4 @@
-﻿namespace Chame.Services
+﻿namespace Chame
 {
     public interface ICssLoader : IContentLoader
     {
