@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
-namespace Chame.Middlewares
+namespace Chame
 {
     internal sealed class Middleware
     {
@@ -12,13 +12,13 @@ namespace Chame.Middlewares
             _next = next;
         }
 
-        public async Task Invoke(HttpContext httpContext, IChameContextFactory contextFactory, IChameRequestHandler requestHandler)
+        public async Task Invoke(HttpContext httpContext, ChameContextFactory factory, ChameContextHandler handler)
         {
             ChameContext context;
 
-            if (contextFactory.TryCreateContext(httpContext, out context))
+            if (factory.TryCreateContext(httpContext, out context))
             {
-                await requestHandler.HandleAsync(context);
+                await handler.HandleAsync(context);
             }
             else
             {

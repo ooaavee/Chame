@@ -1,67 +1,67 @@
 ﻿using System;
 using System.Linq;
-using Chame.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 
-namespace Chame.Services
+namespace Chame
 {
-    internal sealed class ContextFactory : IChameContextFactory
+    public class ChameContextFactory
     {
         private readonly ChameOptions _options;
-        private readonly ILogger<ContextFactory> _logger;
+        private readonly ILogger<ChameContextFactory> _logger;
 
-        public ContextFactory(IOptions<ChameOptions> options, ILogger<ContextFactory> logger)
+        public ChameContextFactory(IOptions<ChameOptions> options, ILogger<ChameContextFactory> logger)
         {
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
             _options = options.Value;
             _logger = logger;
         }
 
         public bool TryCreateContext(HttpContext httpContext, out ChameContext context)
         {
+            if (httpContext == null)
+            {
+                throw new ArgumentNullException(nameof(httpContext));
+            }
+
             _logger.LogDebug("Started to handle the current HTTP request.");
 
             context = null;
 
+
             bool valid = false;
 
-            if (httpContext.Request.Method == "GET" && httpContext.Request.Path.HasValue)
+            if (httpContext.Request.Method == HttpMethods.Get)
             {
-                string path = httpContext.Request.Path.Value.ToLower();
+                bool js = httpContext.Request.Path.StartsWithSegments(new PathString("/chame-js-loader"));
+                bool css = httpContext.Request.Path.StartsWithSegments(new PathString("/chame-css-loader"));
 
-                if (path.StartsWith("/chame-js-loader") || path.StartsWith("/chame-css-loader"))
+                if (js || css)
                 {
                     valid = true;
 
-                    _logger.LogInformation(string.Format("Started to handle the current HTTP request (path = {0}).", path));
+                    _logger.LogInformation(string.Format("Started to handle the current HTTP request (path = {0}).", httpContext.Request.Path.ToString()));
 
-                    string[] tokens = path.Split('/');
+                    // Category
+                    ContentCategory category = js ? ContentCategory.Js : ContentCategory.Css;
 
-                    // Parse catagory
-                    ContentCategory category = default(ContentCategory);
-                    if (tokens.Length == 2 || tokens.Length == 3)
-                    {
-                        switch (tokens[1])
-                        {
-                            case "chame-js-loader":
-                                category = ContentCategory.Js;
-                                break;
-                            case "chame-css-loader":
-                                category = ContentCategory.Css;
-                                break;
-                        }
-                    }
+                    // Filter
+                    StringValues parameter = httpContext.Request.Query["filter"];
+                    string filter = parameter.FirstOrDefault();
 
-                    // Parse filter (optional)
-                    string filter = null;
-                    if (tokens.Length == 3 && !string.IsNullOrEmpty(tokens[2]))
-                    {
-                        filter = tokens[2];
-                    }
-
-                    // Resolve content loaders
+                    // Content loaders
                     IContentLoader[] loaders = null;
                     switch (category)
                     {
@@ -87,10 +87,9 @@ namespace Chame.Services
                         // Sort content loaders if required
                         if (loaderCount > 1)
                         {
-                            Action<IContentLoader[]> sorter = _options.Events.ContentLoaderSorter;
-                            if (sorter != null)
+                            if (_options.ContentLoaderSorter != null)
                             {
-                                sorter(loaders);
+                                _options.ContentLoaderSorter(loaders);
                             }
                             else
                             {
@@ -118,16 +117,9 @@ namespace Chame.Services
 
                         // Resolve theme
                         string theme = null;
-                        Func<ThemeResolverEventArgs, string> resolver = _options.Events.ThemeResolver;
-                        if (resolver != null)
+                        if (_options.ThemeResolver != null)
                         {
-                            theme = resolver(new ThemeResolverEventArgs
-                            {
-                                HttpContext = httpContext,
-                                Category = category,
-                                Filter = filter
-                            });
-
+                            theme = _options.ThemeResolver(new ThemeResolverEventArgs(httpContext, category, filter));
                             _logger.LogDebug(theme == null ? "Theme resolver returned a null value, the default theme will be used." : string.Format("Theme resolver retuned theme '{0}', we'll use that.", theme));
                         }
 
@@ -144,7 +136,7 @@ namespace Chame.Services
                 }
                 else
                 {
-                    _logger.LogDebug("Ignoring the current HTTP request, because request method is not GET and path doesn't start with '/chame-js-loader' or '/chame-css-loader'.");
+                    _logger.LogDebug("Ignoring the current HTTP request, because request method is not GET and path is not '/chame-js-loader' or '/chame-css-loader'.");
                 }
             }
 

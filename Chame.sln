@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Chame", "Chame\Chame.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSite", "WebSite\WebSite.csproj", "{3DE187BF-A93A-4B58-8883-C5793F1DC81E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chame.FileSystem", "Chame.FileSystem\Chame.FileSystem.csproj", "{5F52FB3A-1529-4BB7-B997-B125F930DC9F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{3DE187BF-A93A-4B58-8883-C5793F1DC81E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3DE187BF-A93A-4B58-8883-C5793F1DC81E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3DE187BF-A93A-4B58-8883-C5793F1DC81E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5F52FB3A-1529-4BB7-B997-B125F930DC9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5F52FB3A-1529-4BB7-B997-B125F930DC9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5F52FB3A-1529-4BB7-B997-B125F930DC9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5F52FB3A-1529-4BB7-B997-B125F930DC9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

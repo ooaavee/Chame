@@ -1,11 +1,9 @@
-﻿using System.Net;
-
-namespace Chame
+﻿namespace Chame
 {
     public enum ResponseContentStatus
     {
-        OK = HttpStatusCode.OK,
-        NotFound = HttpStatusCode.NotFound,
-        NotModified = HttpStatusCode.NotModified
+        OK,
+        NotFound,
+        NotModified
     }
 }

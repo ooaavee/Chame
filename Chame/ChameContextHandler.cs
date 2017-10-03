@@ -9,21 +9,36 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
-namespace Chame.Services
+namespace Chame
 {
-    internal sealed class RequestHandler : IChameRequestHandler
+    public class ChameContextHandler
     {
         private readonly ChameOptions _options;
-        private readonly ILogger<RequestHandler> _logger;
+        private readonly ILogger<ChameContextHandler> _logger;
 
-        public RequestHandler(IOptions<ChameOptions> options, ILogger<RequestHandler> logger)
+        public ChameContextHandler(IOptions<ChameOptions> options, ILogger<ChameContextHandler> logger)
         {
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
             _options = options.Value;
             _logger = logger;
         }
 
         public async Task HandleAsync(ChameContext context)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
             var responses = new List<ResponseContent>();
 
             foreach (IContentLoader loader in context.Loaders)

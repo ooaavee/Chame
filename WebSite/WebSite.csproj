@@ -25,7 +25,6 @@
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Chame.FileSystem\Chame.FileSystem.csproj" />
     <ProjectReference Include="..\Chame\Chame.csproj" />
   </ItemGroup>
   <ItemGroup>

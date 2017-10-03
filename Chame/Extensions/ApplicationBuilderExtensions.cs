@@ -1,5 +1,5 @@
 ﻿using System;
-using Chame.Middlewares;
+using Chame;
 
 namespace Microsoft.AspNetCore.Builder
 {
