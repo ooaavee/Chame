@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Chame
+namespace Chame.Services
 {
     public interface IContentLoader
     {
@@ -17,13 +17,5 @@ namespace Chame
         /// <param name="context"></param>
         /// <returns>response</returns>
         Task<ResponseContent> LoadAsync(ChameContext context);
-    }
-
-    public interface ICssLoader : IContentLoader
-    {
-    }
-
-    public interface IJsLoader : IContentLoader
-    {
     }
 }

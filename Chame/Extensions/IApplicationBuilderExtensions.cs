@@ -1,9 +1,9 @@
 ﻿using System;
-using Chame;
+using Chame.Middlewares;
 
 namespace Microsoft.AspNetCore.Builder
 {
-    public static class ApplicationBuilderExtensions
+    public static class IApplicationBuilderExtensions
     {
         public static IApplicationBuilder UseChame(this IApplicationBuilder app)
         {

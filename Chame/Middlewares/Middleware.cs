@@ -1,7 +1,8 @@
 ﻿using System.Threading.Tasks;
+using Chame.Services;
 using Microsoft.AspNetCore.Http;
 
-namespace Chame
+namespace Chame.Middlewares
 {
     internal sealed class Middleware
     {

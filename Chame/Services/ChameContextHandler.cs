@@ -9,36 +9,21 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
-namespace Chame
+namespace Chame.Services
 {
-    public class ChameContextHandler
+    internal sealed class ChameContextHandler
     {
         private readonly ChameOptions _options;
         private readonly ILogger<ChameContextHandler> _logger;
 
         public ChameContextHandler(IOptions<ChameOptions> options, ILogger<ChameContextHandler> logger)
         {
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
-
-            if (logger == null)
-            {
-                throw new ArgumentNullException(nameof(logger));
-            }
-
             _options = options.Value;
             _logger = logger;
         }
 
         public async Task HandleAsync(ChameContext context)
         {
-            if (context == null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
-
             var responses = new List<ResponseContent>();
 
             foreach (IContentLoader loader in context.Loaders)
@@ -84,7 +69,7 @@ namespace Chame
                 }
                 else if (response.Status == ResponseContentStatus.NotModified)
                 {
-                    if (_options.UseETag && !string.IsNullOrEmpty(context.ETag) && context.Loaders.Count == 1)
+                    if (_options.SupportETag && !string.IsNullOrEmpty(context.ETag) && context.Loaders.Count == 1)
                     {
                         responses.Add(response);
                     }
@@ -127,7 +112,7 @@ namespace Chame
                     case ResponseContentStatus.OK:
                         context.HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
 
-                        if (_options.UseETag && responses.Count == 1 && !string.IsNullOrEmpty(response.ETag))
+                        if (_options.SupportETag && responses.Count == 1 && !string.IsNullOrEmpty(response.ETag))
                         {
                             context.HttpContext.Response.Headers.Add("ETag", new StringValues(response.ETag));
                         }
@@ -136,11 +121,11 @@ namespace Chame
                         break;
 
                     case ResponseContentStatus.NotModified:
-                        context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotModified;
+                        context.HttpContext.Response.StatusCode = (int) HttpStatusCode.NotModified;
                         break;
 
                     case ResponseContentStatus.NotFound:
-                        context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                        context.HttpContext.Response.StatusCode = (int) HttpStatusCode.NotFound;
                         break;
 
                     default:
@@ -158,16 +143,10 @@ namespace Chame
         {
             _logger.LogDebug("Merging content from multiple loaders.");
 
-            var response = new ResponseContent
-            {
-                Encoding = null,
-                ETag = null,
-                Status = ResponseContentStatus.OK
-            };
+            var response = new ResponseContent {Encoding = null, ETag = null, Status = ResponseContentStatus.OK};
+            var content = new StringBuilder();
 
-            var buf = new StringBuilder();
-
-            foreach (var item in items)
+            foreach (ResponseContent item in items)
             {
                 if (response.Encoding != null && response.Encoding.EncodingName != item.Encoding.EncodingName)
                 {
@@ -175,14 +154,11 @@ namespace Chame
                     _logger.LogError(message);
                     throw new InvalidOperationException(message);
                 }
-
-                buf.Append(item.Content);
-
+                content.Append(item.Content);
                 response.Encoding = item.Encoding;
             }
 
-            response.Content = buf.ToString();
-
+            response.Content = content.ToString();
             return response;
         }
 

@@ -6,27 +6,28 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Chame.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Chame.FileSystem.Services
+namespace Chame.Services
 {
-    internal sealed class ContentLoader : IJsLoader, ICssLoader
+    internal sealed class FileSystemLoader : IJsLoader, ICssLoader
     {
-        private readonly ThemeBundleResolver _resolver;
+        private readonly ThemeResolver _resolver;
         private readonly ChameOptions _chameOptions;
-        private readonly ContentLoaderOptions _loaderOptions;
-        private readonly Cache _cache;
+        private readonly FileSystemLoaderOptions _fileSystemLoaderOptions;
+        private readonly ContentCache _cache;
         private readonly IHostingEnvironment _env;
-        private readonly ILogger<ContentLoader> _logger;
+        private readonly ILogger<FileSystemLoader> _logger;
 
-        public ContentLoader(ThemeBundleResolver resolver, IOptions<ChameOptions> chameOptions, IOptions<ContentLoaderOptions> loaderOptions, Cache cache, IHostingEnvironment env, ILogger<ContentLoader> logger)
+        public FileSystemLoader(ThemeResolver resolver, IOptions<ChameOptions> chameOptions, IOptions<FileSystemLoaderOptions> fileSystemLoaderOptions, ContentCache cache, IHostingEnvironment env, ILogger<FileSystemLoader> logger)
         {
             _resolver = resolver;
             _chameOptions = chameOptions.Value;
-            _loaderOptions = loaderOptions.Value;
+            _fileSystemLoaderOptions = fileSystemLoaderOptions.Value;
             _cache = cache;
             _env = env;          
             _logger = logger;
@@ -37,101 +38,104 @@ namespace Chame.FileSystem.Services
         public Task<ResponseContent> LoadAsync(ChameContext context)
         {
             // First try to use cached content.
-            if (_loaderOptions.IsCachingEnabled(_env))
+            if (_fileSystemLoaderOptions.IsCachingEnabled(_env))
             {
-                BundleContent cached = _cache.Get<BundleContent>(Cache.Block.BundleContent, context);
+                ContentContainer cached = _cache.Get<ContentContainer>(ContentCache.Block.ContentContainer, context);
                 if (cached != null)
                 {
                     return GetResponseContent(cached, context).AsTask();
                 }
             }
 
-            // Get themed bundle.
-            // Return HTTP NotFound if bundle was not found.
-            ThemeBundle bundle = _resolver.GetThemedBundle(context);
-            if (bundle == null)
+            // Get theme.
+            // Return HTTP NotFound if theme was not found.
+            Theme theme = _resolver.GetTheme(context);
+            if (theme == null)
             {
                 return ResponseContent.NotFound().AsTask();
             }
 
             // Get files to use.
-            List<ThemeBundle.BundleFile> bundleFiles;
+            List<ThemeFile> files;
             switch (context.Category)
             {
                 case ContentCategory.Css:
-                    bundleFiles = bundle.Css;
+                    files = theme.Css;
                     break;
                 case ContentCategory.Js:
-                    bundleFiles = bundle.Js;
+                    files = theme.Js;
                     break;
                 default:
                     throw new InvalidOperationException("fuck");
             }
 
-            // Return HTTP NotFound if there are no files in the bundle.
-            if (bundleFiles == null || !bundleFiles.Any())
+            //
+            // JOS THEMESSA EI OLE FILEJÄ --->> PALAUTETAAN BLANKKO, EI NOT FOUNDIA!
+            //
+
+            // Return HTTP NotFound if there are no files in the theme.         
+            if (files == null || !files.Any())
             {
                 return ResponseContent.NotFound().AsTask();
             }
 
-
             // Read bundle content and optionally cache it.
-            BundleContent content = ReadBundleContent(bundleFiles, context);
-            bool useCache = _loaderOptions.IsCachingEnabled(_env);
+            ContentContainer content = ReadBundleContent(files, context);
+            bool useCache = _fileSystemLoaderOptions.IsCachingEnabled(_env);
             if (useCache)
             {
-                _cache.Set<BundleContent>(content, Cache.Block.BundleContent, context);
+                _cache.Set<ContentContainer>(content, ContentCache.Block.ContentContainer, context);
             }
 
             return GetResponseContent(content, context).AsTask();
         }
 
-        private ResponseContent GetResponseContent(BundleContent content, ChameContext context)
+        private ResponseContent GetResponseContent(ContentContainer container, ChameContext context)
         {            
-            if (_chameOptions.UseETag)
+            if (_chameOptions.SupportETag)
             {
-                if (context.ETag != null && content.ETag != null)
+                if (context.ETag != null && container.ETag != null)
                 {
-                    if (context.ETag == content.ETag)
+                    if (context.ETag == container.ETag)
                     {
                         return ResponseContent.NotModified();
                     }
                 }
             }
 
-            return content.ETag == null ? 
-                ResponseContent.Ok(content.Content, content.Encoding) : 
-                ResponseContent.Ok(content.Content, content.Encoding, content.ETag);
+            return container.ETag == null ? 
+                ResponseContent.Ok(container.Content, container.Encoding) : 
+                ResponseContent.Ok(container.Content, container.Encoding, container.ETag);
         }
 
-        private BundleContent ReadBundleContent(IEnumerable<ThemeBundle.BundleFile> bundleFiles, ChameContext context)
+        private ContentContainer ReadBundleContent(IEnumerable<ThemeFile> files, ChameContext context)
         {
             StringBuilder buffer = new StringBuilder();
-            foreach (ThemeBundle.BundleFile file in GetFiles(bundleFiles, context))
+            foreach (ThemeFile file in FilterFiles(files, context))
             {
-                string content = ReadFile(file);
-                if (content != null)
+                string s = ReadFile(file);
+                if (s != null)
                 {
-                    buffer.AppendLine(content);
+                    buffer.AppendLine(s);
                 }
             }
 
-            string data = buffer.ToString();
+            string content = buffer.ToString();
 
             string eTag = null;
-            if (_chameOptions.UseETag)
+            if (_chameOptions.SupportETag)
             {
-                eTag = CalculateETag(data);
+                eTag = GetETag(content);
             }
 
-            return new BundleContent {Encoding = Encoding.UTF8, Content = data, ETag = eTag};
+            return new ContentContainer(content, eTag);
         }
 
-        private static IEnumerable<ThemeBundle.BundleFile> GetFiles(IEnumerable<ThemeBundle.BundleFile> bundleFiles, ChameContext context)
+        private static IEnumerable<ThemeFile> FilterFiles(IEnumerable<ThemeFile> files, ChameContext context)
         {
             Regex regex = null;
 
-            foreach (ThemeBundle.BundleFile file in bundleFiles)
+            foreach (ThemeFile file in files)
             {
                 if (file.Filter == null)
                 {
@@ -147,7 +151,6 @@ namespace Chame.FileSystem.Services
                     {
                         regex = new Regex(context.Filter);
                     }
-
                     if (regex.IsMatch(file.Filter))
                     {
                         yield return file;
@@ -156,15 +159,15 @@ namespace Chame.FileSystem.Services
             }
         }
 
-        private string ReadFile(ThemeBundle.BundleFile bundleFile)
+        private string ReadFile(ThemeFile file)
         {
             // This is a file somewhere under wwwroot...
-            IFileInfo file = _env.WebRootFileProvider.GetFileInfo(bundleFile.Path);
+            IFileInfo fi = _env.WebRootFileProvider.GetFileInfo(file.Path);
 
             // Check if the file exists.
-            if (!file.Exists)
+            if (!fi.Exists)
             {
-                _logger.LogError(string.Format("Bundle file '{0}' does not exist.", bundleFile.Path));
+                _logger.LogError(string.Format("Bundle file '{0}' does not exist.", file.Path));
                 return null;
             }
 
@@ -172,22 +175,22 @@ namespace Chame.FileSystem.Services
             string content;
             try
             {
-                content = File.ReadAllText(file.PhysicalPath);
+                content = File.ReadAllText(fi.PhysicalPath);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, string.Format("Failed to read bundle file '{0}'.", file.PhysicalPath));
+                _logger.LogError(ex, string.Format("Failed to read bundle file '{0}'.", fi.PhysicalPath));
                 throw;
             }
 
             return content;
         }
 
-        private static string CalculateETag(string data)
+        private static string GetETag(string content)
         {
             using (var sha256 = SHA256.Create())
             {
-                var hash = sha256.ComputeHash(Encoding.ASCII.GetBytes(data));
+                var hash = sha256.ComputeHash(Encoding.ASCII.GetBytes(content));
                 var buffer = new StringBuilder();
                 foreach (var b in hash)
                 {

@@ -1,14 +1,14 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace Chame.FileSystem
+namespace Chame.Models
 {
-    internal sealed class Setup
+    public class ThemeContainer
     {
         /// <summary>
         /// All themes
         /// </summary>
         [JsonProperty("themes")]
-        public List<ThemeBundle> Themes { get; set; } = new List<ThemeBundle>();
+        public List<Theme> Themes { get; set; } = new List<Theme>();
     }
 }

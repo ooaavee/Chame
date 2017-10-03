@@ -1,45 +1,28 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
-namespace Chame
+namespace Chame.Services
 {
-    public class ChameContextFactory
+    internal sealed class ChameContextFactory
     {
         private readonly ChameOptions _options;
         private readonly ILogger<ChameContextFactory> _logger;
 
         public ChameContextFactory(IOptions<ChameOptions> options, ILogger<ChameContextFactory> logger)
         {
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
-
-            if (logger == null)
-            {
-                throw new ArgumentNullException(nameof(logger));
-            }
-
             _options = options.Value;
             _logger = logger;
         }
 
         public bool TryCreateContext(HttpContext httpContext, out ChameContext context)
         {
-            if (httpContext == null)
-            {
-                throw new ArgumentNullException(nameof(httpContext));
-            }
-
             _logger.LogDebug("Started to handle the current HTTP request.");
 
             context = null;
-
 
             bool valid = false;
 
@@ -99,7 +82,7 @@ namespace Chame
 
                         // HTTP ETag is not supported if there are multiple content loader!
                         string eTag = null;
-                        if (_options.UseETag)
+                        if (_options.SupportETag)
                         {
                             if (httpContext.Request.Headers.ContainsKey("If-None-Match"))
                             {

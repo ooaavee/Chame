@@ -1,4 +1,5 @@
 ﻿using System;
+using Chame.Services;
 using Microsoft.AspNetCore.Http;
 
 namespace Chame
@@ -14,7 +15,7 @@ namespace Chame
         {
             ContentLoaderSorter = SortContentLoadersByPriority;
             DefaultTheme = DefaultThemeName;        
-            UseETag = true;
+            SupportETag = true;
         }
 
         /// <summary>
@@ -23,9 +24,9 @@ namespace Chame
         public string DefaultTheme { get; set; }
         
         /// <summary>
-        /// Indicates if we should use HTTP ETags if possible.
+        /// Indicates if we should support HTTP ETags if possible.
         /// </summary>
-        public bool UseETag { get; set; }
+        public bool SupportETag { get; set; }
 
         /// <summary>
         /// Resolves the theme that should be used. If not set, the <see cref="DefaultTheme"/> will be used.

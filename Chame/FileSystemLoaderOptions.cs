@@ -1,27 +1,33 @@
 ﻿using System;
+using Chame.Models;
 using Microsoft.AspNetCore.Hosting;
 
-namespace Chame.FileSystem
+namespace Chame
 {
-    public class ContentLoaderOptions
+    public class FileSystemLoaderOptions
     {
-        public ContentLoaderOptions()
+        public FileSystemLoaderOptions()
         {
-            UseSetupFile = true;
-            SetupFilePath = @"\chame.json";
+            UseThemeContainerFile = true;
+            ThemeContainerFile = @"\chame-files.json";
             CachingMode = CachingModes.EnabledButDisabledOnDevelopment;
             CacheAbsoluteExpirationRelativeToNow = new TimeSpan(0, 0, 1, 0);
         }
 
         /// <summary>
-        /// A path to the setup file.
+        /// A path to the theme container file.
         /// </summary>
-        public string SetupFilePath { get; set; }
+        public string ThemeContainerFile { get; set; }
 
         /// <summary>
-        /// Should we use setup file.
+        /// Should we use the theme container file.
         /// </summary>
-        public bool UseSetupFile { get; set; }
+        public bool UseThemeContainerFile { get; set; }
+
+        /// <summary>
+        /// A function for loading <see cref="ThemeContainer"/> objects. This will be invoked if <see cref="UseThemeContainerFile"/> is false.
+        /// </summary>
+        public Func<ThemeContainer> ThemeContainerGetter { get; set; }
 
         /// <summary>
         /// Current caching mode.

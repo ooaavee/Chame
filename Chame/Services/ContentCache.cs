@@ -2,14 +2,14 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
-namespace Chame.FileSystem.Services
+namespace Chame.Services
 {
-    internal sealed class Cache
+    internal sealed class ContentCache
     {
         private readonly IMemoryCache _memoryCache;
-        private readonly ContentLoaderOptions _options;
+        private readonly FileSystemLoaderOptions _options;
 
-        public Cache(IMemoryCache memoryCache, IOptions<ContentLoaderOptions> options)
+        public ContentCache(IMemoryCache memoryCache, IOptions<FileSystemLoaderOptions> options)
         {
             _memoryCache = memoryCache;
             _options = options.Value;
@@ -35,7 +35,7 @@ namespace Chame.FileSystem.Services
         private static string GetKey(Block block, ChameContext context)
         {
             var s = new StringBuilder();
-            s.Append(typeof(Cache).FullName);
+            s.Append(typeof(ContentCache).FullName);
             s.Append(";");
             s.Append("block:");
             s.Append("'" + block + "'");
@@ -68,8 +68,8 @@ namespace Chame.FileSystem.Services
 
         public enum Block
         {
-            ThemeBundle,
-            BundleContent
+            Theme,
+            ContentContainer
         }
 
     }
