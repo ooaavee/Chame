@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Chame;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 
 namespace WebSite
 {
@@ -20,22 +23,43 @@ namespace WebSite
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
-            Configuration = builder.Build();         
+            Configuration = builder.Build();
         }
 
         public IConfigurationRoot Configuration { get; }
 
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
             services.AddChame()
-                .AddFileSystemLoader(x =>
+                .AddFileSystemLoader(options =>
                 {
-                    x.CachingMode = CachingModes.Enabled;
+                })
+                .AddRazorViews(options =>
+                {
                 });
 
-            // Add framework services.
-            services.AddMvc();
+
+            // Cookie authentication is needed for demo purposes only: authenticated users have a 
+            // different theme in these samples.
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+                {
+                    options.Cookie.Name = "Chame";
+                });
+
+
+
+            // Add MVC.
+            services.AddMvc()
+                .AddRazorOptions(options =>
+                {
+                    options.EnableChame(xxx =>
+                    {
+                    });
+                });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -50,6 +74,8 @@ namespace WebSite
             {
                 app.UseBrowserLink();
             }
+
+            app.UseAuthentication();
 
             app.UseChame();
 

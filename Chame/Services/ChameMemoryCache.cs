@@ -4,11 +4,11 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Chame.Services
 { 
-    internal sealed class SimpleCache
+    internal sealed class ChameMemoryCache
     {
         private readonly IMemoryCache _memoryCache;
 
-        public SimpleCache(IMemoryCache memoryCache)
+        public ChameMemoryCache(IMemoryCache memoryCache)
         {
             _memoryCache = memoryCache;
         }
@@ -32,7 +32,7 @@ namespace Chame.Services
         private static string GetKey<T>(ChameContext context)
         {
             var buffer = new StringBuilder(256);
-            buffer.Append(typeof(SimpleCache).FullName);
+            buffer.Append(typeof(ChameMemoryCache).FullName);
             buffer.Append("{type:'");
             buffer.Append(typeof(T).FullName);
             buffer.Append("';category:'");

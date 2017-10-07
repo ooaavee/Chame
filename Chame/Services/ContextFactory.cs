@@ -8,14 +8,17 @@ using Microsoft.Extensions.Primitives;
 namespace Chame.Services
 {
     /// <summary>
-    /// This is a factory class for building ChameContext objects.
+    /// This is a factory class for building <see cref="ChameContext"/> objects.
     /// </summary>
-    internal sealed class ChameContextFactory
+    internal sealed class ContextFactory
     {
-        private readonly ChameOptions _options;
-        private readonly ILogger<ChameContextFactory> _logger;
+        private const string PathForJs = "/chame-js-loader";
+        private const string PathForCss = "/chame-css-loader";
 
-        public ChameContextFactory(IOptions<ChameOptions> options, ILogger<ChameContextFactory> logger)
+        private readonly ChameOptions _options;
+        private readonly ILogger<ContextFactory> _logger;
+
+        public ContextFactory(IOptions<ChameOptions> options, ILogger<ContextFactory> logger)
         {
             _options = options.Value;
             _logger = logger;
@@ -31,17 +34,17 @@ namespace Chame.Services
 
             if (httpContext.Request.Method == HttpMethods.Get)
             {
-                bool js = httpContext.Request.Path.StartsWithSegments(new PathString("/chame-js-loader"));
-                bool css = httpContext.Request.Path.StartsWithSegments(new PathString("/chame-css-loader"));
+                bool isJs = httpContext.Request.Path.StartsWithSegments(new PathString(PathForJs));
+                bool isCss = httpContext.Request.Path.StartsWithSegments(new PathString(PathForCss));
 
-                if (js || css)
+                if (isJs || isCss)
                 {
                     valid = true;
 
                     _logger.LogInformation(string.Format("Started to handle the current HTTP request (path = {0}).", httpContext.Request.Path.ToString()));
 
                     // Category
-                    ContentCategory category = js ? ContentCategory.Js : ContentCategory.Css;
+                    ContentCategory category = isJs ? ContentCategory.Js : ContentCategory.Css;
 
                     // Filter
                     StringValues parameter = httpContext.Request.Query["filter"];
@@ -122,7 +125,7 @@ namespace Chame.Services
                 }
                 else
                 {
-                    _logger.LogDebug("Ignoring the current HTTP request, because request method is not GET and path is not '/chame-js-loader' or '/chame-css-loader'.");
+                    _logger.LogDebug(string.Format("Ignoring the current HTTP request, because request method is not GET and path is not '{0}' or '{1}'.", PathForCss, PathForJs));
                 }
             }
 

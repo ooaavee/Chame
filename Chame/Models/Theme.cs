@@ -14,13 +14,13 @@ namespace Chame.Models
         /// <summary>
         /// Css files
         /// </summary>
-        [JsonProperty("css")]
-        public virtual List<ThemeFile> Css { get; set; } = new List<ThemeFile>();
+        [JsonProperty("cssFiles")]
+        public virtual List<ThemeFile> CssFiles { get; set; } = new List<ThemeFile>();
 
         /// <summary>
         /// JavaScript files
         /// </summary>
-        [JsonProperty("js")]
-        public virtual List<ThemeFile> Js { get; set; } = new List<ThemeFile>();
+        [JsonProperty("jsFiles")]
+        public virtual List<ThemeFile> JsFiles { get; set; } = new List<ThemeFile>();
     }
 }

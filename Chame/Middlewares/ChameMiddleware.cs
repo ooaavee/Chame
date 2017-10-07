@@ -7,16 +7,16 @@ namespace Chame.Middlewares
     /// <summary>
     /// A middleware for handling Chame web-requests.
     /// </summary>
-    internal sealed class Middleware
+    internal sealed class ChameMiddleware
     {
         private readonly RequestDelegate _next;
 
-        public Middleware(RequestDelegate next)
+        public ChameMiddleware(RequestDelegate next)
         {
             _next = next;
         }
 
-        public async Task Invoke(HttpContext httpContext, ChameContextFactory factory, ChameContextProcessor processor)
+        public async Task Invoke(HttpContext httpContext, ContextFactory factory, ContextProcessor processor)
         {
             if (factory.TryCreate(httpContext, out ChameContext context))
             {

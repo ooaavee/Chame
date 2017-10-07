@@ -14,8 +14,8 @@ namespace Microsoft.AspNetCore.Builder
             {
                 throw new ArgumentNullException(nameof(app));
             }
-
-            app.UseMiddleware<Middleware>();
+          
+            app.UseMiddleware<ChameMiddleware>();
 
             return app;
         }

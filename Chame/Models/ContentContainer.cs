@@ -15,7 +15,7 @@ namespace Chame.Models
 
         public static ContentContainer Empty()
         {
-            return new ContentContainer("", null);
+            return new ContentContainer(string.Empty, null);
         }
 
         /// <summary>

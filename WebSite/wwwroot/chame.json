@@ -2,7 +2,7 @@
     "themes": [
         {
             "name": "default",
-            "css": [
+            "cssFiles": [
                 {
                     "path": "css/bootstrap.css",
                     "filter": "vendor"
@@ -15,7 +15,7 @@
                     "path": "css/site.css"
                 }
             ],
-            "js": [
+            "jsFiles": [
                 {
                     "path": "js/jquery.js",
                     "filter": "vendor"

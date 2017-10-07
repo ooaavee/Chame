@@ -14,12 +14,12 @@ namespace Chame.Services
     /// <summary>
     /// A processor for ChameContext objects.
     /// </summary>
-    internal sealed class ChameContextProcessor
+    internal sealed class ContextProcessor
     {
         private readonly ChameOptions _options;
-        private readonly ILogger<ChameContextProcessor> _logger;
+        private readonly ILogger<ContextProcessor> _logger;
 
-        public ChameContextProcessor(IOptions<ChameOptions> options, ILogger<ChameContextProcessor> logger)
+        public ContextProcessor(IOptions<ChameOptions> options, ILogger<ContextProcessor> logger)
         {
             _options = options.Value;
             _logger = logger;

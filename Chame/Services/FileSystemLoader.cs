@@ -17,25 +17,20 @@ namespace Chame.Services
     internal sealed class FileSystemLoader : IJsLoader, ICssLoader
     {
         private readonly ThemeResolver _resolver;
-        private readonly ChameOptions _chameOptions;
-        private readonly FileSystemLoaderOptions _fileSystemLoaderOptions;
-        private readonly SimpleCache _cache;
+        private readonly ChameOptions _options1;
+        private readonly ChameFileSystemLoaderOptions _options2;
+        private readonly ChameMemoryCache _cache;
         private readonly IHostingEnvironment _env;
         private readonly ILogger<FileSystemLoader> _logger;
 
-        public FileSystemLoader(ThemeResolver resolver, IOptions<ChameOptions> chameOptions, IOptions<FileSystemLoaderOptions> fileSystemLoaderOptions, SimpleCache cache, IHostingEnvironment env, ILogger<FileSystemLoader> logger)
+        public FileSystemLoader(ThemeResolver resolver, IOptions<ChameOptions> options1, IOptions<ChameFileSystemLoaderOptions> options2, ChameMemoryCache cache, IHostingEnvironment env, ILogger<FileSystemLoader> logger)
         {
             _resolver = resolver;
-            _chameOptions = chameOptions.Value;
-            _fileSystemLoaderOptions = fileSystemLoaderOptions.Value;
+            _options1 = options1.Value;
+            _options2 = options2.Value;
             _cache = cache;
             _env = env;          
             _logger = logger;
-        }
-
-        private bool UseCache
-        {
-            get { return _fileSystemLoaderOptions.IsCachingEnabled(_env); }
         }
 
         public int Priority => 1073741823;
@@ -44,6 +39,14 @@ namespace Chame.Services
         {
             ResponseContent response = Load(context);
             return Task.FromResult(response);
+        }
+
+        /// <summary>
+        /// Is caching enabled or not?
+        /// </summary>
+        private bool UseCache
+        {
+            get { return _options2.IsCachingEnabled(_env); }
         }
 
         private ResponseContent Load(ChameContext context)
@@ -71,10 +74,10 @@ namespace Chame.Services
             switch (context.Category)
             {
                 case ContentCategory.Css:
-                    files = theme.Css;
+                    files = theme.CssFiles;
                     break;
                 case ContentCategory.Js:
-                    files = theme.Js;
+                    files = theme.JsFiles;
                     break;
                 default:
                     throw new InvalidOperationException("fuck");
@@ -88,7 +91,7 @@ namespace Chame.Services
                 content = ReadBundleContent(files, context);
                 if (UseCache)
                 {
-                    _cache.Set<ContentContainer>(content, _fileSystemLoaderOptions.CacheAbsoluteExpirationRelativeToNow, context);
+                    _cache.Set<ContentContainer>(content, _options2.CacheAbsoluteExpirationRelativeToNow, context);
                 }
             }
             else
@@ -101,7 +104,7 @@ namespace Chame.Services
 
         private ResponseContent GetResponseContent(ContentContainer container, ChameContext context)
         {            
-            if (_chameOptions.SupportETag)
+            if (_options1.SupportETag)
             {
                 if (context.ETag != null && container.ETag != null)
                 {
@@ -132,7 +135,7 @@ namespace Chame.Services
             string content = buffer.ToString();
 
             string eTag = null;
-            if (_chameOptions.SupportETag)
+            if (_options1.SupportETag)
             {
                 eTag = GetETag(content);
             }

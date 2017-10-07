@@ -10,7 +10,7 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class IChameBuilderExtensions
     {
-        public static IChameBuilder AddFileSystemLoader(this IChameBuilder builder, Action<FileSystemLoaderOptions> configureOptions = null)
+        public static IChameBuilder AddFileSystemLoader(this IChameBuilder builder, Action<ChameFileSystemLoaderOptions> configureOptions = null)
         {
             if (builder == null)
             {
@@ -23,12 +23,12 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             // options
-            builder.Services.Configure<FileSystemLoaderOptions>(configureOptions);
+            builder.Services.Configure<ChameFileSystemLoaderOptions>(configureOptions);
 
             // my services
             builder.Services.TryAddSingleton<IJsLoader, FileSystemLoader>();
             builder.Services.TryAddSingleton<ICssLoader, FileSystemLoader>();
-            builder.Services.TryAddSingleton<SimpleCache>();
+            builder.Services.TryAddSingleton<ChameMemoryCache>();
             builder.Services.TryAddSingleton<ThemeResolver>();
 
             // framework services
@@ -36,5 +36,27 @@ namespace Microsoft.Extensions.DependencyInjection
 
             return builder;
         }
+
+        public static IChameBuilder AddRazorViews(this IChameBuilder builder, Action<ChameRazorOptions> configureOptions = null)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            if (configureOptions == null)
+            {
+                configureOptions = options => { };
+            }
+
+            // options
+            builder.Services.Configure<ChameRazorOptions>(configureOptions);
+
+            // my services
+            builder.Services.TryAddSingleton<IChameRazorThemeResolver, RazorThemeResolver>();
+
+            return builder;
+        }
+
     }
 }
