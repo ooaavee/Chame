@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace Chame
 {
-    public class ChameRazorOptions
+    public class ChameRazorViewEngineOptions
     {
-        public ChameRazorOptions()
+        public ChameRazorViewEngineOptions()
         {
         }
 

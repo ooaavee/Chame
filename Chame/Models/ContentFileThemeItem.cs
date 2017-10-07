@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Chame.Models
 {
-    public class ThemeFile
+    public class ContentFileThemeItem
     {
         /// <summary>
         /// File path

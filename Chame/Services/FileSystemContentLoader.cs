@@ -14,16 +14,19 @@ using Microsoft.Extensions.Options;
 
 namespace Chame.Services
 {
-    internal sealed class FileSystemLoader : IJsLoader, ICssLoader
+    /// <summary>
+    /// Loads JavaScript and CSS content from the filesystem.
+    /// </summary>
+    internal sealed class FileSystemContentLoader : IJsContentLoader, ICssContentLoader
     {
-        private readonly ThemeResolver _resolver;
+        private readonly ContentFileThemeResolver _resolver;
         private readonly ChameOptions _options1;
         private readonly ChameFileSystemLoaderOptions _options2;
         private readonly ChameMemoryCache _cache;
         private readonly IHostingEnvironment _env;
-        private readonly ILogger<FileSystemLoader> _logger;
+        private readonly ILogger<FileSystemContentLoader> _logger;
 
-        public FileSystemLoader(ThemeResolver resolver, IOptions<ChameOptions> options1, IOptions<ChameFileSystemLoaderOptions> options2, ChameMemoryCache cache, IHostingEnvironment env, ILogger<FileSystemLoader> logger)
+        public FileSystemContentLoader(ContentFileThemeResolver resolver, IOptions<ChameOptions> options1, IOptions<ChameFileSystemLoaderOptions> options2, ChameMemoryCache cache, IHostingEnvironment env, ILogger<FileSystemContentLoader> logger)
         {
             _resolver = resolver;
             _options1 = options1.Value;
@@ -63,14 +66,14 @@ namespace Chame.Services
 
             // Get theme.
             // Return HTTP NotFound if theme was not found.
-            Theme theme = _resolver.GetTheme(context);
+            ContentFileTheme theme = _resolver.GetTheme(context);
             if (theme == null)
             {
                 return ResponseContent.NotFound();
             }
 
             // Get files to use.
-            List<ThemeFile> files;
+            List<ContentFileThemeItem> files;
             switch (context.Category)
             {
                 case ContentCategory.Css:
@@ -120,10 +123,10 @@ namespace Chame.Services
                 ResponseContent.Ok(container.Content, container.Encoding, container.ETag);
         }
 
-        private ContentContainer ReadBundleContent(IEnumerable<ThemeFile> files, ChameContext context)
+        private ContentContainer ReadBundleContent(IEnumerable<ContentFileThemeItem> files, ChameContext context)
         {
             StringBuilder buffer = new StringBuilder();
-            foreach (ThemeFile file in FilterFiles(files, context))
+            foreach (ContentFileThemeItem file in FilterFiles(files, context))
             {
                 string s = ReadFile(file);
                 if (s != null)
@@ -143,11 +146,11 @@ namespace Chame.Services
             return new ContentContainer(content, eTag);
         }
 
-        private static IEnumerable<ThemeFile> FilterFiles(IEnumerable<ThemeFile> files, ChameContext context)
+        private static IEnumerable<ContentFileThemeItem> FilterFiles(IEnumerable<ContentFileThemeItem> files, ChameContext context)
         {
             Regex regex = null;
 
-            foreach (ThemeFile file in files)
+            foreach (ContentFileThemeItem file in files)
             {
                 if (file.Filter == null)
                 {
@@ -171,7 +174,7 @@ namespace Chame.Services
             }
         }
 
-        private string ReadFile(ThemeFile file)
+        private string ReadFile(ContentFileThemeItem file)
         {
             // This is a file somewhere under wwwroot...
             IFileInfo fi = _env.WebRootFileProvider.GetFileInfo(file.Path);

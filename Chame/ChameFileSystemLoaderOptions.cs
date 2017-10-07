@@ -26,9 +26,9 @@ namespace Chame
         public bool UseThemeContainerFile { get; set; }
 
         /// <summary>
-        /// A function for loading <see cref="ThemeContainer"/> objects. This will be invoked if <see cref="UseThemeContainerFile"/> is false.
+        /// A function for loading <see cref="ContentFileThemeContainer"/> objects. This will be invoked if <see cref="UseThemeContainerFile"/> is false.
         /// </summary>
-        public Func<ChameContext, ThemeContainer> ThemeContainerGetter { get; set; }
+        public Func<ChameContext, ContentFileThemeContainer> ThemeContainerLoader { get; set; }
 
         /// <summary>
         /// Caching mode, the default value is <see cref="CachingModes.DisabledOnDevelopmentOtherwiseEnabled"/>.

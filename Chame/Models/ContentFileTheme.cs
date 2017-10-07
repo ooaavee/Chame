@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace Chame.Models
 {
-    public class Theme
+    public class ContentFileTheme
     {
         /// <summary>
         /// Theme name
@@ -15,12 +15,12 @@ namespace Chame.Models
         /// Css files
         /// </summary>
         [JsonProperty("cssFiles")]
-        public virtual List<ThemeFile> CssFiles { get; set; } = new List<ThemeFile>();
+        public virtual List<ContentFileThemeItem> CssFiles { get; set; } = new List<ContentFileThemeItem>();
 
         /// <summary>
         /// JavaScript files
         /// </summary>
         [JsonProperty("jsFiles")]
-        public virtual List<ThemeFile> JsFiles { get; set; } = new List<ThemeFile>();
+        public virtual List<ContentFileThemeItem> JsFiles { get; set; } = new List<ContentFileThemeItem>();
     }
 }

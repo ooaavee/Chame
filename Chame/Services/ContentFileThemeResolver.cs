@@ -10,45 +10,45 @@ using Newtonsoft.Json;
 
 namespace Chame.Services
 {
-    internal sealed class ThemeResolver
+    internal sealed class ContentFileThemeResolver
     {
-        private readonly ChameFileSystemLoaderOptions _loaderOptions;
-        private readonly IHostingEnvironment _env;
-        private readonly ILogger<ThemeResolver> _logger;
+        private readonly ChameFileSystemLoaderOptions _options;
         private readonly ChameMemoryCache _cache;
+        private readonly IHostingEnvironment _env;
+        private readonly ILogger<ContentFileThemeResolver> _logger;
 
-        public ThemeResolver(IOptions<ChameFileSystemLoaderOptions> loaderOptions, IHostingEnvironment env, ILogger<ThemeResolver> logger, ChameMemoryCache cache)
+        public ContentFileThemeResolver(IOptions<ChameFileSystemLoaderOptions> options, ChameMemoryCache cache, IHostingEnvironment env, ILogger<ContentFileThemeResolver> logger)
         {
-            _loaderOptions = loaderOptions.Value;
+            _options = options.Value;
+            _cache = cache;
             _env = env;
             _logger = logger;
-            _cache = cache;
         }
 
-        public Theme GetTheme(ChameContext context)
+        public ContentFileTheme GetTheme(ChameContext context)
         {
             // First try to get theme content from the cache.
             if (UseCache)
             {
-                Theme theme = _cache.Get<Theme>(context);
+                ContentFileTheme theme = _cache.Get<ContentFileTheme>(context);
                 if (theme != null)
                 {
                     return theme;
                 }
             }
 
-            if (_loaderOptions.UseThemeContainerFile)
+            if (_options.UseThemeContainerFile)
             {
                 // Load theme content from settings file and cache findings for later usage.
-                ThemeContainer container = LoadThemeContainerFromFile();
+                ContentFileThemeContainer container = LoadThemeContainerFromFile();
                 if (container != null)
                 {
-                    Theme theme = container.Themes.FirstOrDefault(x => x.Name == context.Theme);
+                    ContentFileTheme theme = container.Themes.FirstOrDefault(x => x.Name == context.Theme);
                     if (theme != null)
                     {
                         if (UseCache)
                         {
-                            _cache.Set<Theme>(theme, _loaderOptions.CacheAbsoluteExpirationRelativeToNow, context);
+                            _cache.Set<ContentFileTheme>(theme, _options.CacheAbsoluteExpirationRelativeToNow, context);
                         }
                         return theme;
                     }
@@ -57,16 +57,16 @@ namespace Chame.Services
             else
             {
                 // Load theme bundle by using an external function - these findings won't be cached!
-                if (_loaderOptions.ThemeContainerGetter == null)
+                if (_options.ThemeContainerLoader == null)
                 {
-                    _logger.LogError("LoadThemeContainer Func is null.");
+                    _logger.LogError(string.Format("{0} Func is null.", nameof(_options.ThemeContainerLoader)));
                 }
                 else
                 {
-                    ThemeContainer container = _loaderOptions.ThemeContainerGetter(context);
+                    ContentFileThemeContainer container = _options.ThemeContainerLoader(context);
                     if (container != null)
                     {
-                        Theme theme = container.Themes.FirstOrDefault(x => x.Name == context.Theme);
+                        ContentFileTheme theme = container.Themes.FirstOrDefault(x => x.Name == context.Theme);
                         if (theme != null)
                         {
                             return theme;
@@ -80,29 +80,32 @@ namespace Chame.Services
             return null;
         }
 
+        /// <summary>
+        /// Is caching enabled or not?
+        /// </summary>
         private bool UseCache
         {
-            get { return _loaderOptions.IsCachingEnabled(_env); }
+            get { return _options.IsCachingEnabled(_env); }
         }
 
         /// <summary>
         /// Loads theme container from file.
         /// </summary>
-        private ThemeContainer LoadThemeContainerFromFile()
+        private ContentFileThemeContainer LoadThemeContainerFromFile()
         {
-            if (string.IsNullOrEmpty(_loaderOptions.ThemeContainerFile))
+            if (string.IsNullOrEmpty(_options.ThemeContainerFile))
             {
                 _logger.LogError("ThemeContainerFile is missing.");
                 return null;
             }
 
             // This is a file somewhere under wwwroot...
-            IFileInfo file = _env.WebRootFileProvider.GetFileInfo(_loaderOptions.ThemeContainerFile);
+            IFileInfo file = _env.WebRootFileProvider.GetFileInfo(_options.ThemeContainerFile);
 
             // Check if file exists.
             if (!file.Exists)
             {
-                _logger.LogError(string.Format("Requested file '{0}' does not exist.", _loaderOptions.ThemeContainerFile));
+                _logger.LogError(string.Format("Requested file '{0}' does not exist.", _options.ThemeContainerFile));
                 return null;
             }
 
@@ -120,10 +123,10 @@ namespace Chame.Services
             }
 
             // Deserialize file content.
-            ThemeContainer container = JsonConvert.DeserializeObject<ThemeContainer>(content);
+            ContentFileThemeContainer container = JsonConvert.DeserializeObject<ContentFileThemeContainer>(content);
             if (container == null)
             {
-                _logger.LogError(string.Format("Unable to deserialize JSON content from the requested file '{0}'.", _loaderOptions.ThemeContainerFile));
+                _logger.LogError(string.Format("Unable to deserialize JSON content from the requested file '{0}'.", _options.ThemeContainerFile));
                 return null;
             }
 

@@ -3,12 +3,12 @@ using Newtonsoft.Json;
 
 namespace Chame.Models
 {
-    public class ThemeContainer
+    public class ContentFileThemeContainer
     {
         /// <summary>
         /// All themes
         /// </summary>
         [JsonProperty("themes")]
-        public virtual List<Theme> Themes { get; set; } = new List<Theme>();
+        public virtual List<ContentFileTheme> Themes { get; set; } = new List<ContentFileTheme>();
     }
 }

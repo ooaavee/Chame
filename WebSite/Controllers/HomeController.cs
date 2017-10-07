@@ -11,16 +11,16 @@ namespace WebSite.Controllers
     {
         public async Task<IActionResult> Index()
         {
-            bool isAuthenticated = HttpContext.User.Identity.IsAuthenticated;
+            //bool isAuthenticated = HttpContext.User.Identity.IsAuthenticated;
 
-            if (!isAuthenticated)
-            {
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(new ClaimsIdentity("ChameDemo")));
-            }
-            else
-            {
-                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            }
+            //if (!isAuthenticated)
+            //{
+            //    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(new ClaimsIdentity("ChameDemo")));
+            //}
+            //else
+            //{
+            //    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            //}
  
 
             //context.Authenticate | Challenge | SignInAsync("scheme"); // Calls 2.0 auth stack
@@ -28,11 +28,6 @@ namespace WebSite.Controllers
 
 
 
-            return View();
-        }
-
-        public IActionResult Error()
-        {
             return View();
         }
     }

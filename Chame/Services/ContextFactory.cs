@@ -55,10 +55,10 @@ namespace Chame.Services
                     switch (category)
                     {
                         case ContentCategory.Js:
-                            loaders = httpContext.RequestServices.GetServices<IJsLoader>().ToArray();
+                            loaders = httpContext.RequestServices.GetServices<IJsContentLoader>().ToArray();
                             break;
                         case ContentCategory.Css:
-                            loaders = httpContext.RequestServices.GetServices<ICssLoader>().ToArray();
+                            loaders = httpContext.RequestServices.GetServices<ICssContentLoader>().ToArray();
                             break;
                     }
 
@@ -105,22 +105,36 @@ namespace Chame.Services
                         }
 
                         // Resolve theme
+                        IChameThemeResolver themeResolver = _options.ThemeResolver;
                         string theme = null;
-                        if (_options.ThemeResolver != null)
+                        if (themeResolver != null)
                         {
-                            theme = _options.ThemeResolver(new ThemeResolverEventArgs(httpContext, category, filter));
-                            _logger.LogDebug(theme == null ? "Theme resolver returned a null value, the default theme will be used." : string.Format("Theme resolver retuned theme '{0}', we'll use that.", theme));
+                            theme = themeResolver.GetTheme(new ChameContentFileThemeResolveContext(httpContext, category, filter));
+                            if (string.IsNullOrEmpty(theme))
+                            {
+                                _logger.LogWarning("Theme resolver returned a null or empty string, the default theme will be used.");
+
+                                if (!string.IsNullOrEmpty(_options.DefaultTheme))
+                                {
+                                    theme = _options.DefaultTheme;
+                                }
+                                else
+                                {
+                                    _logger.LogError("DefaultTheme is missing.");
+                                }
+                            }
+                        }
+                        if (string.IsNullOrEmpty(theme))
+                        {
+                            valid = false;
                         }
 
-                        if (theme == null)
+                        if (valid)
                         {
-                            theme = _options.DefaultTheme ?? ChameOptions.DefaultThemeName;
+                            // Finally create the context object
+                            context = ChameContext.Create(httpContext, category, filter, eTag, theme, loaders);
+                            _logger.LogDebug("ChameContext created for the current HTTP request.");
                         }
-
-                        // Finally create the context object
-                        context = ChameContext.Create(httpContext, category, filter, eTag, theme, loaders);
-
-                        _logger.LogDebug("ChameContext created for the current HTTP request.");
                     }
                 }
                 else

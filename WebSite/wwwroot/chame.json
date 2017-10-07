@@ -1,7 +1,36 @@
 ﻿{
     "themes": [
         {
-            "name": "default",
+            "name": "A",
+            "cssFiles": [
+                {
+                    "path": "css/bootstrap.css",
+                    "filter": "vendor"
+                },
+                {
+                    "path": "css/fontawesome.css",
+                    "filter": "vendor"
+                },
+                {
+                    "path": "css/site.css"
+                }
+            ],
+            "jsFiles": [
+                {
+                    "path": "js/jquery.js",
+                    "filter": "vendor"
+                },
+                {
+                    "path": "js/bootstrap.js",
+                    "filter": "vendor"
+                },
+                {
+                    "path": "js/site.js"
+                }
+            ]
+        },
+        {
+            "name": "B",
             "cssFiles": [
                 {
                     "path": "css/bootstrap.css",
@@ -29,5 +58,6 @@
                 }
             ]
         }
+
     ]
 }

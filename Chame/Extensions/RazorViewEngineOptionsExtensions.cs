@@ -10,16 +10,16 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class RazorViewEngineOptionsExtensions
     {
-        public static void EnableChame(this RazorViewEngineOptions options, Action<ChameRazorOptions> configureOptions = null)
+        public static void EnableChame(this RazorViewEngineOptions options, Action<ChameRazorViewEngineOptions> configureOptions = null)
         {
             if (options == null)
             {
                 throw new ArgumentNullException(nameof(options));
             }
 
-            var chame = new ChameRazorOptions();
+            var chame = new ChameRazorViewEngineOptions();
             configureOptions?.Invoke(chame);
-
+         
             // Register a view-location-expander.
             options.ViewLocationExpanders.Add(new ChameViewLocationExpander());
 

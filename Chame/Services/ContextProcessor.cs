@@ -12,7 +12,7 @@ using Microsoft.Extensions.Primitives;
 namespace Chame.Services
 {
     /// <summary>
-    /// A processor for ChameContext objects.
+    /// This is a  processor for <see cref="ChameContext"/> objects.
     /// </summary>
     internal sealed class ContextProcessor
     {
@@ -135,7 +135,6 @@ namespace Chame.Services
                         _logger.LogError(string.Format("Invalid reponse status '{0}'.", response.Status));
                         throw new InvalidOperationException(string.Format("Invalid reponse status '{0}'.", response.Status));
                 }
-
             }
         }
 

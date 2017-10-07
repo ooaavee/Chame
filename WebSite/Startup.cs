@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
+using WebSite.Services;
 
 namespace WebSite
 {
@@ -33,14 +34,32 @@ namespace WebSite
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddChame()
+            services.AddChame(options => { options.ThemeResolver = new DemoThemeResolver(); })
                 .AddFileSystemLoader(options =>
-                {
-                })
-                .AddRazorViews(options =>
                 {
                 });
 
+
+
+            var aa = GetType().Assembly.GetReferencedAssemblies();
+
+
+
+
+            // Add MVC.
+            services.AddMvc()
+                .AddRazorOptions(options =>
+                {
+                    options.EnableChame(o =>
+                    {
+                        o.EmbeddedViewAssemblies.Add(typeof(WebSite.Themes.A.Info).Assembly);
+                        o.EmbeddedViewAssemblies.Add(typeof(WebSite.Themes.B.Info).Assembly);
+                    });
+                });
+
+
+
+            services.AddTransient<DemoService, DemoService>();
 
             // Cookie authentication is needed for demo purposes only: authenticated users have a 
             // different theme in these samples.
@@ -52,15 +71,8 @@ namespace WebSite
 
 
 
-            // Add MVC.
-            services.AddMvc()
-                .AddRazorOptions(options =>
-                {
-                    options.EnableChame(xxx =>
-                    {
-                    });
-                });
         }
+
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)

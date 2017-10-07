@@ -26,10 +26,10 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.Configure<ChameFileSystemLoaderOptions>(configureOptions);
 
             // my services
-            builder.Services.TryAddSingleton<IJsLoader, FileSystemLoader>();
-            builder.Services.TryAddSingleton<ICssLoader, FileSystemLoader>();
+            builder.Services.TryAddSingleton<IJsContentLoader, FileSystemContentLoader>();
+            builder.Services.TryAddSingleton<ICssContentLoader, FileSystemContentLoader>();
             builder.Services.TryAddSingleton<ChameMemoryCache>();
-            builder.Services.TryAddSingleton<ThemeResolver>();
+            builder.Services.TryAddSingleton<ContentFileThemeResolver>();
 
             // framework services
             builder.Services.AddMemoryCache();
@@ -37,26 +37,26 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder;
         }
 
-        public static IChameBuilder AddRazorViews(this IChameBuilder builder, Action<ChameRazorOptions> configureOptions = null)
-        {
-            if (builder == null)
-            {
-                throw new ArgumentNullException(nameof(builder));
-            }
+        ////public static IChameBuilder AddRazorViews(this IChameBuilder builder)
+        ////{
+        ////    if (builder == null)
+        ////    {
+        ////        throw new ArgumentNullException(nameof(builder));
+        ////    }
 
-            if (configureOptions == null)
-            {
-                configureOptions = options => { };
-            }
+        ////    if (configureOptions == null)
+        ////    {
+        ////        configureOptions = options => { };
+        ////    }
 
-            // options
-            builder.Services.Configure<ChameRazorOptions>(configureOptions);
+        ////    // options
+        ////    builder.Services.Configure<ChameRazorThemeResolverOptions>(configureOptions);
 
-            // my services
-            builder.Services.TryAddSingleton<IChameRazorThemeResolver, RazorThemeResolver>();
+        ////    // my services
+        ////    ////builder.Services.TryAddSingleton<IChameRazorThemeResolver, RazorThemeResolver>();
 
-            return builder;
-        }
+        ////    return builder;
+        ////}
 
     }
 }
