@@ -14,7 +14,7 @@ namespace Chame
         /// <summary>
         /// Loads content.
         /// </summary>
-        /// <param name="context"></param>
+        /// <param name="context">context</param>
         /// <returns>response</returns>
         Task<ResponseContent> LoadAsync(ChameContext context);
     }

@@ -21,13 +21,6 @@ namespace Chame
         /// </summary>
         public string DefaultTheme { get; set; }
 
-
-        ///// <summary>
-        ///// Resolves the theme that should be used. If not set, the <see cref="DefaultTheme"/> will be used.
-        ///// </summary>
-        //public Func<ThemeResolverEventArgs, string> ThemeResolver { get; set; }
-
-
         /// <summary>
         /// Resolves the theme that should be used. If not set, the <see cref="DefaultTheme"/> will be used.
         /// </summary>

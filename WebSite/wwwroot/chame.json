@@ -26,6 +26,9 @@
                 },
                 {
                     "path": "js/site.js"
+                },
+                {
+                    "path": "js/Themes/A/demo.js"
                 }
             ]
         },
@@ -55,6 +58,9 @@
                 },
                 {
                     "path": "js/site.js"
+                },
+                {
+                    "path": "js/Themes/B/demo.js"
                 }
             ]
         }

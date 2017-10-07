@@ -27,8 +27,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Chame\Chame.csproj" />
-    <ProjectReference Include="..\WebSite.Themes.A\WebSite.Themes.A.csproj" />
-    <ProjectReference Include="..\WebSite.Themes.B\WebSite.Themes.B.csproj" />
+    <ProjectReference Include="..\ThemeA\ThemeA.csproj" />
+    <ProjectReference Include="..\ThemeB\ThemeB.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Update="Properties\launchSettings.json">

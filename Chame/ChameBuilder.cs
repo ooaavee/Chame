@@ -2,9 +2,8 @@
 
 namespace Chame
 {
-    internal class ChameBuilder : IChameBuilder
+    internal sealed class ChameBuilder : IChameBuilder
     {
         public IServiceCollection Services { get; set; }
-
     }
 }

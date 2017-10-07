@@ -36,12 +36,11 @@ namespace Chame.Services
             _logger = logger;
         }
 
-        public int Priority => 1073741823;
+        public int Priority => 0;
 
         public Task<ResponseContent> LoadAsync(ChameContext context)
         {
-            ResponseContent response = Load(context);
-            return Task.FromResult(response);
+            return Task.FromResult(Load(context));
         }
 
         /// <summary>
@@ -126,7 +125,8 @@ namespace Chame.Services
         private ContentContainer ReadBundleContent(IEnumerable<ContentFileThemeItem> files, ChameContext context)
         {
             StringBuilder buffer = new StringBuilder();
-            foreach (ContentFileThemeItem file in FilterFiles(files, context))
+
+            foreach (ContentFileThemeItem file in Filter(files, context.Filter))
             {
                 string s = ReadFile(file);
                 if (s != null)
@@ -137,38 +137,30 @@ namespace Chame.Services
 
             string content = buffer.ToString();
 
-            string eTag = null;
-            if (_options1.SupportETag)
-            {
-                eTag = GetETag(content);
-            }
+            string eTag = _options1.SupportETag ? GetETag(content) : null;
 
             return new ContentContainer(content, eTag);
         }
 
-        private static IEnumerable<ContentFileThemeItem> FilterFiles(IEnumerable<ContentFileThemeItem> files, ChameContext context)
+        private static IEnumerable<ContentFileThemeItem> Filter(IEnumerable<ContentFileThemeItem> files, string filter)
         {
-            Regex regex = null;
-
             foreach (ContentFileThemeItem file in files)
             {
-                if (file.Filter == null)
+                if (filter == null)
                 {
-                    yield return file;
-                }
-                else if (context.Filter == null && file.Filter == null)
-                {
-                    yield return file;
-                }
-                else if (context.Filter != null && file.Filter != null)
-                {
-                    if (regex == null)
-                    {
-                        regex = new Regex(context.Filter);
-                    }
-                    if (regex.IsMatch(file.Filter))
+                    if (string.IsNullOrEmpty(file.Filter))
                     {
                         yield return file;
+                    }
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(file.Filter))
+                    {
+                        if (Regex.IsMatch(file.Filter, filter))
+                        {
+                            yield return file;
+                        }
                     }
                 }
             }

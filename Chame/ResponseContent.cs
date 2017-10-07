@@ -5,7 +5,7 @@ namespace Chame
 {
     public class ResponseContent
     {
-        public static readonly Encoding DefaultEncoding = Encoding.UTF8;
+        private static readonly Encoding DefaultEncoding = Encoding.UTF8;
 
         /// <summary>
         /// Response content

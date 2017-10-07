@@ -52,8 +52,8 @@ namespace WebSite
                 {
                     options.EnableChame(o =>
                     {
-                        o.EmbeddedViewAssemblies.Add(typeof(WebSite.Themes.A.Info).Assembly);
-                        o.EmbeddedViewAssemblies.Add(typeof(WebSite.Themes.B.Info).Assembly);
+                        o.EmbeddedViewAssemblies.Add(typeof(ThemeA.Info).Assembly);
+                        o.EmbeddedViewAssemblies.Add(typeof(ThemeB.Info).Assembly);
                     });
                 });
 
