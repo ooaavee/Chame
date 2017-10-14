@@ -17,17 +17,21 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new ArgumentNullException(nameof(options));
             }
 
-            var chame = new ChameRazorViewEngineOptions();
-            configureOptions?.Invoke(chame);
+            // Create and configure options.
+            ChameRazorViewEngineOptions opt = new ChameRazorViewEngineOptions();
+            if (configureOptions != null)
+            {
+                configureOptions(opt);
+            }
          
             // Register a view-location-expander.
-            options.ViewLocationExpanders.Add(new ChameViewLocationExpander());
+            options.ViewLocationExpanders.Add(new ChameViewLocationExpander(opt));
 
             // Register assemblies for embedded Razor views.
-            if (chame.EmbeddedViewAssemblies.Any())
+            if (opt.EmbeddedViewAssemblies.Any())
             {
                 var providers = new List<IFileProvider>();
-                foreach (Assembly assembly in chame.EmbeddedViewAssemblies)
+                foreach (Assembly assembly in opt.EmbeddedViewAssemblies)
                 {
                     providers.Add(new EmbeddedFileProvider(assembly));
                 }

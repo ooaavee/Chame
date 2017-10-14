@@ -1,0 +1,13 @@
+﻿
+.demo-status-box {
+    background: white;
+    border: 2px solid black;
+    padding: 20px;
+    font-size: large;
+    font-family: "Courier New", "Times New Roman", "Times", serif;
+    background: red;
+}
+
+    .demo-status-box h2 {
+        font-family: "Courier New", "Times New Roman", "Times", serif;
+    }

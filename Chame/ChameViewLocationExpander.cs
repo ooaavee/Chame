@@ -12,6 +12,13 @@ namespace Chame
     {
         private const string ThemeKey = "chame.razor.theme";
 
+        private readonly ChameRazorViewEngineOptions _options;
+
+        public ChameViewLocationExpander(ChameRazorViewEngineOptions options)
+        {
+            _options = options;
+        }
+
         public void PopulateValues(ViewLocationExpanderContext context)
         {
             // Check that HTTP Context is available!
@@ -20,35 +27,28 @@ namespace Chame
                 throw new InvalidOperationException("HTTP Context is not available.");
             }
 
-            IOptions<ChameOptions> options =
-                context.ActionContext.HttpContext.RequestServices
-                    .GetService(typeof(IOptions<ChameOptions>)) as IOptions<ChameOptions>;
-
-
+            IOptions<ChameOptions> options = context.ActionContext.HttpContext.RequestServices.GetService(typeof(IOptions<ChameOptions>)) as IOptions<ChameOptions>;          
             if (options == null || options.Value == null)
             {
-                // virhe
-                throw new InvalidOperationException("");
+                throw new InvalidOperationException("IOptions<ChameOptions> is not available.");
             }
 
             IChameThemeResolver themeResolver = options.Value.ThemeResolver;
             if (themeResolver == null)
             {
-                // virhe
-                throw new InvalidOperationException("");
+                throw new InvalidOperationException("IChameThemeResolver is not available.");
 
             }
 
-            var resolveContext = new ChameRazorThemeResolveContext(
-                context.ActionContext.HttpContext, 
+            // Resolve theme that will be used when loading Razor views.
+            string theme = themeResolver.GetTheme(new ChameRazorThemeResolveContext(
+                context.ActionContext.HttpContext,
                 context.ViewName,
-                context.ControllerName, 
-                context.PageName, 
-                context.AreaName, 
-                context.IsMainPage, 
-                context.Values);
-
-            string theme = themeResolver.GetTheme(resolveContext);
+                context.ControllerName,
+                context.PageName,
+                context.AreaName,
+                context.IsMainPage,
+                context.Values));
 
             if (string.IsNullOrEmpty(theme))
             {
@@ -56,50 +56,27 @@ namespace Chame
             }
 
             context.Values[ThemeKey] = theme;
-
-            //IChameRazorThemeResolver themeResolver = context.ActionContext.HttpContext.RequestServices.GetService(typeof(IChameRazorThemeResolver)) as IChameRazorThemeResolver;
-            //if (themeResolver == null)
-            //{
-            //    throw new InvalidOperationException("IChameRazorThemeResolver implementation is not available.");
-            //}
-
-            //string theme = themeResolver.ResolveTheme(new ChameRazorThemeResolveContext
-            //{
-            //    HttpContext = context.ActionContext.HttpContext,
-            //    AreaName = context.AreaName,
-            //    ControllerName = context.ControllerName,
-            //    IsMainPage = context.IsMainPage,
-            //    PageName = context.PageName,
-            //    Values = context.Values,
-            //    ViewName = context.ViewName
-            //});
-
-            //if (string.IsNullOrEmpty(theme))
-            //{
-            //    throw new InvalidOperationException("Theme not found.");
-            //}
-
-            //context.Values[ThemeKey] = theme;
         }
 
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
             string theme;
-            
             if (context.Values.TryGetValue(ThemeKey, out theme))
             {
-                IEnumerable<string> themeLocations = new[]
-                {
-                    // TODO: Olisi kiva jos tämä olisi konffattava :)
-                    $"Views/Themes/{theme}/{{1}}/{{0}}.cshtml",
-                    $"Views/Themes/{theme}/Shared/{{0}}.cshtml",
-                    $"Views/Themes/{theme}/{{0}}.cshtml"
-                };
-
+                IEnumerable<string> themeLocations = GetViewLocationForTheme(theme);
                 viewLocations = themeLocations.Concat(viewLocations);
             }
-
             return viewLocations;
         }
+
+        private IEnumerable<string> GetViewLocationForTheme(string theme)
+        {
+            foreach (string template in _options.ViewLocationTemplates)
+            {
+                string location = string.Format(template, theme);
+                yield return location;
+            }
+        }
+
     }
 }

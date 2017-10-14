@@ -13,6 +13,9 @@
                 },
                 {
                     "path": "css/site.css"
+                },
+                {
+                    "path": "css/Themes/A/demo.css"
                 }
             ],
             "jsFiles": [
@@ -45,6 +48,9 @@
                 },
                 {
                     "path": "css/site.css"
+                },
+                {
+                    "path": "css/Themes/B/demo.css"
                 }
             ],
             "jsFiles": [

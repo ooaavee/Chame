@@ -5,6 +5,18 @@ namespace Chame
 {
     public class ChameRazorViewEngineOptions
     {
+        public ChameRazorViewEngineOptions()
+        {
+            ViewLocationTemplates.Add("Views/Themes/{0}/{{1}}/{{0}}.cshtml");
+            ViewLocationTemplates.Add("Views/Themes/{0}/Shared/{{0}}.cshtml");
+            ViewLocationTemplates.Add("Views/Themes/{0}/{{0}}.cshtml");
+        }
+
+        /// <summary>
+        /// View location templates.
+        /// </summary>
+        public IList<string> ViewLocationTemplates { get; } = new List<string>();
+
         /// <summary>
         /// Assemblies where to look views that are embedded resources.
         /// </summary>
