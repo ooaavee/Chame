@@ -8,8 +8,8 @@ namespace Chame
     {
         public ChameFileSystemLoaderOptions()
         {
-            UseThemeContainerFile = true;
-            ThemeContainerFile = @"\chame.json";
+            UseThemesFile = true;
+            ThemesFile = @"\chame.json";
             CachingMode = CachingModes.DisabledOnDevelopmentOtherwiseEnabled;
             CacheAbsoluteExpirationRelativeToNow = new TimeSpan(0, 0, 1, 0);
         }
@@ -17,17 +17,17 @@ namespace Chame
         /// <summary>
         /// A path to the theme container file.
         /// </summary>
-        public string ThemeContainerFile { get; set; }
+        public string ThemesFile { get; set; }
 
         /// <summary>
         /// Should we use the theme container file.
         /// </summary>
-        public bool UseThemeContainerFile { get; set; }
+        public bool UseThemesFile { get; set; }
 
         /// <summary>
-        /// A function for loading <see cref="ContentFileThemeContainer"/> objects. This will be invoked if <see cref="UseThemeContainerFile"/> is false.
+        /// A function for loading <see cref="ContentFileThemes"/> objects. This will be invoked if <see cref="UseThemesFile"/> is false.
         /// </summary>
-        public Func<ChameContext, ContentFileThemeContainer> ThemeContainerLoader { get; set; }
+        public Func<ChameContext, ContentFileThemes> ThemesLoader { get; set; }
 
         /// <summary>
         /// Caching mode, the default value is <see cref="CachingModes.DisabledOnDevelopmentOtherwiseEnabled"/>.

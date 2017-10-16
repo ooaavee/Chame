@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Chame.Models
 {
-    public class ContentFileThemeItem
+    public class ContentFile
     {
         /// <summary>
         /// File path
@@ -11,7 +11,7 @@ namespace Chame.Models
         public virtual string Path { get; set; }
 
         /// <summary>
-        /// Filter (Regex)
+        /// Filter
         /// </summary>
         [JsonProperty("filter")]
         public virtual string Filter { get; set; }

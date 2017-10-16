@@ -132,7 +132,7 @@ namespace Chame.Services
                         if (valid)
                         {
                             // Finally create the context object
-                            context = ChameContext.Create(httpContext, category, filter, eTag, theme, loaders);
+                            context = ChameContext.Create(httpContext, category, theme, filter, eTag, loaders);
                             _logger.LogDebug("ChameContext created for the current HTTP request.");
                         }
                     }

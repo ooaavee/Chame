@@ -19,14 +19,14 @@ namespace Chame.Services
     /// </summary>
     internal sealed class FileSystemContentLoader : IJsContentLoader, ICssContentLoader
     {
-        private readonly ContentFileThemeResolver _resolver;
+        private readonly ThemedContentFileResolver _resolver;
         private readonly ChameOptions _options1;
         private readonly ChameFileSystemLoaderOptions _options2;
         private readonly ChameMemoryCache _cache;
         private readonly IHostingEnvironment _env;
         private readonly ILogger<FileSystemContentLoader> _logger;
 
-        public FileSystemContentLoader(ContentFileThemeResolver resolver, IOptions<ChameOptions> options1, IOptions<ChameFileSystemLoaderOptions> options2, ChameMemoryCache cache, IHostingEnvironment env, ILogger<FileSystemContentLoader> logger)
+        public FileSystemContentLoader(ThemedContentFileResolver resolver, IOptions<ChameOptions> options1, IOptions<ChameFileSystemLoaderOptions> options2, ChameMemoryCache cache, IHostingEnvironment env, ILogger<FileSystemContentLoader> logger)
         {
             _resolver = resolver;
             _options1 = options1.Value;
@@ -63,34 +63,14 @@ namespace Chame.Services
                 }
             }
 
-            // Get theme.
-            // Return HTTP NotFound if theme was not found.
-            ContentFileTheme theme = _resolver.GetTheme(context);
-            if (theme == null)
-            {
-                return ResponseContent.NotFound();
-            }
-
             // Get files to use.
-            List<ContentFileThemeItem> files;
-            switch (context.Category)
-            {
-                case ContentCategory.Css:
-                    files = theme.CssFiles;
-                    break;
-                case ContentCategory.Js:
-                    files = theme.JsFiles;
-                    break;
-                default:
-                    throw new InvalidOperationException("fuck");
-            }
+            ContentFile[] files = _resolver.GetFiles(context);
 
+            // Read content files and optionally cache the content.
             ContentContainer content;
-
-            // Read bundle content and optionally cache it.
-            if (files != null && files.Any())
+            if (files.Any())
             {
-                content = ReadBundleContent(files, context);
+                content = GetContent(files, context);
                 if (UseCache)
                 {
                     _cache.Set<ContentContainer>(content, _options2.CacheAbsoluteExpirationRelativeToNow, context);
@@ -116,17 +96,14 @@ namespace Chame.Services
                     }
                 }
             }
-
-            return container.ETag == null ? 
-                ResponseContent.Ok(container.Content, container.Encoding) : 
-                ResponseContent.Ok(container.Content, container.Encoding, container.ETag);
+            return container.ETag == null ? ResponseContent.Ok(container.Content, container.Encoding) : ResponseContent.Ok(container.Content, container.Encoding, container.ETag);
         }
 
-        private ContentContainer ReadBundleContent(IEnumerable<ContentFileThemeItem> files, ChameContext context)
+        private ContentContainer GetContent(IEnumerable<ContentFile> files, ChameContext context)
         {
             StringBuilder buffer = new StringBuilder();
 
-            foreach (ContentFileThemeItem file in Filter(files, context.Filter))
+            foreach (ContentFile file in Filter(files, context.Filter))
             {
                 string s = ReadFile(file);
                 if (s != null)
@@ -142,9 +119,9 @@ namespace Chame.Services
             return new ContentContainer(content, eTag);
         }
 
-        private static IEnumerable<ContentFileThemeItem> Filter(IEnumerable<ContentFileThemeItem> files, string filter)
+        private static IEnumerable<ContentFile> Filter(IEnumerable<ContentFile> files, string filter)
         {
-            foreach (ContentFileThemeItem file in files)
+            foreach (ContentFile file in files)
             {
                 if (filter == null)
                 {
@@ -166,7 +143,7 @@ namespace Chame.Services
             }
         }
 
-        private string ReadFile(ContentFileThemeItem file)
+        private string ReadFile(ContentFile file)
         {
             // This is a file somewhere under wwwroot...
             IFileInfo fi = _env.WebRootFileProvider.GetFileInfo(file.Path);

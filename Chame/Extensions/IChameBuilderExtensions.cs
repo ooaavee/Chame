@@ -29,7 +29,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.TryAddSingleton<IJsContentLoader, FileSystemContentLoader>();
             builder.Services.TryAddSingleton<ICssContentLoader, FileSystemContentLoader>();
             builder.Services.TryAddSingleton<ChameMemoryCache>();
-            builder.Services.TryAddSingleton<ContentFileThemeResolver>();
+            builder.Services.TryAddSingleton<ThemedContentFileResolver>();
 
             // framework services
             builder.Services.AddMemoryCache();

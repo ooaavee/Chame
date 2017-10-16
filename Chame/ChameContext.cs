@@ -10,7 +10,7 @@ namespace Chame
     /// </summary>
     public class ChameContext
     {
-        public static ChameContext Create(HttpContext httpContext, ContentCategory category, string filter, string eTag, string theme, IReadOnlyCollection<IContentLoader> loaders)
+        public static ChameContext Create(HttpContext httpContext, ContentCategory category, string theme, string filter, string eTag, IReadOnlyCollection<IContentLoader> loaders)
         {
             if (httpContext == null)
             {
@@ -36,9 +36,9 @@ namespace Chame
             {
                 HttpContext = httpContext,
                 Category = category,
+                Theme = theme,
                 Filter = filter,
                 ETag = eTag,
-                Theme = theme,
                 Loaders = loaders
             };
         }
@@ -54,6 +54,11 @@ namespace Chame
         public virtual ContentCategory Category { get; internal set; }
 
         /// <summary>
+        /// Theme
+        /// </summary>
+        public virtual string Theme { get; internal set; }
+
+        /// <summary>
         /// Filter (optional)
         /// </summary>
         public virtual string Filter { get; internal set; }
@@ -62,11 +67,6 @@ namespace Chame
         /// HTTP ETag (optional)
         /// </summary>
         public virtual string ETag { get; internal set; }
-
-        /// <summary>
-        /// Theme (optional)
-        /// </summary>
-        public virtual string Theme { get; internal set; }
 
         /// <summary>
         /// Content loaders

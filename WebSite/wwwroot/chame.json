@@ -1,35 +1,41 @@
 ﻿{
+    "cssFiles": [
+        {
+            "path": "css/bootstrap.css",
+            "filter": "vendor"
+        },
+        {
+            "path": "css/fontawesome.css",
+            "filter": "vendor"
+        },
+        {
+            "path": "css/site.css"
+        }
+    ],
+
+    "jsFiles": [
+        {
+            "path": "js/jquery.js",
+            "filter": "vendor"
+        },
+        {
+            "path": "js/bootstrap.js",
+            "filter": "vendor"
+        },
+        {
+            "path": "js/site.js"
+        }
+    ],
+
     "themes": [
         {
             "name": "A",
             "cssFiles": [
                 {
-                    "path": "css/bootstrap.css",
-                    "filter": "vendor"
-                },
-                {
-                    "path": "css/fontawesome.css",
-                    "filter": "vendor"
-                },
-                {
-                    "path": "css/site.css"
-                },
-                {
                     "path": "css/Themes/A/demo.css"
                 }
             ],
             "jsFiles": [
-                {
-                    "path": "js/jquery.js",
-                    "filter": "vendor"
-                },
-                {
-                    "path": "js/bootstrap.js",
-                    "filter": "vendor"
-                },
-                {
-                    "path": "js/site.js"
-                },
                 {
                     "path": "js/Themes/A/demo.js"
                 }
@@ -39,37 +45,14 @@
             "name": "B",
             "cssFiles": [
                 {
-                    "path": "css/bootstrap.css",
-                    "filter": "vendor"
-                },
-                {
-                    "path": "css/fontawesome.css",
-                    "filter": "vendor"
-                },
-                {
-                    "path": "css/site.css"
-                },
-                {
                     "path": "css/Themes/B/demo.css"
                 }
             ],
             "jsFiles": [
                 {
-                    "path": "js/jquery.js",
-                    "filter": "vendor"
-                },
-                {
-                    "path": "js/bootstrap.js",
-                    "filter": "vendor"
-                },
-                {
-                    "path": "js/site.js"
-                },
-                {
                     "path": "js/Themes/B/demo.js"
                 }
             ]
         }
-
     ]
 }
