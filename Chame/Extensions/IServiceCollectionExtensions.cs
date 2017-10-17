@@ -28,8 +28,8 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.Configure<ChameOptions>(configureOptions);
 
             // my services
-            builder.Services.TryAddSingleton<ContextFactory, ContextFactory>();
-            builder.Services.TryAddSingleton<ContextProcessor, ContextProcessor>();
+            builder.Services.TryAddSingleton<ChameContextFactory, ChameContextFactory>();
+            builder.Services.TryAddSingleton<RequestProcessor, RequestProcessor>();
 
             return builder;
         }

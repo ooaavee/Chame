@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Chame
 {
@@ -13,13 +15,23 @@ namespace Chame
         {
             ContentLoaderSorter = SortContentLoadersByPriority;
             DefaultTheme = DefaultThemeName;        
-            SupportETag = true;
+            SupportETag = true;            
         }
 
         /// <summary>
         /// The name of the default theme that should be used.
         /// </summary>
         public string DefaultTheme { get; set; }
+
+        /// <summary>
+        /// An extension point for loading JavaScript content.
+        /// </summary>
+        public Func<ChameContext, Task<ResponseContent>> JsLoader { get; set; }
+
+        /// <summary>
+        /// An extension point for loading CSS content.
+        /// </summary>
+        public Func<ChameContext, Task<ResponseContent>> CssLoader { get; set; }
 
         /// <summary>
         /// Resolves the theme that should be used. If not set, the <see cref="DefaultTheme"/> will be used.
@@ -34,14 +46,14 @@ namespace Chame
         /// <summary>
         /// An execution order sorter for <see cref="IContentLoader"/> implementations.
         /// </summary>
-        public Action<IContentLoader[]> ContentLoaderSorter { get; set; }
+        public Action<List<IContentLoader>> ContentLoaderSorter { get; set; }
 
         /// <summary>
         /// The default sorter for IContentLoader implementations -> implementations are sorted by priority.
         /// </summary>
-        private static void SortContentLoadersByPriority(IContentLoader[] loaders)
+        private static void SortContentLoadersByPriority(List<IContentLoader> loaders)
         {
-            Array.Sort(loaders, (loader1, loader2) => loader1.Priority.CompareTo(loader2.Priority));
+            loaders.Sort((loader1, loader2) => loader1.Priority.CompareTo(loader2.Priority));
         }
     }
 }

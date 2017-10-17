@@ -16,7 +16,7 @@ namespace Chame.Middlewares
             _next = next;
         }
 
-        public async Task Invoke(HttpContext httpContext, ContextFactory factory, ContextProcessor processor)
+        public async Task Invoke(HttpContext httpContext, ChameContextFactory factory, RequestProcessor processor)
         {
             if (factory.TryCreate(httpContext, out ChameContext context))
             {
