@@ -26,17 +26,17 @@ namespace Chame
         /// <summary>
         /// An extension point for loading JavaScript content.
         /// </summary>
-        public Func<ChameContext, Task<ResponseContent>> JsLoader { get; set; }
+        public Func<ContentLoadingContext, Task<ResponseContent>> JsLoader { get; set; }
 
         /// <summary>
         /// An extension point for loading CSS content.
         /// </summary>
-        public Func<ChameContext, Task<ResponseContent>> CssLoader { get; set; }
+        public Func<ContentLoadingContext, Task<ResponseContent>> CssLoader { get; set; }
 
         /// <summary>
         /// Resolves the theme that should be used. If not set, the <see cref="DefaultTheme"/> will be used.
         /// </summary>
-        public IChameThemeResolver ThemeResolver { get; set; }
+        public IThemeResolver ThemeResolver { get; set; }
 
         /// <summary>
         /// Indicates if we should support HTTP ETags if possible.

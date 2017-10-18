@@ -13,6 +13,10 @@ namespace Chame.Models
             ETag = eTag;
         }
 
+        /// <summary>
+        /// Creates a new empty content container.
+        /// </summary>
+        /// <returns>an empty content container</returns>
         public static ContentContainer Empty()
         {
             return new ContentContainer(string.Empty, null);

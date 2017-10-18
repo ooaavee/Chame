@@ -40,20 +40,14 @@ namespace WebSite
                 });
 
 
-
-            var aa = GetType().Assembly.GetReferencedAssemblies();
-
-
-
-
             // Add MVC.
             services.AddMvc()
                 .AddRazorOptions(options =>
                 {
-                    options.EnableChame(o =>
+                    options.EnableThemes(themes =>
                     {
-                        o.EmbeddedViewAssemblies.Add(typeof(ThemeA.Info).Assembly);
-                        o.EmbeddedViewAssemblies.Add(typeof(ThemeB.Info).Assembly);
+                        themes.EmbeddedViewAssemblies.Add(typeof(WebSite.Themes.A.Info).Assembly);
+                        themes.EmbeddedViewAssemblies.Add(typeof(WebSite.Themes.B.Info).Assembly);
                     });
                 });
 

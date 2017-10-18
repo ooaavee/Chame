@@ -21,12 +21,12 @@ namespace Chame.Services
     {
         private readonly ThemedContentFileResolver _resolver;
         private readonly ChameOptions _options1;
-        private readonly ChameFileSystemLoaderOptions _options2;
-        private readonly ChameMemoryCache _cache;
+        private readonly FileSystemLoaderOptions _options2;
+        private readonly ContentCache _cache;
         private readonly IHostingEnvironment _env;
         private readonly ILogger<FileSystemContentLoader> _logger;
 
-        public FileSystemContentLoader(ThemedContentFileResolver resolver, IOptions<ChameOptions> options1, IOptions<ChameFileSystemLoaderOptions> options2, ChameMemoryCache cache, IHostingEnvironment env, ILogger<FileSystemContentLoader> logger)
+        public FileSystemContentLoader(ThemedContentFileResolver resolver, IOptions<ChameOptions> options1, IOptions<FileSystemLoaderOptions> options2, ContentCache cache, IHostingEnvironment env, ILogger<FileSystemContentLoader> logger)
         {
             _resolver = resolver;
             _options1 = options1.Value;
@@ -38,7 +38,7 @@ namespace Chame.Services
 
         public int Priority => 0;
 
-        public Task<ResponseContent> LoadAsync(ChameContext context)
+        public Task<ResponseContent> LoadContentAsync(ContentLoadingContext context)
         {
             return Task.FromResult(Load(context));
         }
@@ -51,7 +51,7 @@ namespace Chame.Services
             get { return _options2.IsCachingEnabled(_env); }
         }
 
-        private ResponseContent Load(ChameContext context)
+        private ResponseContent Load(ContentLoadingContext context)
         {
             // First try to use cached content.
             if (UseCache)
@@ -84,7 +84,7 @@ namespace Chame.Services
             return GetResponseContent(content, context);
         }
 
-        private ResponseContent GetResponseContent(ContentContainer container, ChameContext context)
+        private ResponseContent GetResponseContent(ContentContainer container, ContentLoadingContext context)
         {            
             if (_options1.SupportETag)
             {
@@ -99,7 +99,7 @@ namespace Chame.Services
             return container.ETag == null ? ResponseContent.Ok(container.Content, container.Encoding) : ResponseContent.Ok(container.Content, container.Encoding, container.ETag);
         }
 
-        private ContentContainer GetContent(IEnumerable<ContentFile> files, ChameContext context)
+        private ContentContainer GetContent(IEnumerable<ContentFile> files, ContentLoadingContext context)
         {
             StringBuilder buffer = new StringBuilder();
 

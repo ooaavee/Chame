@@ -8,13 +8,13 @@ namespace Chame
 {
     // http://benfoster.io/blog/asp-net-core-themes-and-multi-tenancy
 
-    public class ChameViewLocationExpander : IViewLocationExpander
+    public class ViewLocationExpander : IViewLocationExpander
     {
         private const string ThemeKey = "chame.razor.theme";
 
-        private readonly ChameRazorViewEngineOptions _options;
+        private readonly RazorThemeOptions _options;
 
-        public ChameViewLocationExpander(ChameRazorViewEngineOptions options)
+        public ViewLocationExpander(RazorThemeOptions options)
         {
             _options = options;
         }
@@ -28,20 +28,20 @@ namespace Chame
             }
 
             IOptions<ChameOptions> options = context.ActionContext.HttpContext.RequestServices.GetService(typeof(IOptions<ChameOptions>)) as IOptions<ChameOptions>;          
-            if (options == null || options.Value == null)
+            if (options?.Value == null)
             {
                 throw new InvalidOperationException("IOptions<ChameOptions> is not available.");
             }
 
-            IChameThemeResolver themeResolver = options.Value.ThemeResolver;
+            IThemeResolver themeResolver = options.Value.ThemeResolver;
             if (themeResolver == null)
             {
-                throw new InvalidOperationException("IChameThemeResolver is not available.");
+                throw new InvalidOperationException(string.Format("{0} is not available.", nameof(IThemeResolver)));
 
             }
 
             // Resolve theme that will be used when loading Razor views.
-            string theme = themeResolver.GetTheme(new ChameRazorThemeResolveContext(
+            string theme = themeResolver.ResolveTheme(new RazorThemeResolveContext(
                 context.ActionContext.HttpContext,
                 context.ViewName,
                 context.ControllerName,
@@ -49,6 +49,14 @@ namespace Chame
                 context.AreaName,
                 context.IsMainPage,
                 context.Values));
+
+            if (string.IsNullOrEmpty(theme))
+            {                
+                if (!string.IsNullOrEmpty(options.Value.DefaultTheme))
+                {
+                    theme = options.Value.DefaultTheme;
+                }
+            }
 
             if (string.IsNullOrEmpty(theme))
             {

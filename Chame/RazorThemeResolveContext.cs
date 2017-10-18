@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace Chame
 {
-    public class ChameRazorThemeResolveContext
+    public class RazorThemeResolveContext
     {
-        public ChameRazorThemeResolveContext(HttpContext httpContext, string viewName, string controllerName, string pageName, string areaName, bool isMainPage, IDictionary<string, string> values)
+        public RazorThemeResolveContext(HttpContext httpContext, string viewName, string controllerName, string pageName, string areaName, bool isMainPage, IDictionary<string, string> values)
         {
             HttpContext = httpContext;
             ViewName = viewName;
@@ -17,7 +17,7 @@ namespace Chame
         }
 
         /// <summary>
-        /// HTTP Context
+        /// The current HTTP context.
         /// </summary>
         public HttpContext HttpContext { get; }
 

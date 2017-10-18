@@ -22,16 +22,19 @@ namespace Microsoft.Extensions.DependencyInjection
                 configureOptions = options => { };
             }
 
-            ChameBuilder builder = new ChameBuilder {Services = services};
-
             // options
-            builder.Services.Configure<ChameOptions>(configureOptions);
+            services.Configure<ChameOptions>(configureOptions);
 
             // my services
-            builder.Services.TryAddSingleton<ChameContextFactory, ChameContextFactory>();
-            builder.Services.TryAddSingleton<RequestProcessor, RequestProcessor>();
+            services.TryAddSingleton<ContentCache>();
 
-            return builder;
+            return new ChameBuilder {Services = services};
         }
+
+        private class ChameBuilder : IChameBuilder
+        {
+            public IServiceCollection Services { get; set; }
+        }
+
     }
 }

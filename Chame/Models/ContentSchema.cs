@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace Chame.Models
 {
-    public class ContentFileThemes
+    public class ContentSchema
     {
         /// <summary>
         /// Common CSS files for all themes

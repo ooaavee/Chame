@@ -16,12 +16,12 @@ namespace Chame.Services
     /// </summary>
     internal sealed class ThemedContentFileResolver
     {
-        private readonly ChameFileSystemLoaderOptions _options;
-        private readonly ChameMemoryCache _cache;
+        private readonly FileSystemLoaderOptions _options;
+        private readonly ContentCache _cache;
         private readonly IHostingEnvironment _env;
         private readonly ILogger<ThemedContentFileResolver> _logger;
 
-        public ThemedContentFileResolver(IOptions<ChameFileSystemLoaderOptions> options, ChameMemoryCache cache, IHostingEnvironment env, ILogger<ThemedContentFileResolver> logger)
+        public ThemedContentFileResolver(IOptions<FileSystemLoaderOptions> options, ContentCache cache, IHostingEnvironment env, ILogger<ThemedContentFileResolver> logger)
         {
             _options = options.Value;
             _cache = cache;
@@ -29,43 +29,43 @@ namespace Chame.Services
             _logger = logger;
         }
 
-        public ContentFile[] GetFiles(ChameContext context)
+        public ContentFile[] GetFiles(ContentLoadingContext context)
         {
             List<ContentFile> files = new List<ContentFile>();
 
-            ContentFileThemes container = null;
+            ContentSchema schema = null;
 
             if (UseCache)
             {
-                container = _cache.Get<ContentFileThemes>(context);
+                schema = _cache.Get<ContentSchema>(context);
             }
 
-            if (_options.UseThemesFile)
+            if (_options.UseContentSchemaFile)
             {
                 // Load themes from settings file and cache findings for later usage.
-                container = LoadThemes();
-                if (container != null)
+                schema = LoadThemes();
+                if (schema != null)
                 {
                     if (UseCache)
                     {
-                        _cache.Set<ContentFileThemes>(container, _options.CacheAbsoluteExpirationRelativeToNow, context);
+                        _cache.Set<ContentSchema>(schema, _options.CacheAbsoluteExpirationRelativeToNow, context);
                     }
                 }
             }
             else
             {
                 // Load themes by using an external function - these findings won't be cached!
-                if (_options.ThemesLoader == null)
+                if (_options.ContentSchemaResolver == null)
                 {
-                    _logger.LogError(string.Format("{0} Func is null.", nameof(_options.ThemesLoader)));
+                    _logger.LogError(string.Format("{0} Func is null.", nameof(_options.ContentSchemaResolver)));
                 }
                 else
                 {
-                    container = _options.ThemesLoader(context);
+                    schema = _options.ContentSchemaResolver(context);
                 }
             }
 
-            if (container == null)
+            if (schema == null)
             {
                 _logger.LogError(string.Format("No content found for the requested theme '{0}'.", context.Theme));
             }
@@ -75,15 +75,15 @@ namespace Chame.Services
                 switch (context.Category)
                 {
                     case ContentCategory.Css:
-                        files.AddRange(container.CssFiles);
+                        files.AddRange(schema.CssFiles);
                         break;
                     case ContentCategory.Js:
-                        files.AddRange(container.JsFiles);
+                        files.AddRange(schema.JsFiles);
                         break;
                 }
 
                 // Resolve theme-specific files.
-                ContentFileTheme theme = container.Themes.FirstOrDefault(x => x.Name == context.Theme);
+                ContentFileTheme theme = schema.Themes.FirstOrDefault(x => x.Name == context.Theme);
                 if (theme == null)
                 {
                     _logger.LogWarning(string.Format("No content found for the requested theme '{0}'.", context.Theme));
@@ -116,21 +116,21 @@ namespace Chame.Services
         /// <summary>
         /// Loads themes from file.
         /// </summary>
-        private ContentFileThemes LoadThemes()
+        private ContentSchema LoadThemes()
         {
-            if (string.IsNullOrEmpty(_options.ThemesFile))
+            if (string.IsNullOrEmpty(_options.ContentSchemaFile))
             {
                 _logger.LogError("ThemesFile is missing.");
                 return null;
             }
 
             // This is a file somewhere under wwwroot...
-            IFileInfo file = _env.WebRootFileProvider.GetFileInfo(_options.ThemesFile);
+            IFileInfo file = _env.WebRootFileProvider.GetFileInfo(_options.ContentSchemaFile);
 
             // Check if file exists.
             if (!file.Exists)
             {
-                _logger.LogError(string.Format("Requested file '{0}' does not exist.", _options.ThemesFile));
+                _logger.LogError(string.Format("Requested file '{0}' does not exist.", _options.ContentSchemaFile));
                 return null;
             }
 
@@ -148,14 +148,14 @@ namespace Chame.Services
             }
 
             // Deserialize file content.
-            ContentFileThemes container = JsonConvert.DeserializeObject<ContentFileThemes>(content);
-            if (container == null)
+            ContentSchema schema = JsonConvert.DeserializeObject<ContentSchema>(content);
+            if (schema == null)
             {
-                _logger.LogError(string.Format("Unable to deserialize JSON content from the requested file '{0}'.", _options.ThemesFile));
+                _logger.LogError(string.Format("Unable to deserialize JSON content from the requested file '{0}'.", _options.ContentSchemaFile));
                 return null;
             }
 
-            return container;
+            return schema;
         }
 
     }

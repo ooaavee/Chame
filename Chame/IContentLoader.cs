@@ -16,6 +16,15 @@ namespace Chame
         /// </summary>
         /// <param name="context">context</param>
         /// <returns>response</returns>
-        Task<ResponseContent> LoadAsync(ChameContext context);
+        Task<ResponseContent> LoadContentAsync(ContentLoadingContext context);
     }
+
+    public interface IJsContentLoader : IContentLoader
+    {
+    }
+
+    public interface ICssContentLoader : IContentLoader
+    {
+    }
+
 }

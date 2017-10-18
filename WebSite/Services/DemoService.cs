@@ -16,7 +16,6 @@ namespace WebSite.Services
 
         public const string ThemeB = "B";
 
-
         public async Task SwitchThemeAsync(HttpContext context)
         {
             if (context.User.Identity.IsAuthenticated)
@@ -29,30 +28,32 @@ namespace WebSite.Services
                 var principal = new ClaimsPrincipal(identity);
                 await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
             }
-
         }
-
     }
 
-    public class DemoThemeResolver : IChameThemeResolver
+    public class DemoThemeResolver : IThemeResolver
     {
-        public string GetTheme(ChameContentFileThemeResolveContext context)
+        public string ResolveTheme(ContentFileThemeResolveContext context)
         {
             return GetThemeFromHttpContext(context.HttpContext);
         }
 
-        public string GetTheme(ChameRazorThemeResolveContext context)
+        public string ResolveTheme(RazorThemeResolveContext context)
         {
             return GetThemeFromHttpContext(context.HttpContext);
         }
 
         private static string GetThemeFromHttpContext(HttpContext context)
         {
-            return context.User.Identity.IsAuthenticated ?
-                DemoService.ThemeB :
-                DemoService.ThemeA;
+            if (context.User.Identity.IsAuthenticated)
+            {
+                return DemoService.ThemeB;
+            }
+            else
+            {
+                return DemoService.ThemeA;
+            }
         }
-
     }
 
 }

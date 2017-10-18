@@ -3,9 +3,9 @@ using System.Reflection;
 
 namespace Chame
 {
-    public class ChameRazorViewEngineOptions
+    public class RazorThemeOptions
     {
-        public ChameRazorViewEngineOptions()
+        public RazorThemeOptions()
         {
             ViewLocationTemplates.Add("Views/Themes/{0}/{{1}}/{{0}}.cshtml");
             ViewLocationTemplates.Add("Views/Themes/{0}/Shared/{{0}}.cshtml");

@@ -10,7 +10,7 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class RazorViewEngineOptionsExtensions
     {
-        public static void EnableChame(this RazorViewEngineOptions options, Action<ChameRazorViewEngineOptions> configureOptions = null)
+        public static void EnableThemes(this RazorViewEngineOptions options, Action<RazorThemeOptions> configureOptions = null)
         {
             if (options == null)
             {
@@ -18,24 +18,22 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             // Create and configure options.
-            ChameRazorViewEngineOptions opt = new ChameRazorViewEngineOptions();
-            if (configureOptions != null)
-            {
-                configureOptions(opt);
-            }
-         
+            var themes = new RazorThemeOptions();
+            configureOptions?.Invoke(themes);
+
             // Register a view-location-expander.
-            options.ViewLocationExpanders.Add(new ChameViewLocationExpander(opt));
+            var expander = new ViewLocationExpander(themes);
+            options.ViewLocationExpanders.Add(expander);
 
             // Register assemblies for embedded Razor views.
-            if (opt.EmbeddedViewAssemblies.Any())
+            if (themes.EmbeddedViewAssemblies.Any())
             {
-                var providers = new List<IFileProvider>();
-                foreach (Assembly assembly in opt.EmbeddedViewAssemblies)
+                var l = new List<IFileProvider>();
+                foreach (Assembly a in themes.EmbeddedViewAssemblies)
                 {
-                    providers.Add(new EmbeddedFileProvider(assembly));
+                    l.Add(new EmbeddedFileProvider(a));
                 }
-                options.FileProviders.Add(new CompositeFileProvider(providers));
+                options.FileProviders.Add(new CompositeFileProvider(l));
             }
 
         }
