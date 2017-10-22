@@ -1,8 +1,8 @@
 ﻿namespace Chame
 {
-    public enum ResponseContentStatus
+    public enum ResponseStatus
     {
-        OK,
+        Ok,
         NotFound,
         NotModified
     }

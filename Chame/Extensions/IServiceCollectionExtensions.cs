@@ -10,7 +10,7 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class IServiceCollectionExtensions
     {
-        public static IChameBuilder AddChame(this IServiceCollection services, Action<ChameOptions> configureOptions = null)
+        public static IThemeBuilder AddThemes(this IServiceCollection services, Action<ContentLoaderOptions> configureOptions = null)
         {
             if (services == null)
             {
@@ -23,18 +23,12 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             // options
-            services.Configure<ChameOptions>(configureOptions);
+            services.Configure<ContentLoaderOptions>(configureOptions);
 
             // my services
             services.TryAddSingleton<ContentCache>();
 
-            return new ChameBuilder {Services = services};
+            return new ThemeBuilder(services);
         }
-
-        private class ChameBuilder : IChameBuilder
-        {
-            public IServiceCollection Services { get; set; }
-        }
-
     }
 }

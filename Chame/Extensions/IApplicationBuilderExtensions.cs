@@ -8,14 +8,14 @@ namespace Microsoft.AspNetCore.Builder
     /// </summary>
     public static class IApplicationBuilderExtensions
     {
-        public static IApplicationBuilder UseChame(this IApplicationBuilder app)
+        public static IApplicationBuilder UseThemes(this IApplicationBuilder app)
         {
             if (app == null)
             {
                 throw new ArgumentNullException(nameof(app));
             }
           
-            app.UseMiddleware<ChameMiddleware>();
+            app.UseMiddleware<ContentLoaderMiddleware>();
 
             return app;
         }

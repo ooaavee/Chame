@@ -4,7 +4,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Chame.Services
 { 
-    internal sealed class ContentCache
+    public class ContentCache
     {
         private readonly IMemoryCache _mem;
 

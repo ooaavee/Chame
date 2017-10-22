@@ -33,12 +33,12 @@ namespace WebSite.Services
 
     public class DemoThemeResolver : IThemeResolver
     {
-        public string ResolveTheme(ContentFileThemeResolveContext context)
+        public string GetTheme(ContentFileThemeResolvingContext context)
         {
             return GetThemeFromHttpContext(context.HttpContext);
         }
 
-        public string ResolveTheme(RazorThemeResolveContext context)
+        public string GetTheme(RazorThemeResolvingContext context)
         {
             return GetThemeFromHttpContext(context.HttpContext);
         }

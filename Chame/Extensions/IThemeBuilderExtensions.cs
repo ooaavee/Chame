@@ -6,11 +6,11 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 namespace Microsoft.Extensions.DependencyInjection
 {
     /// <summary>
-    /// IChameBuilder extension methods
+    /// IThemeBuilder extension methods
     /// </summary>
-    public static class IChameBuilderExtensions
+    public static class IThemeBuilderExtensions
     {
-        public static IChameBuilder AddFileSystemLoader(this IChameBuilder builder, Action<FileSystemLoaderOptions> configureOptions = null)
+        public static IThemeBuilder AddFileSystemLoader(this IThemeBuilder builder, Action<FileSystemContentLoaderOptions> configureOptions = null)
         {
             if (builder == null)
             {
@@ -23,12 +23,11 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             // options
-            builder.Services.Configure<FileSystemLoaderOptions>(configureOptions);
+            builder.Services.Configure<FileSystemContentLoaderOptions>(configureOptions);
 
             // my services
             builder.Services.TryAddSingleton<IJsContentLoader, FileSystemContentLoader>();
             builder.Services.TryAddSingleton<ICssContentLoader, FileSystemContentLoader>();
-            builder.Services.TryAddSingleton<ThemedContentFileResolver>();
 
             // framework services
             builder.Services.AddMemoryCache();

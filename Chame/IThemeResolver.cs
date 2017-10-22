@@ -7,13 +7,13 @@
         /// </summary>
         /// <param name="context">context</param>
         /// <returns>theme name</returns>
-        string ResolveTheme(ContentFileThemeResolveContext context);
+        string GetTheme(ContentFileThemeResolvingContext context);
 
         /// <summary>
         /// Resolves a theme that should be used when loading Razor views.
         /// </summary>
         /// <param name="context">context</param>
         /// <returns>theme name</returns>
-        string ResolveTheme(RazorThemeResolveContext context);
+        string GetTheme(RazorThemeResolvingContext context);
     }
 }

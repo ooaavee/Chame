@@ -16,24 +16,23 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 throw new ArgumentNullException(nameof(options));
             }
-
+            
             // Create and configure options.
             var themes = new RazorThemeOptions();
             configureOptions?.Invoke(themes);
 
             // Register a view-location-expander.
-            var expander = new ViewLocationExpander(themes);
-            options.ViewLocationExpanders.Add(expander);
+            options.ViewLocationExpanders.Add(new ThemedViewLocationExpander(themes));
 
             // Register assemblies for embedded Razor views.
             if (themes.EmbeddedViewAssemblies.Any())
             {
-                var l = new List<IFileProvider>();
-                foreach (Assembly a in themes.EmbeddedViewAssemblies)
+                var providers = new List<IFileProvider>();
+                foreach (Assembly assembly in themes.EmbeddedViewAssemblies)
                 {
-                    l.Add(new EmbeddedFileProvider(a));
+                    providers.Add(new EmbeddedFileProvider(assembly));
                 }
-                options.FileProviders.Add(new CompositeFileProvider(l));
+                options.FileProviders.Add(new CompositeFileProvider(providers));
             }
 
         }

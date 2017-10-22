@@ -17,18 +17,41 @@ namespace Chame.Services
     /// <summary>
     /// Loads JavaScript and CSS content from the filesystem.
     /// </summary>
-    internal sealed class FileSystemContentLoader : IJsContentLoader, ICssContentLoader
+    public class FileSystemContentLoader : IJsContentLoader, ICssContentLoader
     {
-        private readonly ThemedContentFileResolver _resolver;
-        private readonly ChameOptions _options1;
-        private readonly FileSystemLoaderOptions _options2;
+        private readonly ContentLoaderOptions _options1;
+        private readonly FileSystemContentLoaderOptions _options2;
         private readonly ContentCache _cache;
         private readonly IHostingEnvironment _env;
         private readonly ILogger<FileSystemContentLoader> _logger;
 
-        public FileSystemContentLoader(ThemedContentFileResolver resolver, IOptions<ChameOptions> options1, IOptions<FileSystemLoaderOptions> options2, ContentCache cache, IHostingEnvironment env, ILogger<FileSystemContentLoader> logger)
+        public FileSystemContentLoader(IOptions<ContentLoaderOptions> options1, IOptions<FileSystemContentLoaderOptions> options2, ContentCache cache, IHostingEnvironment env, ILogger<FileSystemContentLoader> logger)
         {
-            _resolver = resolver;
+            if (options1 == null)
+            {
+                throw new ArgumentNullException(nameof(options1));
+            }
+
+            if (options2 == null)
+            {
+                throw new ArgumentNullException(nameof(options2));
+            }
+
+            if (cache == null)
+            {
+                throw new ArgumentNullException(nameof(cache));
+            }
+
+            if (env == null)
+            {
+                throw new ArgumentNullException(nameof(env));
+            }
+
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
             _options1 = options1.Value;
             _options2 = options2.Value;
             _cache = cache;
@@ -38,90 +61,99 @@ namespace Chame.Services
 
         public int Priority => 0;
 
-        public Task<ResponseContent> LoadContentAsync(ContentLoadingContext context)
+        public Task<TextContent> LoadContentAsync(ContentLoadingContext context)
         {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
             return Task.FromResult(Load(context));
         }
 
         /// <summary>
-        /// Is caching enabled or not?
+        /// Is caching enabled?
         /// </summary>
-        private bool UseCache
+        private bool IsCacheEnabled
         {
-            get { return _options2.IsCachingEnabled(_env); }
+            get
+            {
+                switch (_options2.CachingMode)
+                {
+                    case CachingModes.Disabled:
+                        return false;
+                    case CachingModes.Enabled:
+                        return true;
+                    case CachingModes.EnabledButDisabledOnDev:
+                        return !_env.IsDevelopment();
+                    default:
+                        return false;
+                }
+            }
         }
 
-        private ResponseContent Load(ContentLoadingContext context)
+        private TextContent Load(ContentLoadingContext context)
         {
+            FileContent content;
+
             // First try to use cached content.
-            if (UseCache)
+            if (IsCacheEnabled)
             {
-                ContentContainer cached = _cache.Get<ContentContainer>(context);
-                if (cached != null)
+                content = _cache.Get<FileContent>(context);
+                if (content != null)
                 {
-                    return GetResponseContent(cached, context);
+                    return GetResponseContent(content, context);
                 }
             }
 
             // Get files to use.
-            ContentFile[] files = _resolver.GetFiles(context);
+            ContentFile[] files = GetFiles(context);
 
             // Read content files and optionally cache the content.
-            ContentContainer content;
             if (files.Any())
             {
                 content = GetContent(files, context);
-                if (UseCache)
+                if (IsCacheEnabled)
                 {
-                    _cache.Set<ContentContainer>(content, _options2.CacheAbsoluteExpirationRelativeToNow, context);
+                    _cache.Set<FileContent>(content, _options2.CacheAbsoluteExpirationRelativeToNow, context);
                 }
             }
             else
             {
-                content = ContentContainer.Empty();
+                content = new FileContent {Value = string.Empty};
             }
 
             return GetResponseContent(content, context);
         }
 
-        private ResponseContent GetResponseContent(ContentContainer container, ContentLoadingContext context)
-        {            
-            if (_options1.SupportETag)
+        private TextContent GetResponseContent(FileContent container, ContentLoadingContext context)
+        {
+            if (_options1.SupportETag && context.ETag != null && container.ETag != null && context.ETag == container.ETag)
             {
-                if (context.ETag != null && container.ETag != null)
-                {
-                    if (context.ETag == container.ETag)
-                    {
-                        return ResponseContent.NotModified();
-                    }
-                }
+                return TextContent.NotModified();
             }
-            return container.ETag == null ? ResponseContent.Ok(container.Content, container.Encoding) : ResponseContent.Ok(container.Content, container.Encoding, container.ETag);
+            return container.ETag == null ? 
+                TextContent.Ok(container.Value, Encoding.UTF8) : 
+                TextContent.Ok(container.Value, Encoding.UTF8, container.ETag);
         }
 
-        private ContentContainer GetContent(IEnumerable<ContentFile> files, ContentLoadingContext context)
+        private FileContent GetContent(IEnumerable<ContentFile> files, ContentLoadingContext context)
         {
-            StringBuilder buffer = new StringBuilder();
-
+            var buf = new StringBuilder();
             foreach (ContentFile file in Filter(files, context.Filter))
             {
-                string s = ReadFile(file);
-                if (s != null)
-                {
-                    buffer.AppendLine(s);
-                }
+                buf.AppendLine(ReadAllText(file));
             }
-
-            string content = buffer.ToString();
-
-            string eTag = _options1.SupportETag ? GetETag(content) : null;
-
-            return new ContentContainer(content, eTag);
+            return new FileContent
+            {
+                Value = buf.ToString(),
+                ETag = _options1.SupportETag ? GetETag(buf.ToString()) : null
+            };
         }
 
         private static IEnumerable<ContentFile> Filter(IEnumerable<ContentFile> files, string filter)
         {
-            foreach (ContentFile file in files)
+            foreach (var file in files)
             {
                 if (filter == null)
                 {
@@ -143,31 +175,26 @@ namespace Chame.Services
             }
         }
 
-        private string ReadFile(ContentFile file)
+        private string ReadAllText(ContentFile file)
         {
-            // This is a file somewhere under wwwroot...
             IFileInfo fi = _env.WebRootFileProvider.GetFileInfo(file.Path);
-
-            // Check if the file exists.
-            if (!fi.Exists)
+            if (fi.Exists)
             {
-                _logger.LogError(string.Format("Bundle file '{0}' does not exist.", file.Path));
-                return null;
+                try
+                {
+                    return File.ReadAllText(fi.PhysicalPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, string.Format("Failed to read a content file '{0}'.", fi.PhysicalPath));
+                    throw;
+                }
             }
-
-            // Read the file.
-            string content;
-            try
+            else
             {
-                content = File.ReadAllText(fi.PhysicalPath);
+                _logger.LogError(string.Format("Content file '{0}' does not exist.", file.Path));
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, string.Format("Failed to read bundle file '{0}'.", fi.PhysicalPath));
-                throw;
-            }
-
-            return content;
+            return string.Empty;
         }
 
         private static string GetETag(string content)
@@ -183,6 +210,136 @@ namespace Chame.Services
                 return buffer.ToString();
             }
         }
+
+        private ContentFile[] GetFiles(ContentLoadingContext context)
+        {
+            List<ContentFile> files = new List<ContentFile>();
+
+            ContentSchema schema = null;
+
+            if (IsCacheEnabled)
+            {
+                schema = _cache.Get<ContentSchema>(context);
+            }
+
+            if (_options2.UseContentSchemaFile)
+            {
+                // Load themes from settings file and cache findings for later usage.
+                schema = LoadSchema();
+                if (schema != null)
+                {
+                    if (IsCacheEnabled)
+                    {
+                        _cache.Set<ContentSchema>(schema, _options2.CacheAbsoluteExpirationRelativeToNow, context);
+                    }
+                }
+            }
+            else
+            {
+                // Load themes by using an external function - these findings won't be cached!
+                if (_options2.ContentSchemaResolver == null)
+                {
+                    _logger.LogError(string.Format("{0} Func is null.", nameof(_options2.ContentSchemaResolver)));
+                }
+                else
+                {
+                    schema = _options2.ContentSchemaResolver(context);
+                }
+            }
+
+            if (schema == null)
+            {
+                _logger.LogError(string.Format("No content found for the requested theme '{0}'.", context.Theme));
+            }
+            else
+            {
+                // Common files for all themes.
+                switch (context.Category)
+                {
+                    case ContentCategory.Css:
+                        files.AddRange(schema.CssFiles);
+                        break;
+                    case ContentCategory.Js:
+                        files.AddRange(schema.JsFiles);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(context.Category));
+                }
+
+                // Resolve theme-specific files.
+                ContentFileTheme theme = schema.Themes.FirstOrDefault(x => x.Name == context.Theme);
+                if (theme == null)
+                {
+                    _logger.LogWarning(string.Format("No content found for the requested theme '{0}'.", context.Theme));
+                }
+                else
+                {
+                    switch (context.Category)
+                    {
+                        case ContentCategory.Css:
+                            files.AddRange(theme.CssFiles);
+                            break;
+                        case ContentCategory.Js:
+                            files.AddRange(theme.JsFiles);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(context.Category));
+                    }
+                }
+            }
+
+            return files.ToArray();
+        }
+     
+        /// <summary>
+        /// Loads themes from file.
+        /// </summary>
+        private ContentSchema LoadSchema()
+        {
+            if (string.IsNullOrEmpty(_options2.ContentSchemaFile))
+            {
+                _logger.LogError("ContentSchemaFile is missing.");
+                return null;
+            }
+
+            // Read the file that is usually shomewhere under wwwroot...
+            IFileInfo file = _env.WebRootFileProvider.GetFileInfo(_options2.ContentSchemaFile);
+            if (file.Exists)
+            {
+                try
+                {
+                    string content = File.ReadAllText(file.PhysicalPath);
+                    return ContentSchema.Deserialize(content);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, string.Format("Failed to read file '{0}'.", file.PhysicalPath));
+                    throw;
+                }
+            }
+            else
+            {
+                _logger.LogError(string.Format("Requested file '{0}' does not exist.", _options2.ContentSchemaFile));
+                return null;
+            }
+        }
+
+
+
+
+        private class FileContent
+        {
+            /// <summary>
+            /// Text content
+            /// </summary>
+            public string Value { get; set; }
+
+            /// <summary>
+            /// HTTP ETag
+            /// </summary>
+            public string ETag { get; set; }
+        }
+
 
     }
 }

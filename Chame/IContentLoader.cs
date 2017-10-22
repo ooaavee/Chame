@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace Chame
 {
@@ -14,9 +15,9 @@ namespace Chame
         /// <summary>
         /// Loads content.
         /// </summary>
-        /// <param name="context">context</param>
+        /// <param name="context">A context object that tells you what was requested.</param>
         /// <returns>response</returns>
-        Task<ResponseContent> LoadContentAsync(ContentLoadingContext context);
+        Task<TextContent> LoadContentAsync(ContentLoadingContext context);
     }
 
     public interface IJsContentLoader : IContentLoader
@@ -26,5 +27,23 @@ namespace Chame
     public interface ICssContentLoader : IContentLoader
     {
     }
+
+    internal class FuncContentLoader : IContentLoader
+    {
+        private Func<ContentLoadingContext, Task<TextContent>> Func { get; }
+        public int Priority { get; }
+
+        public FuncContentLoader(Func<ContentLoadingContext, Task<TextContent>> func, int priority)
+        {
+            Func = func;
+            Priority = priority;
+        }
+
+        public async Task<TextContent> LoadContentAsync(ContentLoadingContext context)
+        {
+            return await Func(context);
+        }
+    }
+
 
 }

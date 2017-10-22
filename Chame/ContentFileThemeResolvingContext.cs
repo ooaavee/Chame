@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace Chame
 {
-    public class ContentFileThemeResolveContext
+    public class ContentFileThemeResolvingContext
     {
-        public ContentFileThemeResolveContext(HttpContext httpContext, ContentCategory category, string filter)
+        public ContentFileThemeResolvingContext(HttpContext httpContext, ContentCategory category, string filter)
         {
             HttpContext = httpContext;
             Category = category;
@@ -17,7 +17,7 @@ namespace Chame
         public HttpContext HttpContext { get; }
 
         /// <summary>
-        /// What kind of content was requested.
+        /// Defines what kind of content was requested.
         /// </summary>
         public ContentCategory Category { get; }
 

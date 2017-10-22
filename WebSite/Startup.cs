@@ -34,10 +34,11 @@ namespace WebSite
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddChame(options => { options.ThemeResolver = new DemoThemeResolver(); })
-                .AddFileSystemLoader(options =>
+            services.AddThemes(options =>
                 {
-                });
+                    options.ThemeResolver = new DemoThemeResolver();
+                })
+                .AddFileSystemLoader();
 
 
             // Add MVC.
@@ -83,7 +84,7 @@ namespace WebSite
 
             app.UseAuthentication();
 
-            app.UseChame();
+            app.UseThemes();
 
             app.UseStaticFiles();
 
