@@ -12,13 +12,9 @@ namespace Chame
         public ContentLoaderOptions()
         {
             DefaultTheme = "default";
-            VirtualPathForJsRequests = "/chame-js-loader";
-            VirtualPathForCssRequests = "/chame-css-loader";
             SupportETag = true;
-            ContentLoaderSorter = delegate(List<IContentLoader> items)
-            {
-                items.Sort((item1, item2) => item1.Priority.CompareTo(item2.Priority));
-            };
+            ContentLoaderSorter = new DefaultContentLoaderSorter();
+            ContentModel = new DefaultContentModel();
         }
 
         /// <summary>
@@ -32,14 +28,9 @@ namespace Chame
         public IThemeResolver ThemeResolver { get; set; }
 
         /// <summary>
-        /// An extension point for loading JavaScript content. If set, will be invoked before registered <see cref="IJsContentLoader"/> services.
+        /// Content loaders
         /// </summary>
-        public Func<ContentLoadingContext, Task<TextContent>> JsLoader { get; set; }
-
-        /// <summary>
-        /// An extension point for loading CSS content. If set, will be invoked before registered <see cref="ICssContentLoader"/> services.
-        /// </summary>
-        public Func<ContentLoadingContext, Task<TextContent>> CssLoader { get; set; }
+        public List<IContentLoader> ContentLoaders { get; } = new List<IContentLoader>();
 
         /// <summary>
         /// Indicates if we should support HTTP ETags if possible. The default value is true.
@@ -47,14 +38,13 @@ namespace Chame
         public bool SupportETag { get; set; }
 
         /// <summary>
-        /// An execution order sorter for <see cref="IJsContentLoader"/> and <see cref="ICssContentLoader"/> implementations. If not not, the default 
-        /// implementation will be used, which sorts implementations by <see cref="IContentLoader.Priority"/> property.
+        /// An execution order sorter for <see cref="IContentLoader"/> implementations.
         /// </summary>
-        public Action<List<IContentLoader>> ContentLoaderSorter { get; set; }
+        public IContentLoaderSorter ContentLoaderSorter { get; set; }
 
-        public string VirtualPathForJsRequests { get; set; }
+        public IContentModel ContentModel { get; set; }
 
-        public string VirtualPathForCssRequests { get; set; }
+     
 
     }
 }

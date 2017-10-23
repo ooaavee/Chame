@@ -20,11 +20,22 @@ namespace Chame.Middlewares
         private readonly ContentLoaderOptions _options;
         private readonly ILogger<ContentLoaderMiddleware> _logger;
 
-        public ContentLoaderMiddleware(RequestDelegate next, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger)
+        /// <summary>
+        /// All valid query paths and corresponding content-types.
+        /// </summary>
+        private readonly Dictionary<string, IContentTypeInfo> _validPaths = new Dictionary<string, IContentTypeInfo>();
+
+        public ContentLoaderMiddleware(RequestDelegate next, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger, string pathTemplate)
         {
             _next = next;
             _options = options.Value;
             _logger = logger;
+
+            foreach (IContentTypeInfo contentType in options.Value.ContentModel.SupportedContentTypes)
+            {
+                string path = string.Format(pathTemplate, contentType.Code);
+                _validPaths[path] = contentType;
+            }
         }
 
         public async Task Invoke(HttpContext httpContext, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger)
@@ -49,21 +60,25 @@ namespace Chame.Middlewares
                 return false;
             }
 
+
+            var VirtualPathForJsRequests = "/chame-js-loader";
+            var  VirtualPathForCssRequests = "/chame-css-loader";
+
             // Is this JavaScript request?
-            if (string.IsNullOrEmpty(_options.VirtualPathForJsRequests))
+            if (string.IsNullOrEmpty(VirtualPathForJsRequests))
             {
                 _logger.LogCritical("VirtualPathForJsRequests is missing.");
                 return false;
             }
-            bool isJs = httpContext.Request.Path.StartsWithSegments(new PathString(_options.VirtualPathForJsRequests));
+            bool isJs = httpContext.Request.Path.StartsWithSegments(new PathString(VirtualPathForJsRequests));
 
             // Is this CSS request?
-            if (string.IsNullOrEmpty(_options.VirtualPathForCssRequests))
+            if (string.IsNullOrEmpty(VirtualPathForCssRequests))
             {
                 _logger.LogCritical("VirtualPathForCssRequests is missing.");
                 return false;
             }
-            bool isCss = httpContext.Request.Path.StartsWithSegments(new PathString(_options.VirtualPathForCssRequests));
+            bool isCss = httpContext.Request.Path.StartsWithSegments(new PathString(VirtualPathForCssRequests));
 
             // So, no JavaScript or CSS -> just continue your life...
             if (!(isJs || isCss))
@@ -76,59 +91,32 @@ namespace Chame.Middlewares
             // Filter
             string filter = httpContext.Request.Query["filter"].FirstOrDefault();
 
-            // Content loaders
-            IContentLoader func = null;
-            List<IContentLoader> contentLoaders = new List<IContentLoader>();
-
             // Category
-            ContentCategory category = default(ContentCategory);
+            ContentCategory category = isCss ? ContentCategory.Css : ContentCategory.Js;
 
-            if (isJs)
-            {
-                category = ContentCategory.Js;
-                if (_options.JsLoader != null)
-                {
-                    func = new FuncContentLoader(_options.JsLoader, int.MinValue);
-                }
-                contentLoaders.AddRange(httpContext.RequestServices.GetServices<IJsContentLoader>());
-            }
-
-            if (isCss)
-            {
-                category = ContentCategory.Css;
-                if (_options.CssLoader != null)
-                {
-                    func = new FuncContentLoader(_options.CssLoader, int.MinValue);
-                }
-                contentLoaders.AddRange(httpContext.RequestServices.GetServices<ICssContentLoader>());
-            }
-
-            int serviceContentLoaderCount = contentLoaders.Count;
-            int totalContentLoaderCount = contentLoaders.Count + (func != null ? 1 : 0);
-
-            if (totalContentLoaderCount == 0)
+            // Content loaders
+            List<IContentLoader> loaders = httpContext.RequestServices.GetServices<IContentLoader>()
+                .Concat(_options.ContentLoaders)
+                .ToList();
+ 
+            if (loaders.Count == 0)
             {
                 _logger.LogCritical("No content loaders found.");
                 return false;
             }
 
             // Sort service content loaders if needed.
-            if (serviceContentLoaderCount > 1)
+            if (loaders.Count > 1)
             {
-                if (_options.ContentLoaderSorter != null)
+                IContentLoaderSorter sorter = _options.ContentLoaderSorter;
+                if (sorter != null)
                 {
-                    _options.ContentLoaderSorter(contentLoaders);
+                    sorter.Sort(loaders);
                 }
                 else
                 {
-                    _logger.LogWarning("There is no content loader sorter available, which means that content loaders are invoked in arbitrary order!");
+                    _logger.LogWarning("There is no IContentLoaderSorter available, which means that content loaders are invoked in arbitrary order!");
                 }
-            }
-
-            // This one is always the first content loader.
-            if (func != null)
-            {
-                contentLoaders.Insert(0, func);
             }
 
             // HTTP ETag is not supported if there are multiple content loaders.
@@ -137,7 +125,7 @@ namespace Chame.Middlewares
             {
                 if (httpContext.Request.Headers.ContainsKey("If-None-Match"))
                 {
-                    if (totalContentLoaderCount == 1)
+                    if (loaders.Count == 1)
                     {
                         eTag = httpContext.Request.Headers["If-None-Match"].FirstOrDefault();
                     }
@@ -150,9 +138,10 @@ namespace Chame.Middlewares
 
             // Resolve theme by invoking ThemeResolver. If not available, a fallback theme comes from options.
             string theme = null;
-            if (_options.ThemeResolver != null)
+            IThemeResolver themeResolver = _options.ThemeResolver;
+            if (themeResolver != null)
             {
-                theme = _options.ThemeResolver.GetTheme(new ContentFileThemeResolvingContext(httpContext, category, filter));
+                theme = themeResolver.GetTheme(new ContentFileThemeResolvingContext(httpContext, category, filter));
             }
 
             if (string.IsNullOrEmpty(theme))
@@ -165,7 +154,7 @@ namespace Chame.Middlewares
                 }
             }
 
-            context = new ContentLoadingContext(httpContext, category, theme, filter, eTag, contentLoaders);
+            context = new ContentLoadingContext(httpContext, category, theme, filter, eTag, loaders);
 
             return true;
         }

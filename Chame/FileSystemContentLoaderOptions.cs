@@ -24,7 +24,7 @@ namespace Chame
         public bool UseContentSchemaFile { get; set; }
 
         /// <summary>
-        /// A function for loading <see cref="ContentSchema"/> objects. This will be invoked if <see cref="UseContentSchemaFile"/> is false.
+        /// A function for loading <see cref="IContentModel"/> objects. This will be invoked if <see cref="UseContentSchemaFile"/> is false.
         /// </summary>
         public Func<ContentLoadingContext, ContentSchema> ContentSchemaResolver { get; set; }
 

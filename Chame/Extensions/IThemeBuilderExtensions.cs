@@ -26,8 +26,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.Configure<FileSystemContentLoaderOptions>(configureOptions);
 
             // my services
-            builder.Services.TryAddSingleton<IJsContentLoader, FileSystemContentLoader>();
-            builder.Services.TryAddSingleton<ICssContentLoader, FileSystemContentLoader>();
+            builder.Services.TryAddSingleton<IContentLoader, FileSystemContentLoader>();
 
             // framework services
             builder.Services.AddMemoryCache();

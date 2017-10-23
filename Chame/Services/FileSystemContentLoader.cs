@@ -17,7 +17,7 @@ namespace Chame.Services
     /// <summary>
     /// Loads JavaScript and CSS content from the filesystem.
     /// </summary>
-    public class FileSystemContentLoader : IJsContentLoader, ICssContentLoader
+    public class FileSystemContentLoader : IContentLoader
     {
         private readonly ContentLoaderOptions _options1;
         private readonly FileSystemContentLoaderOptions _options2;
@@ -59,7 +59,7 @@ namespace Chame.Services
             _logger = logger;
         }
 
-        public int Priority => 0;
+        public double Priority => 0;
 
         public Task<TextContent> LoadContentAsync(ContentLoadingContext context)
         {
@@ -321,7 +321,7 @@ namespace Chame.Services
             {
                 _logger.LogError(string.Format("Requested file '{0}' does not exist.", _options2.ContentSchemaFile));
                 return null;
-            }
+            }        
         }
 
 
