@@ -52,7 +52,7 @@ namespace Chame
                 theme = options.Value.DefaultTheme;
                 if (string.IsNullOrEmpty(theme))
                 {
-                    throw new InvalidOperationException("Theme not found.");
+                    throw new InvalidOperationException("Could not resolve theme.");
                 }
             }
 

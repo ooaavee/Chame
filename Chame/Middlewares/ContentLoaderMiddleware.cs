@@ -23,7 +23,7 @@ namespace Chame.Middlewares
         /// <summary>
         /// All valid query paths and corresponding content-types.
         /// </summary>
-        private readonly Dictionary<string, IContentTypeInfo> _validPaths = new Dictionary<string, IContentTypeInfo>();
+        private readonly Dictionary<string, IContentInfo> _validPaths = new Dictionary<string, IContentInfo>();
 
         public ContentLoaderMiddleware(RequestDelegate next, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger, string pathTemplate)
         {
@@ -31,18 +31,19 @@ namespace Chame.Middlewares
             _options = options.Value;
             _logger = logger;
 
-            foreach (IContentTypeInfo contentType in options.Value.ContentModel.SupportedContentTypes)
+            foreach (IContentInfo ci in _options.ContentModel.SupportedContent)
             {
-                string path = string.Format(pathTemplate, contentType.Code);
-                _validPaths[path] = contentType;
+                string path = string.Format(pathTemplate, ci.Code);
+                _validPaths[path] = ci;
+                _logger.LogDebug(string.Format("A content loader path '{0}' registered for MIME type '{1}'.", path, ci.MimeType));
             }
         }
 
         public async Task Invoke(HttpContext httpContext, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger)
         {
-            if (TryParse(httpContext, out ContentLoadingContext context))
+            if (TryParse(httpContext, out Tuple<ContentLoadingContext, List<IContentLoader>> assets))
             {
-                await HandleAsync(context);
+                await HandleAsync(assets.Item1, assets.Item2);
             }
             else
             {
@@ -50,55 +51,40 @@ namespace Chame.Middlewares
             }
         }
 
-        private bool TryParse(HttpContext httpContext, out ContentLoadingContext context)
+        private bool TryParse(HttpContext httpContext, out Tuple<ContentLoadingContext, List<IContentLoader>> assets)
         {
-            context = null;
+            assets = null;
 
-            // Must be HTTP GET
+            // Must be HTTP GET.
             if (httpContext.Request.Method != HttpMethods.Get)
             {
                 return false;
             }
 
-
-            var VirtualPathForJsRequests = "/chame-js-loader";
-            var  VirtualPathForCssRequests = "/chame-css-loader";
-
-            // Is this JavaScript request?
-            if (string.IsNullOrEmpty(VirtualPathForJsRequests))
-            {
-                _logger.LogCritical("VirtualPathForJsRequests is missing.");
-                return false;
-            }
-            bool isJs = httpContext.Request.Path.StartsWithSegments(new PathString(VirtualPathForJsRequests));
-
-            // Is this CSS request?
-            if (string.IsNullOrEmpty(VirtualPathForCssRequests))
-            {
-                _logger.LogCritical("VirtualPathForCssRequests is missing.");
-                return false;
-            }
-            bool isCss = httpContext.Request.Path.StartsWithSegments(new PathString(VirtualPathForCssRequests));
-
-            // So, no JavaScript or CSS -> just continue your life...
-            if (!(isJs || isCss))
+            // Check that request path is valid.
+            string path = httpContext.Request.Path.ToString();
+            IContentInfo ci;
+            if (!_validPaths.TryGetValue(path, out ci))
             {
                 return false;
             }
 
             _logger.LogInformation(string.Format("Started to handle the current HTTP request [path = {0}].", httpContext.Request.Path.ToString()));
 
-            // Filter
+            // Parse an optional filter.
             string filter = httpContext.Request.Query["filter"].FirstOrDefault();
 
-            // Category
-            ContentCategory category = isCss ? ContentCategory.Css : ContentCategory.Js;
+            // Get content loaders from request services and options.
+            List<IContentLoader> loaders = new List<IContentLoader>();
+            foreach (IContentLoader loader in httpContext.RequestServices.GetServices<IContentLoader>().Concat(_options.ContentLoaders))
+            {
+                // TODO: Kuinka tässä, jos content-loader käsittelee kaikki tyypit
+                if (loader.SupportedContentTypes().Any(x => x == ci.Code))
+                {
+                    loaders.Add(loader);
+                }                
+            }
 
-            // Content loaders
-            List<IContentLoader> loaders = httpContext.RequestServices.GetServices<IContentLoader>()
-                .Concat(_options.ContentLoaders)
-                .ToList();
- 
             if (loaders.Count == 0)
             {
                 _logger.LogCritical("No content loaders found.");
@@ -115,7 +101,7 @@ namespace Chame.Middlewares
                 }
                 else
                 {
-                    _logger.LogWarning("There is no IContentLoaderSorter available, which means that content loaders are invoked in arbitrary order!");
+                    _logger.LogWarning(string.Format("{0} implementation is not configured. Content loaders are invoked in arbitrary order.", nameof(IContentLoaderSorter)));
                 }
             }
 
@@ -131,7 +117,7 @@ namespace Chame.Middlewares
                     }
                     else
                     {
-                        _logger.LogDebug("HTTP ETag found from request headers, but won't be used, because there are multiple content loaders.");
+                        _logger.LogDebug("Found HTTP ETag will be ignored, because the feature is not available when working with multiple content loaders.");
                     }
                 }
             }
@@ -141,7 +127,7 @@ namespace Chame.Middlewares
             IThemeResolver themeResolver = _options.ThemeResolver;
             if (themeResolver != null)
             {
-                theme = themeResolver.GetTheme(new ContentFileThemeResolvingContext(httpContext, category, filter));
+                theme = themeResolver.GetTheme(new ContentFileThemeResolvingContext(httpContext, ci, filter));
             }
 
             if (string.IsNullOrEmpty(theme))
@@ -149,21 +135,23 @@ namespace Chame.Middlewares
                 theme = _options.DefaultTheme;
                 if (string.IsNullOrEmpty(theme))
                 {
-                    _logger.LogCritical("DefaultTheme is missing.");
+                    _logger.LogCritical("Could not resolve theme.");
                     return false;
                 }
             }
 
-            context = new ContentLoadingContext(httpContext, category, theme, filter, eTag, loaders);
+            ContentLoadingContext context = new ContentLoadingContext(httpContext, ci, theme, filter, eTag);
+
+            assets = new Tuple<ContentLoadingContext, List<IContentLoader>>(context, loaders);
 
             return true;
         }
 
-        private async Task HandleAsync(ContentLoadingContext context)
+        private async Task HandleAsync(ContentLoadingContext context, List<IContentLoader> loaders)
         {
             var contents = new List<TextContent>();
 
-            foreach (IContentLoader loader in context.ContentLoaders)
+            foreach (IContentLoader loader in loaders)
             {
                 _logger.LogDebug(string.Format("Loading content by using '{0}' loader.", loader.GetType().FullName));
 
@@ -199,7 +187,7 @@ namespace Chame.Middlewares
                     }
                     else if (content.Status == ResponseStatus.NotModified)
                     {
-                        if (_options.SupportETag && !string.IsNullOrEmpty(context.ETag) && context.ContentLoaders.Count == 1)
+                        if (_options.SupportETag && !string.IsNullOrEmpty(context.ETag) && loaders.Count == 1)
                         {
                             contents.Add(content);
                         }
@@ -221,14 +209,15 @@ namespace Chame.Middlewares
             {
                 TextContent content = contents.Count > 1 ? TextContent.Combine(contents) : contents.First();
 
-                if (context.Category == ContentCategory.Js)
-                {
-                    context.HttpContext.Response.ContentType = "application/javascript";
-                }
-                else if (context.Category == ContentCategory.Css)
-                {
-                    context.HttpContext.Response.ContentType = "text/css";
-                }
+                //if (context.Category == ContentCategory.Js)
+                //{
+                //    context.HttpContext.Response.ContentType = "application/javascript";
+                //}
+                //else if (context.Category == ContentCategory.Css)
+                //{
+                //    context.HttpContext.Response.ContentType = "text/css";
+                //}
+                context.HttpContext.Response.ContentType = context.ContentInfo.MimeType;
 
                 if (content.Status == ResponseStatus.Ok)
                 {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Chame
@@ -11,6 +12,8 @@ namespace Chame
         /// This is only meaningful if there are more than one content loaders!
         /// </summary>
         double Priority { get; }
+
+        IEnumerable<string> SupportedContentTypes();
 
         /// <summary>
         /// Loads content.

@@ -61,6 +61,12 @@ namespace Chame.Services
 
         public double Priority => 0;
 
+        public IEnumerable<string> SupportedContentTypes()
+        {
+            yield return "js";
+            yield return "css";
+        }
+
         public Task<TextContent> LoadContentAsync(ContentLoadingContext context)
         {
             if (context == null)
@@ -254,16 +260,14 @@ namespace Chame.Services
             else
             {
                 // Common files for all themes.
-                switch (context.Category)
+                switch (context.ContentInfo.Code)
                 {
-                    case ContentCategory.Css:
+                    case "css":
                         files.AddRange(schema.CssFiles);
                         break;
-                    case ContentCategory.Js:
+                    case "js":
                         files.AddRange(schema.JsFiles);
                         break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(context.Category));
                 }
 
                 // Resolve theme-specific files.
@@ -274,16 +278,14 @@ namespace Chame.Services
                 }
                 else
                 {
-                    switch (context.Category)
+                    switch (context.ContentInfo.Code)
                     {
-                        case ContentCategory.Css:
+                        case "css":
                             files.AddRange(theme.CssFiles);
                             break;
-                        case ContentCategory.Js:
+                        case "js":
                             files.AddRange(theme.JsFiles);
                             break;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(context.Category));
                     }
                 }
             }

@@ -4,10 +4,10 @@ namespace Chame
 {
     public class ContentFileThemeResolvingContext
     {
-        public ContentFileThemeResolvingContext(HttpContext httpContext, ContentCategory category, string filter)
+        public ContentFileThemeResolvingContext(HttpContext httpContext, IContentInfo contentInfo, string filter)
         {
             HttpContext = httpContext;
-            Category = category;
+            ContentInfo = contentInfo;
             Filter = filter;
         }
 
@@ -19,7 +19,7 @@ namespace Chame
         /// <summary>
         /// Defines what kind of content was requested.
         /// </summary>
-        public ContentCategory Category { get; }
+        public IContentInfo ContentInfo { get; }
 
         /// <summary>
         /// Filter (optional).

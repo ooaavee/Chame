@@ -39,7 +39,7 @@ namespace Chame.Services
             s.Append("{type:'");
             s.Append(typeof(T).FullName);
             s.Append("';category:'");
-            s.Append(context.Category);
+            s.Append(context.ContentInfo.Code);
             s.Append("';filter:");
             s.Append("'");
             if (context.Filter != null)

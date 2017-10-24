@@ -9,17 +9,17 @@ namespace Chame
 {
     public interface IContentModel
     {
-        IReadOnlyCollection<IContentTypeInfo> SupportedContentTypes { get; }
+        IReadOnlyCollection<IContentInfo> SupportedContent { get; }
 
     }
 
     public class DefaultContentModel : IContentModel
     {
-        public IReadOnlyCollection<IContentTypeInfo> SupportedContentTypes { get; }
+        public IReadOnlyCollection<IContentInfo> SupportedContent { get; }
 
         public DefaultContentModel()
         {
-            var supported = new List<IContentTypeInfo>();
+            var supported = new List<IContentInfo>();
 
             Register("application/vnd.hzn-3d-crossword", "x3d", supported);
             Register("video/3gpp", "3gp", supported);
@@ -713,19 +713,19 @@ namespace Chame
             Register("application/vnd.handheld-entertainment+xml", "zmm", supported);
             Register("application/vnd.zzazz.deck+xml", "zaz", supported);
 
-            SupportedContentTypes = new ReadOnlyCollection<IContentTypeInfo>(supported);
+            SupportedContent = new ReadOnlyCollection<IContentInfo>(supported);
         }
 
-        private void Register(string mimeType, string code, ICollection<IContentTypeInfo> supported, bool canCombine = false)
+        private void Register(string mimeType, string code, ICollection<IContentInfo> supported, bool canCombine = false)
         {
-            IContentTypeInfo ct = new DefaultContentTypeInfo {MimeType = mimeType, Code = code, CanCombine = canCombine};
+            IContentInfo ct = new DefaultContentInfo {MimeType = mimeType, Code = code, CanCombine = canCombine};
             if (IsContentTypeSupported(ct))
             {
                 supported.Add(ct);
             }
         }
 
-        protected virtual bool IsContentTypeSupported(IContentTypeInfo ct)
+        protected virtual bool IsContentTypeSupported(IContentInfo ct)
         {
             return true;
         }

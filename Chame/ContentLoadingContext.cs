@@ -8,14 +8,13 @@ namespace Chame
     /// </summary>
     public class ContentLoadingContext
     {
-        public ContentLoadingContext(HttpContext httpContext, ContentCategory category, string theme, string filter, string eTag, IReadOnlyCollection<IContentLoader> contentLoaders)
+        public ContentLoadingContext(HttpContext httpContext, IContentInfo contentInfo, string theme, string filter, string eTag)
         {
             HttpContext = httpContext;
-            Category = category;
+            ContentInfo = contentInfo;
             Theme = theme;
             Filter = filter;
             ETag = eTag;
-            ContentLoaders = contentLoaders;
         }
 
         /// <summary>
@@ -23,10 +22,7 @@ namespace Chame
         /// </summary>
         public HttpContext HttpContext { get; }
 
-        /// <summary>
-        /// Defines what kind of content was requested.
-        /// </summary>
-        public ContentCategory Category { get; }
+        public IContentInfo ContentInfo { get; }
 
         /// <summary>
         /// Theme
@@ -42,10 +38,5 @@ namespace Chame
         /// HTTP ETag (optional)
         /// </summary>
         public string ETag { get; }
-
-        /// <summary>
-        /// Content loaders
-        /// </summary>
-        public IReadOnlyCollection<IContentLoader> ContentLoaders { get; }
     }
 }
