@@ -21,9 +21,9 @@ namespace Chame.Middlewares
         private readonly ILogger<ContentLoaderMiddleware> _logger;
 
         /// <summary>
-        /// All valid query paths and corresponding content-types.
+        /// All valid request paths and corresponding content-types.
         /// </summary>
-        private readonly Dictionary<string, IContentInfo> _validPaths = new Dictionary<string, IContentInfo>();
+        private readonly Dictionary<string, IContentInfo> _paths = new Dictionary<string, IContentInfo>();
 
         public ContentLoaderMiddleware(RequestDelegate next, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger, string pathTemplate)
         {
@@ -33,15 +33,15 @@ namespace Chame.Middlewares
 
             foreach (IContentInfo ci in _options.ContentModel.SupportedContent)
             {
-                string path = string.Format(pathTemplate, ci.Code);
-                _validPaths[path] = ci;
-                _logger.LogDebug(string.Format("A content loader path '{0}' registered for MIME type '{1}'.", path, ci.MimeType));
+                var path = string.Format(pathTemplate, ci.Code);
+                _paths[path] = ci;
+                _logger.LogDebug(string.Format("Registering a request path '{0}' for MIME type '{1}'.", path, ci.MimeType));
             }
         }
 
         public async Task Invoke(HttpContext httpContext, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger)
         {
-            if (TryParse(httpContext, out Tuple<ContentLoadingContext, List<IContentLoader>> assets))
+            if (TryParse(httpContext, out Tuple<ContentLoadingContext, IReadOnlyCollection<IContentLoader>> assets))
             {
                 await HandleAsync(assets.Item1, assets.Item2);
             }
@@ -51,7 +51,7 @@ namespace Chame.Middlewares
             }
         }
 
-        private bool TryParse(HttpContext httpContext, out Tuple<ContentLoadingContext, List<IContentLoader>> assets)
+        private bool TryParse(HttpContext httpContext, out Tuple<ContentLoadingContext, IReadOnlyCollection<IContentLoader>> assets)
         {
             assets = null;
 
@@ -64,7 +64,7 @@ namespace Chame.Middlewares
             // Check that request path is valid.
             string path = httpContext.Request.Path.ToString();
             IContentInfo ci;
-            if (!_validPaths.TryGetValue(path, out ci))
+            if (!_paths.TryGetValue(path, out ci))
             {
                 return false;
             }
@@ -78,21 +78,22 @@ namespace Chame.Middlewares
             List<IContentLoader> loaders = new List<IContentLoader>();
             foreach (IContentLoader loader in httpContext.RequestServices.GetServices<IContentLoader>().Concat(_options.ContentLoaders))
             {
-                // TODO: Kuinka tässä, jos content-loader käsittelee kaikki tyypit
-                if (loader.SupportedContentTypes().Any(x => x == ci.Code))
+                if (loader.SupportedContentTypes().Any(x => x == ci.Code || x == "*"))
                 {
                     loaders.Add(loader);
                 }                
             }
 
-            if (loaders.Count == 0)
+            int loaderCount = loaders.Count;
+
+            if (loaderCount == 0)
             {
                 _logger.LogCritical("No content loaders found.");
                 return false;
             }
 
-            // Sort service content loaders if needed.
-            if (loaders.Count > 1)
+            // Sort content loaders if needed.
+            if (loaderCount > 1)
             {
                 IContentLoaderSorter sorter = _options.ContentLoaderSorter;
                 if (sorter != null)
@@ -111,7 +112,7 @@ namespace Chame.Middlewares
             {
                 if (httpContext.Request.Headers.ContainsKey("If-None-Match"))
                 {
-                    if (loaders.Count == 1)
+                    if (loaderCount == 1)
                     {
                         eTag = httpContext.Request.Headers["If-None-Match"].FirstOrDefault();
                     }
@@ -140,20 +141,22 @@ namespace Chame.Middlewares
                 }
             }
 
+            _logger.LogInformation(string.Format("A theme '{0}' will be used.", theme));
+
             ContentLoadingContext context = new ContentLoadingContext(httpContext, ci, theme, filter, eTag);
 
-            assets = new Tuple<ContentLoadingContext, List<IContentLoader>>(context, loaders);
+            assets = new Tuple<ContentLoadingContext, IReadOnlyCollection<IContentLoader>>(context, loaders);
 
             return true;
         }
 
-        private async Task HandleAsync(ContentLoadingContext context, List<IContentLoader> loaders)
+        private async Task HandleAsync(ContentLoadingContext context, IReadOnlyCollection<IContentLoader> loaders)
         {
             var contents = new List<TextContent>();
 
             foreach (IContentLoader loader in loaders)
             {
-                _logger.LogDebug(string.Format("Loading content by using '{0}' loader.", loader.GetType().FullName));
+                _logger.LogDebug(string.Format("Loading content by using '{0}' content loader.", loader.GetType().FullName));
 
                 // Load content
                 TextContent content;
@@ -163,74 +166,71 @@ namespace Chame.Middlewares
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Loader '{0}' threw an exception {1}.", loader.GetType().FullName, ex);
+                    _logger.LogError(ex, "Content loader '{0}' threw an unhandled exception.", loader.GetType().FullName);
                     throw;
                 }
 
-                // Validate loaded content
                 if (content == null || content.Status == ResponseStatus.NotFound)
                 {
-                    _logger.LogDebug(string.Format("Loader '{0}' did not found any content.", loader.GetType().FullName));
+                    // NotFound
+                    _logger.LogDebug(string.Format("Content loader '{0}' did not found any content.", loader.GetType().FullName));
+                    continue;
                 }
-                else
+
+                if (content.Status == ResponseStatus.Ok)
                 {
-                    if (content.Status == ResponseStatus.Ok)
+                    // Ok
+                    if (content.Value != null && content.Encoding != null)
                     {
-                        if (content.Value != null && content.Encoding != null)
-                        {
-                            contents.Add(content);
-                        }
-                        else
-                        {
-                            _logger.LogWarning(string.Format("Loader '{0}' retuned null content and/or null encoding, ignoring item.", loader.GetType().FullName));
-                        }
+                        contents.Add(content);
                     }
-                    else if (content.Status == ResponseStatus.NotModified)
+                    else
                     {
-                        if (_options.SupportETag && !string.IsNullOrEmpty(context.ETag) && loaders.Count == 1)
-                        {
-                            contents.Add(content);
-                        }
-                        else
-                        {
-                            _logger.LogWarning(string.Format("Loader '{0}' returned status {1}, which is wrong because ETags were not enabled.", loader.GetType().FullName, ResponseStatus.NotModified));
-                        }
+                        _logger.LogWarning(string.Format("Content loader '{0}' retuned null content and/or null encoding, ignoring item.", loader.GetType().FullName));
+                    }
+                }
+                else if (content.Status == ResponseStatus.NotModified)
+                {
+                    // NotModified
+                    if (_options.SupportETag && !string.IsNullOrEmpty(context.ETag) && loaders.Count == 1)
+                    {
+                        contents.Add(content);
+                    }
+                    else
+                    {
+                        _logger.LogWarning(string.Format("Content loader '{0}' returned status {1}, which is wrong because ETags were not enabled.", loader.GetType().FullName, ResponseStatus.NotModified));
                     }
                 }
             }
 
-            if (contents.Count == 0)
+            int contentCount = contents.Count;
+
+            if (contentCount == 0)
             {
                 // Not found
-                _logger.LogDebug("None of the loader(s) found any content.");
-                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                _logger.LogDebug("Content loaders did not found any content.");
+                context.HttpContext.Response.StatusCode = (int) HttpStatusCode.NotFound;
             }
-            else if (contents.Count > 0)
+            else if (contentCount > 0)
             {
                 TextContent content = contents.Count > 1 ? TextContent.Combine(contents) : contents.First();
 
-                //if (context.Category == ContentCategory.Js)
-                //{
-                //    context.HttpContext.Response.ContentType = "application/javascript";
-                //}
-                //else if (context.Category == ContentCategory.Css)
-                //{
-                //    context.HttpContext.Response.ContentType = "text/css";
-                //}
                 context.HttpContext.Response.ContentType = context.ContentInfo.MimeType;
 
                 if (content.Status == ResponseStatus.Ok)
                 {
                     context.HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
-                    if (_options.SupportETag && contents.Count == 1 && !string.IsNullOrEmpty(content.ETag))
+
+                    if (_options.SupportETag && contentCount == 1 && !string.IsNullOrEmpty(content.ETag))
                     {
                         context.HttpContext.Response.Headers.Add("ETag", new StringValues(content.ETag));
                     }
+
                     await context.HttpContext.Response.WriteAsync(content.Value, content.Encoding);
                 }
                 else if (content.Status == ResponseStatus.NotModified)
                 {
-                    context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotModified;
+                    context.HttpContext.Response.StatusCode = (int) HttpStatusCode.NotModified;
                 }
             }
         }
