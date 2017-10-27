@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace Chame
+namespace Chame.ContentLoaders
 {
     /// <summary>
     /// An execution order sorter for <see cref="IContentLoader"/> implementations.

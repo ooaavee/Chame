@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Chame.ContentLoaders;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Options;
 
@@ -10,7 +11,7 @@ namespace Chame
 
     public class ThemedViewLocationExpander : IViewLocationExpander
     {
-        private const string ThemeKey = "chame.theme";
+        private const string ThemeKey = "chame.theme.id";
 
         private readonly RazorThemeOptions _options;
 
@@ -27,14 +28,14 @@ namespace Chame
                 throw new InvalidOperationException("HttpContext is not available.");
             }
 
-            IOptions<ContentLoaderOptions> options = context.ActionContext.HttpContext.RequestServices.GetService(typeof(IOptions<ContentLoaderOptions>)) as IOptions<ContentLoaderOptions>;          
+            IOptions<ContentLoaderOptions> options = context.ActionContext.HttpContext.RequestServices.GetService(typeof(IOptions<ContentLoaderOptions>)) as IOptions<ContentLoaderOptions>;
             if (options?.Value == null)
             {
                 throw new InvalidOperationException(string.Format("{0} is not available.", nameof(IOptions<ContentLoaderOptions>)));
             }
 
             // Resolve theme by invoking ThemeResolver. If not available, a fallback theme comes from options.   
-            string theme = null;
+            IThemeInfo theme = null;
             if (options.Value.ThemeResolver != null)
             {
                 theme = options.Value.ThemeResolver.GetTheme(new RazorThemeResolvingContext(
@@ -47,16 +48,16 @@ namespace Chame
                     context.Values));
             }
 
-            if (string.IsNullOrEmpty(theme))
+            if (theme == null)
             {
                 theme = options.Value.DefaultTheme;
-                if (string.IsNullOrEmpty(theme))
+                if (theme == null)
                 {
-                    throw new InvalidOperationException("Could not resolve theme.");
+                    throw new InvalidOperationException("Could not resolve a theme.");
                 }
             }
-
-            context.Values[ThemeKey] = theme;
+           
+            context.Values[ThemeKey] = theme.Id;
         }
 
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)

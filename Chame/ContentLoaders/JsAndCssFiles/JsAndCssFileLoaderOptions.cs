@@ -1,20 +1,21 @@
 ﻿using System;
-using Chame.Models;
+using Chame.Caching;
+using Chame.ContentLoaders.JsAndCssFiles.Models;
 
-namespace Chame
+namespace Chame.ContentLoaders.JsAndCssFiles
 {
-    public class FileSystemContentLoaderOptions
+    public class JsAndCssFileLoaderOptions
     {
-        public FileSystemContentLoaderOptions()
+        public JsAndCssFileLoaderOptions()
         {
             UseContentSchemaFile = true;
-            ContentSchemaFile = @"\chame.json";
+            ContentSchemaFile = @"\JsAndCssFileLoader.json";
             CachingMode = CachingModes.EnabledButDisabledOnDev;
             CacheAbsoluteExpirationRelativeToNow = new TimeSpan(0, 0, 1, 0);
         }
 
         /// <summary>
-        /// A path to the content schema file. The default value is '\chame.json' under wwwroot.
+        /// A path to the content schema file. The default value is '\JsAndCssFileLoader.json' under wwwroot.
         /// </summary>
         public string ContentSchemaFile { get; set; }
 

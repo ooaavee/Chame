@@ -6,26 +6,27 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Chame.Models;
+using Chame.Caching;
+using Chame.ContentLoaders.JsAndCssFiles.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Chame.Services
+namespace Chame.ContentLoaders.JsAndCssFiles
 {
     /// <summary>
-    /// Loads JavaScript and CSS content from the filesystem.
+    /// Loads JavaScript and CSS files from the filesystem.
     /// </summary>
-    public class FileSystemContentLoader : IContentLoader
+    public class JsAndCssFileLoader : IContentLoader
     {
         private readonly ContentLoaderOptions _options1;
-        private readonly FileSystemContentLoaderOptions _options2;
+        private readonly JsAndCssFileLoaderOptions _options2;
         private readonly ContentCache _cache;
         private readonly IHostingEnvironment _env;
-        private readonly ILogger<FileSystemContentLoader> _logger;
+        private readonly ILogger<JsAndCssFileLoader> _logger;
 
-        public FileSystemContentLoader(IOptions<ContentLoaderOptions> options1, IOptions<FileSystemContentLoaderOptions> options2, ContentCache cache, IHostingEnvironment env, ILogger<FileSystemContentLoader> logger)
+        public JsAndCssFileLoader(IOptions<ContentLoaderOptions> options1, IOptions<JsAndCssFileLoaderOptions> options2, ContentCache cache, IHostingEnvironment env, ILogger<JsAndCssFileLoader> logger)
         {
             if (options1 == null)
             {
@@ -61,7 +62,7 @@ namespace Chame.Services
 
         public double Priority => 0;
 
-        public IEnumerable<string> SupportedContentTypes()
+        public IEnumerable<string> ContentTypeExtensions()
         {
             yield return "js";
             yield return "css";
@@ -260,7 +261,7 @@ namespace Chame.Services
             else
             {
                 // Common files for all themes.
-                switch (context.ContentInfo.Code)
+                switch (context.ContentInfo.Extension)
                 {
                     case "css":
                         files.AddRange(schema.CssFiles);
@@ -271,14 +272,14 @@ namespace Chame.Services
                 }
 
                 // Resolve theme-specific files.
-                ContentFileTheme theme = schema.Themes.FirstOrDefault(x => x.Name == context.Theme);
+                ContentFileTheme theme = schema.Themes.FirstOrDefault(x => x.Id == context.Theme.Id);
                 if (theme == null)
                 {
                     _logger.LogWarning(string.Format("No content found for the requested theme '{0}'.", context.Theme));
                 }
                 else
                 {
-                    switch (context.ContentInfo.Code)
+                    switch (context.ContentInfo.Extension)
                     {
                         case "css":
                             files.AddRange(theme.CssFiles);

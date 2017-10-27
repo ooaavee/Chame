@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 
-namespace Chame
+namespace Chame.ContentLoaders
 {
     public class ContentFileThemeResolvingContext
     {

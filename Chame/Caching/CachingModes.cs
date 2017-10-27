@@ -1,4 +1,4 @@
-﻿namespace Chame
+﻿namespace Chame.Caching
 {
     /// <summary>
     /// Caching modes

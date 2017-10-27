@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Chame;
+using Chame.ContentLoaders;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -33,27 +34,33 @@ namespace WebSite.Services
 
     public class DemoThemeResolver : IThemeResolver
     {
-        public string GetTheme(ContentFileThemeResolvingContext context)
+        public IThemeInfo GetTheme(ContentFileThemeResolvingContext context)
         {
             return GetThemeFromHttpContext(context.HttpContext);
         }
 
-        public string GetTheme(RazorThemeResolvingContext context)
+        public IThemeInfo GetTheme(RazorThemeResolvingContext context)
         {
             return GetThemeFromHttpContext(context.HttpContext);
         }
 
-        private static string GetThemeFromHttpContext(HttpContext context)
+        private static IThemeInfo GetThemeFromHttpContext(HttpContext context)
         {
             if (context.User.Identity.IsAuthenticated)
             {
-                return DemoService.ThemeB;
+                return new MyTheme {Id = DemoService.ThemeB};
             }
             else
             {
-                return DemoService.ThemeA;
+                return new MyTheme {Id = DemoService.ThemeA};
             }
         }
+
+        private class MyTheme : IThemeInfo
+        {
+            public string Id { get; set; }
+        }
+
     }
 
 }

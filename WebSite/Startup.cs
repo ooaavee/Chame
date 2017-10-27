@@ -34,7 +34,7 @@ namespace WebSite
         public void ConfigureServices(IServiceCollection services)
         {
 
-            services.AddThemes(options =>
+            services.AddContentLoader(options =>
                 {
                     options.ThemeResolver = new DemoThemeResolver();
                 })

@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Chame
+namespace Chame.ContentLoaders
 {
     public interface IContentLoader
     {
@@ -13,7 +12,11 @@ namespace Chame
         /// </summary>
         double Priority { get; }
 
-        IEnumerable<string> SupportedContentTypes();
+        /// <summary>
+        /// Content-type extensions that are supported by the content loader.
+        /// </summary>
+        /// <returns>supported content-type extensions</returns>
+        IEnumerable<string> ContentTypeExtensions();
 
         /// <summary>
         /// Loads content.

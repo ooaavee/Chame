@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Chame.ContentLoaders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -33,7 +34,7 @@ namespace Chame.Middlewares
 
             foreach (IContentInfo ci in _options.ContentModel.SupportedContent)
             {
-                var path = string.Format(pathTemplate, ci.Code);
+                var path = string.Format(pathTemplate, ci.Extension);
                 _paths[path] = ci;
                 _logger.LogDebug(string.Format("Registering a request path '{0}' for MIME type '{1}'.", path, ci.MimeType));
             }
@@ -78,10 +79,10 @@ namespace Chame.Middlewares
             List<IContentLoader> loaders = new List<IContentLoader>();
             foreach (IContentLoader loader in httpContext.RequestServices.GetServices<IContentLoader>().Concat(_options.ContentLoaders))
             {
-                if (loader.SupportedContentTypes().Any(x => x == ci.Code || x == "*"))
+                if (loader.ContentTypeExtensions().Any(x => x == ci.Extension || x == "*"))
                 {
                     loaders.Add(loader);
-                }                
+                }
             }
 
             int loaderCount = loaders.Count;
@@ -124,17 +125,17 @@ namespace Chame.Middlewares
             }
 
             // Resolve theme by invoking ThemeResolver. If not available, a fallback theme comes from options.
-            string theme = null;
+            IThemeInfo theme = null;
             IThemeResolver themeResolver = _options.ThemeResolver;
             if (themeResolver != null)
             {
                 theme = themeResolver.GetTheme(new ContentFileThemeResolvingContext(httpContext, ci, filter));
             }
 
-            if (string.IsNullOrEmpty(theme))
+            if (theme == null)
             {
                 theme = _options.DefaultTheme;
-                if (string.IsNullOrEmpty(theme))
+                if (theme == null)
                 {
                     _logger.LogCritical("Could not resolve theme.");
                     return false;
@@ -209,7 +210,7 @@ namespace Chame.Middlewares
             {
                 // Not found
                 _logger.LogDebug("Content loaders did not found any content.");
-                context.HttpContext.Response.StatusCode = (int) HttpStatusCode.NotFound;
+                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotFound;
             }
             else if (contentCount > 0)
             {
@@ -230,7 +231,7 @@ namespace Chame.Middlewares
                 }
                 else if (content.Status == ResponseStatus.NotModified)
                 {
-                    context.HttpContext.Response.StatusCode = (int) HttpStatusCode.NotModified;
+                    context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotModified;
                 }
             }
         }

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-namespace Chame
+namespace Chame.ContentLoaders
 {
     public class ContentLoaderOptions
     {
@@ -11,16 +9,16 @@ namespace Chame
         /// </summary>
         public ContentLoaderOptions()
         {
-            DefaultTheme = "default";
+            DefaultTheme = new DefaultTheme();
             SupportETag = true;
             ContentLoaderSorter = new DefaultContentLoaderSorter();
             ContentModel = new DefaultContentModel();
         }
 
         /// <summary>
-        /// The name of the default theme that should be used. The default value is 'default'.
+        /// A fallback theme.
         /// </summary>
-        public string DefaultTheme { get; set; }
+        public IThemeInfo DefaultTheme { get; set; }
 
         /// <summary>
         /// Resolves the theme that should be used. If not set, the <see cref="DefaultTheme"/> will be used.
@@ -42,9 +40,9 @@ namespace Chame
         /// </summary>
         public IContentLoaderSorter ContentLoaderSorter { get; set; }
 
+        /// <summary>
+        /// Defines supported content.
+        /// </summary>
         public IContentModel ContentModel { get; set; }
-
-     
-
     }
 }

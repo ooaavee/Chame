@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace Chame.Models
+namespace Chame.ContentLoaders.JsAndCssFiles.Models
 {
     public class ContentFileTheme
     {
         /// <summary>
-        /// Theme name
+        /// Theme id
         /// </summary>
-        [JsonProperty("name")]
-        public virtual string Name { get; set; }
+        [JsonProperty("id")]
+        public virtual string Id { get; set; }
 
         /// <summary>
         /// CSS files for this theme

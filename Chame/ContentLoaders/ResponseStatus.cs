@@ -1,4 +1,4 @@
-﻿namespace Chame
+﻿namespace Chame.ContentLoaders
 {
     public enum ResponseStatus
     {

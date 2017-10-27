@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Chame
+namespace Chame.ContentLoaders
 {
     public class TextContent
     {

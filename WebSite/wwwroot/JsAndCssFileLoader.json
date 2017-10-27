@@ -29,7 +29,7 @@
 
     "themes": [
         {
-            "name": "A",
+            "id": "A",
             "cssFiles": [
                 {
                     "path": "css/Themes/A/demo.css"
@@ -42,7 +42,7 @@
             ]
         },
         {
-            "name": "B",
+            "id": "B",
             "cssFiles": [
                 {
                     "path": "css/Themes/B/demo.css"

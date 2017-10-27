@@ -1,4 +1,6 @@
-﻿namespace Chame
+﻿using Chame.ContentLoaders;
+
+namespace Chame
 {
     public interface IThemeResolver
     {
@@ -6,14 +8,14 @@
         /// Resolves a theme that should be used when loading content files.
         /// </summary>
         /// <param name="context">context</param>
-        /// <returns>theme name</returns>
-        string GetTheme(ContentFileThemeResolvingContext context);
+        /// <returns>theme</returns>
+        IThemeInfo GetTheme(ContentFileThemeResolvingContext context);
 
         /// <summary>
         /// Resolves a theme that should be used when loading Razor views.
         /// </summary>
         /// <param name="context">context</param>
-        /// <returns>theme name</returns>
-        string GetTheme(RazorThemeResolvingContext context);
+        /// <returns>theme</returns>
+        IThemeInfo GetTheme(RazorThemeResolvingContext context);
     }
 }

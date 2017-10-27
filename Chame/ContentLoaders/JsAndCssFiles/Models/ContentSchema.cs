@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace Chame.Models
+namespace Chame.ContentLoaders.JsAndCssFiles.Models
 {
     public class ContentSchema
     {

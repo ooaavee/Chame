@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace Chame.Models
+namespace Chame.ContentLoaders.JsAndCssFiles.Models
 {
     public class ContentFile
     {

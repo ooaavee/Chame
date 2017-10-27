@@ -1,6 +1,7 @@
 ﻿using System;
 using Chame;
-using Chame.Services;
+using Chame.Caching;
+using Chame.ContentLoaders;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -10,7 +11,7 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class IServiceCollectionExtensions
     {
-        public static IThemeBuilder AddThemes(this IServiceCollection services, Action<ContentLoaderOptions> configureOptions = null)
+        public static IContentLoaderBuilder AddContentLoader(this IServiceCollection services, Action<ContentLoaderOptions> configureOptions = null)
         {
             if (services == null)
             {
@@ -28,7 +29,7 @@ namespace Microsoft.Extensions.DependencyInjection
             // my services
             services.TryAddSingleton<ContentCache>();
 
-            return new ThemeBuilder(services);
+            return new DefaultContentLoaderBuilder(services);
         }
     }
 }

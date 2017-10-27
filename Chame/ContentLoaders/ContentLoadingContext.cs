@@ -1,14 +1,13 @@
-﻿using System.Collections.Generic;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 
-namespace Chame
+namespace Chame.ContentLoaders
 {
     /// <summary>
     /// Encapsulates information about an individual content file loading request.
     /// </summary>
     public class ContentLoadingContext
     {
-        public ContentLoadingContext(HttpContext httpContext, IContentInfo contentInfo, string theme, string filter, string eTag)
+        public ContentLoadingContext(HttpContext httpContext, IContentInfo contentInfo, IThemeInfo theme, string filter, string eTag)
         {
             HttpContext = httpContext;
             ContentInfo = contentInfo;
@@ -22,12 +21,15 @@ namespace Chame
         /// </summary>
         public HttpContext HttpContext { get; }
 
+        /// <summary>
+        /// Content-info
+        /// </summary>
         public IContentInfo ContentInfo { get; }
 
         /// <summary>
         /// Theme
         /// </summary>
-        public string Theme { get; }
+        public IThemeInfo Theme { get; }
 
         /// <summary>
         /// Filter (optional)
