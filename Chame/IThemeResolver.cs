@@ -9,13 +9,13 @@ namespace Chame
         /// </summary>
         /// <param name="context">context</param>
         /// <returns>theme</returns>
-        IThemeInfo GetTheme(ContentFileThemeResolvingContext context);
+        IThemeInfo Resolve(ContentFileThemeResolvingContext context);
 
         /// <summary>
         /// Resolves a theme that should be used when loading Razor views.
         /// </summary>
         /// <param name="context">context</param>
         /// <returns>theme</returns>
-        IThemeInfo GetTheme(RazorThemeResolvingContext context);
+        IThemeInfo Resolve(RazorThemeResolvingContext context);
     }
 }

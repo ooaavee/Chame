@@ -16,8 +16,8 @@ namespace WebSite.Controllers
             _service = service;
         }
 
-        [HttpGet("demo")]
-        public ActionResult Demo()
+        [HttpGet("demo1")]
+        public ActionResult Demo1()
         {
             return View();
         }
@@ -26,7 +26,7 @@ namespace WebSite.Controllers
         public async Task<ActionResult> SwitchTheme()
         {
             await _service.SwitchThemeAsync(HttpContext);
-            return RedirectToAction("Demo");
+            return RedirectToAction("Demo1");
         }
 
     }

@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using Chame.ContentLoaders;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Chame
@@ -22,41 +25,24 @@ namespace Chame
 
         public void PopulateValues(ViewLocationExpanderContext context)
         {
-            // Check that HTTP Context is available!
-            if (context.ActionContext.HttpContext == null)
+            HttpContext httpContext = context.ActionContext.HttpContext;
+            if (httpContext == null)
             {
                 throw new InvalidOperationException("HttpContext is not available.");
             }
 
-            IOptions<ContentLoaderOptions> options = context.ActionContext.HttpContext.RequestServices.GetService(typeof(IOptions<ContentLoaderOptions>)) as IOptions<ContentLoaderOptions>;
-            if (options?.Value == null)
-            {
-                throw new InvalidOperationException(string.Format("{0} is not available.", nameof(IOptions<ContentLoaderOptions>)));
-            }
+            ILogger<ThemedViewLocationExpander> logger = httpContext.RequestServices.GetRequiredService<ILogger<ThemedViewLocationExpander>>();
 
-            // Resolve theme by invoking ThemeResolver. If not available, a fallback theme comes from options.   
-            IThemeInfo theme = null;
-            if (options.Value.ThemeResolver != null)
-            {
-                theme = options.Value.ThemeResolver.GetTheme(new RazorThemeResolvingContext(
-                    context.ActionContext.HttpContext,
-                    context.ViewName,
-                    context.ControllerName,
-                    context.PageName,
-                    context.AreaName,
-                    context.IsMainPage,
-                    context.Values));
-            }
-
+            IOptions<ContentLoaderOptions> options = httpContext.RequestServices.GetRequiredService<IOptions<ContentLoaderOptions>>();
+           
+            // resolve theme
+            IThemeInfo theme = ThemeResolver.Resolve(new RazorThemeResolvingContext(context), options.Value.ThemeResolver, options.Value.DefaultTheme);
             if (theme == null)
             {
-                theme = options.Value.DefaultTheme;
-                if (theme == null)
-                {
-                    throw new InvalidOperationException("Could not resolve a theme.");
-                }
+                logger.LogCritical("Could not resolve a theme.");
+                throw new InvalidOperationException("Could not resolve a theme.");
             }
-           
+
             context.Values[ThemeKey] = theme.Id;
         }
 

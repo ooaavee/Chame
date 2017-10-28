@@ -45,14 +45,8 @@ namespace WebSite
             services.AddMvc()
                 .AddRazorOptions(options =>
                 {
-                    options.EnableThemes(themes =>
-                    {
-                        themes.EmbeddedViewAssemblies.Add(typeof(WebSite.Themes.A.Info).Assembly);
-                        themes.EmbeddedViewAssemblies.Add(typeof(WebSite.Themes.B.Info).Assembly);
-                    });
+                    options.EnableThemes();
                 });
-
-
 
             services.AddTransient<DemoService, DemoService>();
 

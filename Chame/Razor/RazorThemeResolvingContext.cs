@@ -1,19 +1,21 @@
+using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Razor;
 
 namespace Chame
 {
     public class RazorThemeResolvingContext
     {
-        public RazorThemeResolvingContext(HttpContext httpContext, string viewName, string controllerName, string pageName, string areaName, bool isMainPage, IDictionary<string, string> values)
+        public RazorThemeResolvingContext(ViewLocationExpanderContext context)
         {
-            HttpContext = httpContext;
-            ViewName = viewName;
-            ControllerName = controllerName;
-            PageName = pageName;
-            AreaName = areaName;
-            IsMainPage = isMainPage;
-            Values = values;
+            HttpContext = context.ActionContext.HttpContext;
+            ViewName = context.ViewName;
+            ControllerName = context.ControllerName;
+            PageName = context.PageName;
+            AreaName = context.AreaName;
+            IsMainPage = context.IsMainPage;
+            Values = context.Values;
         }
 
         /// <summary>
