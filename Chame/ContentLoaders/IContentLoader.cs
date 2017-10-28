@@ -22,7 +22,7 @@ namespace Chame.ContentLoaders
         /// Loads content.
         /// </summary>
         /// <param name="context">A context object that tells you what was requested.</param>
-        /// <returns>response</returns>
-        Task<TextContent> LoadContentAsync(ContentLoadingContext context);
+        /// <returns>loaded content</returns>
+        Task<Content> LoadContentAsync(ContentLoadingContext context);
     }   
 }

@@ -60,15 +60,29 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             _logger = logger;
         }
 
+        /// <summary>
+        /// Content loader priority. 
+        /// An execution order of content loaders are sorted by this property. 
+        /// This is only meaningful if there are more than one content loaders!
+        /// </summary>
         public double Priority => 0;
 
+        /// <summary>
+        /// Content-type extensions that are supported by the content loader.
+        /// </summary>
+        /// <returns>supported content-type extensions</returns>
         public IEnumerable<string> ContentTypeExtensions()
         {
             yield return "js";
             yield return "css";
         }
 
-        public Task<TextContent> LoadContentAsync(ContentLoadingContext context)
+        /// <summary>
+        /// Loads content.
+        /// </summary>
+        /// <param name="context">A context object that tells you what was requested.</param>
+        /// <returns>loaded content</returns>
+        public Task<Content> LoadContentAsync(ContentLoadingContext context)
         {
             if (context == null)
             {
@@ -99,63 +113,90 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             }
         }
 
-        private TextContent Load(ContentLoadingContext context)
+        private Content Load(ContentLoadingContext context)
         {
-            FileContent content;
+            FileContent fileContent = null;
 
-            // First try to use cached content.
+            // first try to use cached content
             if (IsCacheEnabled)
             {
-                content = _cache.Get<FileContent>(context);
-                if (content != null)
+                fileContent = _cache.Get<FileContent>(context);
+                if (fileContent != null)
                 {
-                    return GetResponseContent(content, context);
+                    return GetContent(fileContent, context);
                 }
             }
 
-            // Get files to use.
+            // read content files and optionally cache the content
             ContentFile[] files = GetFiles(context);
-
-            // Read content files and optionally cache the content.
             if (files.Any())
             {
-                content = GetContent(files, context);
+                fileContent = GetFileContent(files, context);
                 if (IsCacheEnabled)
                 {
-                    _cache.Set<FileContent>(content, _options2.CacheAbsoluteExpirationRelativeToNow, context);
+                    _cache.Set<FileContent>(fileContent, _options2.CacheAbsoluteExpirationRelativeToNow, context);
+                }
+            }
+
+            return GetContent(fileContent, context);
+        }
+
+        private Content GetContent(FileContent fileContent, ContentLoadingContext context)
+        {
+            Content content;
+
+            if (fileContent != null)
+            {
+                if (_options1.SupportETag && context.ETag != null && fileContent.ETag != null && context.ETag == fileContent.ETag)
+                {
+                    content = Content.NotModified();
+                }
+                else
+                {
+                    if (fileContent.ETag != null)
+                    {
+                        content = Content.Ok(fileContent.Data, fileContent.ETag);
+                    }
+                    else
+                    {
+                        content = Content.Ok(fileContent.Data);
+                    }
                 }
             }
             else
             {
-                content = new FileContent {Value = string.Empty};
+                content = Content.NotFound();
             }
 
-            return GetResponseContent(content, context);
+            return content;
         }
 
-        private TextContent GetResponseContent(FileContent container, ContentLoadingContext context)
+        private FileContent GetFileContent(IEnumerable<ContentFile> files, ContentLoadingContext context)
         {
-            if (_options1.SupportETag && context.ETag != null && container.ETag != null && context.ETag == container.ETag)
-            {
-                return TextContent.NotModified();
-            }
-            return container.ETag == null ? 
-                TextContent.Ok(container.Value, Encoding.UTF8) : 
-                TextContent.Ok(container.Value, Encoding.UTF8, container.ETag);
-        }
+//            var buf = new StringBuilder();
+            List<byte> bytes = new List<byte>(); 
+                
+            IEnumerable<ContentFile> filtered = Filter(files, context.Filter);
 
-        private FileContent GetContent(IEnumerable<ContentFile> files, ContentLoadingContext context)
-        {
-            var buf = new StringBuilder();
-            foreach (ContentFile file in Filter(files, context.Filter))
+            foreach (ContentFile file in filtered)
             {
-                buf.AppendLine(ReadAllText(file));
+                byte[] tmp = ReadAllBytes(file);
+                if (tmp != null)
+                {
+                    bytes.AddRange(tmp);
+                }
             }
-            return new FileContent
+
+            byte[] data = bytes.ToArray();
+
+            string eTag = null;
+
+            if (_options1.SupportETag)
             {
-                Value = buf.ToString(),
-                ETag = _options1.SupportETag ? GetETag(buf.ToString()) : null
-            };
+                eTag = GetETag(data);
+            }
+
+            return new FileContent {Data = data, ETag = eTag};
         }
 
         private static IEnumerable<ContentFile> Filter(IEnumerable<ContentFile> files, string filter)
@@ -182,14 +223,14 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             }
         }
 
-        private string ReadAllText(ContentFile file)
+        private byte[] ReadAllBytes(ContentFile file)
         {
             IFileInfo fi = _env.WebRootFileProvider.GetFileInfo(file.Path);
             if (fi.Exists)
             {
                 try
                 {
-                    return File.ReadAllText(fi.PhysicalPath);
+                    return File.ReadAllBytes(fi.PhysicalPath);
                 }
                 catch (Exception ex)
                 {
@@ -197,18 +238,24 @@ namespace Chame.ContentLoaders.JsAndCssFiles
                     throw;
                 }
             }
-            else
-            {
-                _logger.LogError(string.Format("Content file '{0}' does not exist.", file.Path));
-            }
-            return string.Empty;
+            _logger.LogError(string.Format("Content file '{0}' does not exist.", file.Path));
+            return null;
         }
 
-        private static string GetETag(string content)
+        /// <summary>
+        /// 
+        /// TODO: Tästä apuluokka, koska tarvitaan muuallakin.
+        /// 
+        /// 
+        /// 
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        private static string GetETag(byte[] data)
         {
             using (var sha256 = SHA256.Create())
             {
-                var hash = sha256.ComputeHash(Encoding.ASCII.GetBytes(content));
+                var hash = sha256.ComputeHash(data);
                 var buffer = new StringBuilder();
                 foreach (var b in hash)
                 {
@@ -326,23 +373,5 @@ namespace Chame.ContentLoaders.JsAndCssFiles
                 return null;
             }        
         }
-
-
-
-
-        private class FileContent
-        {
-            /// <summary>
-            /// Text content
-            /// </summary>
-            public string Value { get; set; }
-
-            /// <summary>
-            /// HTTP ETag
-            /// </summary>
-            public string ETag { get; set; }
-        }
-
-
     }
 }
