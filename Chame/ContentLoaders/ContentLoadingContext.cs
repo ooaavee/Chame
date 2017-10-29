@@ -7,7 +7,7 @@ namespace Chame.ContentLoaders
     /// </summary>
     public class ContentLoadingContext
     {
-        public ContentLoadingContext(HttpContext httpContext, IContentInfo contentInfo, IThemeInfo theme, string filter, string eTag)
+        public ContentLoadingContext(HttpContext httpContext, IContentInfo contentInfo, ITheme theme, string filter, string eTag)
         {
             HttpContext = httpContext;
             ContentInfo = contentInfo;
@@ -29,7 +29,7 @@ namespace Chame.ContentLoaders
         /// <summary>
         /// Theme
         /// </summary>
-        public IThemeInfo Theme { get; }
+        public ITheme Theme { get; }
 
         /// <summary>
         /// Filter (optional)

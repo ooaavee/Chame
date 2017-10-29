@@ -319,7 +319,8 @@ namespace Chame.ContentLoaders.JsAndCssFiles
                 }
 
                 // Resolve theme-specific files.
-                ContentFileTheme theme = schema.Themes.FirstOrDefault(x => x.Id == context.Theme.Id);
+                string themeName = context.Theme.GetName();
+                ContentFileTheme theme = schema.Themes.FirstOrDefault(x => x.Id == themeName);
                 if (theme == null)
                 {
                     _logger.LogWarning(string.Format("No content found for the requested theme '{0}'.", context.Theme));

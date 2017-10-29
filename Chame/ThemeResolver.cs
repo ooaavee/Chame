@@ -9,9 +9,9 @@ namespace Chame
 {
     internal static class ThemeResolver
     {
-        internal static IThemeInfo Resolve(ContentFileThemeResolvingContext context, IThemeResolver resolver, IThemeInfo fallbackTheme)
+        internal static ITheme Resolve(ContentFileThemeResolvingContext context, IThemeResolver resolver, ITheme fallbackTheme)
         {
-            IThemeInfo theme = null;
+            ITheme theme = null;
 
             if (resolver != null)
             {
@@ -26,9 +26,9 @@ namespace Chame
             return theme;
         }
 
-        internal static IThemeInfo Resolve(RazorThemeResolvingContext context, IThemeResolver resolver, IThemeInfo fallbackTheme)
+        internal static ITheme Resolve(RazorThemeResolvingContext context, IThemeResolver resolver, ITheme fallbackTheme)
         {
-            IThemeInfo theme = null;
+            ITheme theme = null;
 
             if (resolver != null)
             {

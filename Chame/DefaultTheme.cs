@@ -3,8 +3,11 @@
     /// <summary>
     /// 'default' theme
     /// </summary>
-    public class DefaultTheme : IThemeInfo
+    public class DefaultTheme : ITheme
     {
-        public string Id => "default";
+        public string GetName()
+        {
+            return "default";
+        }
     }
 }

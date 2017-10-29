@@ -18,7 +18,7 @@ namespace Chame.ContentLoaders
         /// <summary>
         /// A fallback theme.
         /// </summary>
-        public IThemeInfo DefaultTheme { get; set; }
+        public ITheme DefaultTheme { get; set; }
 
         /// <summary>
         /// Resolves the theme that should be used. If not set, the <see cref="DefaultTheme"/> will be used.

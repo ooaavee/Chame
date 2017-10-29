@@ -36,14 +36,14 @@ namespace Chame
             IOptions<ContentLoaderOptions> options = httpContext.RequestServices.GetRequiredService<IOptions<ContentLoaderOptions>>();
            
             // resolve theme
-            IThemeInfo theme = ThemeResolver.Resolve(new RazorThemeResolvingContext(context), options.Value.ThemeResolver, options.Value.DefaultTheme);
+            ITheme theme = ThemeResolver.Resolve(new RazorThemeResolvingContext(context), options.Value.ThemeResolver, options.Value.DefaultTheme);
             if (theme == null)
             {
                 logger.LogCritical("Could not resolve a theme.");
                 throw new InvalidOperationException("Could not resolve a theme.");
             }
 
-            context.Values[ThemeKey] = theme.Id;
+            context.Values[ThemeKey] = theme.GetName();
         }
 
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)

@@ -142,7 +142,7 @@ namespace Chame.Middlewares
             }
 
             // resolve theme
-            IThemeInfo theme = ThemeResolver.Resolve(new ContentFileThemeResolvingContext(httpContext, content, filter), _options.ThemeResolver, _options.DefaultTheme);
+            ITheme theme = ThemeResolver.Resolve(new ContentFileThemeResolvingContext(httpContext, content, filter), _options.ThemeResolver, _options.DefaultTheme);
             if (theme == null)
             {
                 _logger.LogCritical("Could not resolve theme.");

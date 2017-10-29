@@ -34,31 +34,41 @@ namespace WebSite.Services
 
     public class DemoThemeResolver : IThemeResolver
     {
-        public IThemeInfo Resolve(ContentFileThemeResolvingContext context)
+        public ITheme Resolve(ContentFileThemeResolvingContext context)
         {
             return GetThemeFromHttpContext(context.HttpContext);
         }
 
-        public IThemeInfo Resolve(RazorThemeResolvingContext context)
+        public ITheme Resolve(RazorThemeResolvingContext context)
         {
             return GetThemeFromHttpContext(context.HttpContext);
         }
 
-        private static IThemeInfo GetThemeFromHttpContext(HttpContext context)
+        private static ITheme GetThemeFromHttpContext(HttpContext context)
         {
             if (context.User.Identity.IsAuthenticated)
             {
-                return new MyTheme {Id = DemoService.ThemeB};
+                return new MyTheme(DemoService.ThemeB);
             }
             else
             {
-                return new MyTheme {Id = DemoService.ThemeA};
+                return new MyTheme(DemoService.ThemeA);
             }
         }
 
-        private class MyTheme : IThemeInfo
+        private class MyTheme : ITheme
         {
-            public string Id { get; set; }
+            private readonly string _name;
+
+            public MyTheme(string name)
+            {
+                _name = name;
+            }
+
+            public string GetName()
+            {
+                return _name;
+            }
         }
 
     }
