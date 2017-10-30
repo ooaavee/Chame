@@ -1,6 +1,7 @@
 ﻿using System;
 using Chame;
-using Chame.Services;
+using Chame.ContentLoaders;
+using Chame.ContentLoaders.JsAndCssFiles;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -10,7 +11,7 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class IThemeBuilderExtensions
     {
-        public static IThemeBuilder AddFileSystemLoader(this IThemeBuilder builder, Action<FileSystemContentLoaderOptions> configureOptions = null)
+        public static IContentLoaderBuilder AddFileSystemLoader(this IContentLoaderBuilder builder, Action<JsAndCssFileLoaderOptions> configureOptions = null)
         {
             if (builder == null)
             {
@@ -23,11 +24,10 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             // options
-            builder.Services.Configure<FileSystemContentLoaderOptions>(configureOptions);
+            builder.Services.Configure<JsAndCssFileLoaderOptions>(configureOptions);
 
             // my services
-            builder.Services.TryAddSingleton<IJsContentLoader, FileSystemContentLoader>();
-            builder.Services.TryAddSingleton<ICssContentLoader, FileSystemContentLoader>();
+            builder.Services.TryAddSingleton<IContentLoader, JsAndCssFileLoader>();
 
             // framework services
             builder.Services.AddMemoryCache();
