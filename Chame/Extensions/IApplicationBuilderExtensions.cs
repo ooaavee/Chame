@@ -8,14 +8,16 @@ namespace Microsoft.AspNetCore.Builder
     /// </summary>
     public static class IApplicationBuilderExtensions
     {
-        public static IApplicationBuilder UseThemes(this IApplicationBuilder app)
+        private const string DefaultPathTemplate = "/chame-loader/{0}";
+
+        public static IApplicationBuilder UseThemes(this IApplicationBuilder app, string pathTemplate = null)
         {
             if (app == null)
             {
                 throw new ArgumentNullException(nameof(app));
             }
-          
-            app.UseMiddleware<ContentLoaderMiddleware>();
+            
+            app.UseMiddleware<ContentLoaderMiddleware>(pathTemplate ?? DefaultPathTemplate);
 
             return app;
         }
