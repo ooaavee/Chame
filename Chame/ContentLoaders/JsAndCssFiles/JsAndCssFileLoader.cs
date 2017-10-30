@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Chame.Caching;
@@ -106,7 +104,11 @@ namespace Chame.ContentLoaders.JsAndCssFiles
                     case CachingModes.Enabled:
                         return true;
                     case CachingModes.EnabledButDisabledOnDev:
-                        return !_env.IsDevelopment();
+                        if (_env.IsDevelopment())
+                        {
+                            return false;
+                        }
+                        return true;
                     default:
                         return false;
                 }
@@ -173,7 +175,6 @@ namespace Chame.ContentLoaders.JsAndCssFiles
 
         private FileContent GetFileContent(IEnumerable<ContentFile> files, ContentLoadingContext context)
         {
-//            var buf = new StringBuilder();
             List<byte> bytes = new List<byte>(); 
                 
             IEnumerable<ContentFile> filtered = Filter(files, context.Filter);
@@ -193,7 +194,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
 
             if (_options1.SupportETag)
             {
-                eTag = GetETag(data);
+                eTag = HttpETag.Calculate(data);
             }
 
             return new FileContent {Data = data, ETag = eTag};
@@ -241,30 +242,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             _logger.LogError(string.Format("Content file '{0}' does not exist.", file.Path));
             return null;
         }
-
-        /// <summary>
-        /// 
-        /// TODO: Tästä apuluokka, koska tarvitaan muuallakin.
-        /// 
-        /// 
-        /// 
-        /// </summary>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        private static string GetETag(byte[] data)
-        {
-            using (var sha256 = SHA256.Create())
-            {
-                var hash = sha256.ComputeHash(data);
-                var buffer = new StringBuilder();
-                foreach (var b in hash)
-                {
-                    buffer.AppendFormat("{0:X2}", b);
-                }
-                return buffer.ToString();
-            }
-        }
-
+       
         private ContentFile[] GetFiles(ContentLoadingContext context)
         {
             List<ContentFile> files = new List<ContentFile>();

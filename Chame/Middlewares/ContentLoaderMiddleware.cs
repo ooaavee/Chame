@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 
 namespace Chame.Middlewares
 {
@@ -53,11 +52,11 @@ namespace Chame.Middlewares
                     ContentLoadingContext context = assets.Item1;
                     IReadOnlyCollection<IContentLoader> loaders = assets.Item2;
 
-                    List<Content> loadedContent = await LoadContentAsync(context, loaders);
+                    List<Content> loaded = await LoadContentAsync(context, loaders);
 
-                    if (loadedContent.Any())
+                    if (loaded.Any())
                     {
-                        await WriteResponseAsync(context, loadedContent);
+                        await WriteResponseAsync(context, loaded);
                         return;
                     }
                 }
@@ -128,16 +127,11 @@ namespace Chame.Middlewares
             string eTag = null;
             if (_options.SupportETag)
             {
-                if (httpContext.Request.Headers.ContainsKey("If-None-Match"))
+                bool eTagAvailable = HttpETag.TryParse(httpContext.Request, out eTag);
+                if (eTagAvailable && loaders.Count > 1)
                 {
-                    if (loaders.Count == 1)
-                    {
-                        eTag = httpContext.Request.Headers["If-None-Match"].FirstOrDefault();
-                    }
-                    else
-                    {
-                        _logger.LogDebug("HTTP ETag feature will be disabled for this request, because there is more than one content loader.");
-                    }
+                    eTag = null;
+                    _logger.LogDebug("HTTP ETag will be disabled for this request, because there are multiple content loaders for this request.");
                 }
             }
 
@@ -158,53 +152,19 @@ namespace Chame.Middlewares
             return true;
         }
 
-        private async Task WriteResponseAsync(ContentLoadingContext context, List<Content> loadedContent)
-        {
-            Content content;
-
-            if (loadedContent.Count == 1)
-            {
-                content = loadedContent.First();
-            }
-            else
-            {
-                content = Content.Combine(loadedContent);
-            }
-
-            context.HttpContext.Response.ContentType = context.ContentInfo.MimeType;
-
-            switch (content.Status)
-            {
-                case ResponseStatus.Ok:
-                    context.HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
-
-                    if (_options.SupportETag && loadedContent.Count == 1 && !string.IsNullOrEmpty(content.ETag))
-                    {
-                        context.HttpContext.Response.Headers.Add("ETag", new StringValues(content.ETag));
-                    }
-
-                    await context.HttpContext.Response.Body.WriteAsync(content.Data, 0, content.Data.Length);
-                    break;
-
-                case ResponseStatus.NotModified:
-                    context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotModified;
-                    break;
-            }
-        }
-
         private async Task<List<Content>> LoadContentAsync(ContentLoadingContext context, IReadOnlyCollection<IContentLoader> loaders)
         {
-            var contents = new List<Content>();
+            var items = new List<Content>();
 
             foreach (IContentLoader loader in loaders)
             {
                 _logger.LogDebug(string.Format("Loading content by using '{0}' content loader.", loader.GetType().FullName));
 
-                // load content from IContentLoader
-                Content content;
+                // load stuff
+                Content item;
                 try
                 {
-                    content = await loader.LoadContentAsync(context);
+                    item = await loader.LoadContentAsync(context);
                 }
                 catch (Exception ex)
                 {
@@ -213,44 +173,85 @@ namespace Chame.Middlewares
                 }
 
                 // not found
-                if (content == null)
+                if (item == null)
                 {
                     _logger.LogDebug(string.Format("Content loader '{0}' did not found any content.", loader.GetType().FullName));
                     continue;
                 }
 
-                // handle loaded content status
-                switch (content.Status)
+                // not found
+                if (item.Status == ResponseStatus.NotFound)
                 {
-                    case ResponseStatus.NotFound:
-                        _logger.LogDebug(string.Format("Content loader '{0}' did not found any content.", loader.GetType().FullName));
-                        break;
+                    _logger.LogDebug(string.Format("Content loader '{0}' did not found any content.", loader.GetType().FullName));
+                }
 
-                    case ResponseStatus.Ok:
-                        if (content.Data != null)
-                        {
-                            contents.Add(content);
-                        }
-                        else
-                        {
-                            _logger.LogWarning(string.Format("Content loader '{0}' retuned null content -> ignoring item.", loader.GetType().FullName));
-                        }
-                        break;
+                // ok
+                else if (item.Status == ResponseStatus.Ok)
+                {
+                    if (item.Data != null)
+                    {
+                        items.Add(item);
+                    }
+                    else
+                    {
+                        _logger.LogWarning(string.Format("Content loader '{0}' retuned null content -> ignoring item.", loader.GetType().FullName));
+                    }
+                }
 
-                    case ResponseStatus.NotModified:
-                        if (_options.SupportETag && !string.IsNullOrEmpty(context.ETag) && loaders.Count == 1)
-                        {
-                            contents.Add(content);
-                        }
-                        else
-                        {
-                            _logger.LogWarning(string.Format("Content loader '{0}' returned status {1}, which is wrong because ETags were not enabled.", loader.GetType().FullName, ResponseStatus.NotModified));
-                        }
-                        break;
+                // not modified
+                else if (item.Status == ResponseStatus.NotModified)
+                {
+                    bool useETag = _options.SupportETag && !string.IsNullOrEmpty(context.ETag) && loaders.Count == 1;
+
+                    if (useETag)
+                    {
+                        items.Add(item);
+                    }
+                    else
+                    {
+                        _logger.LogWarning(string.Format("Content loader '{0}' returned status {1}, which is wrong because ETags were not enabled.", loader.GetType().FullName, ResponseStatus.NotModified));
+                    }
                 }
             }
 
-            return contents;
+            return items;
         }
+
+        private async Task WriteResponseAsync(ContentLoadingContext context, List<Content> loaded)
+        {
+            Content content;
+            if (loaded.Count == 1)
+            {
+                content = loaded.First();
+            }
+            else
+            {
+                content = Content.Combine(loaded);
+            }
+
+            context.HttpContext.Response.ContentType = context.ContentInfo.MimeType;
+
+            // ok
+            if (content.Status == ResponseStatus.Ok)
+            {
+                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
+
+                bool useETag = !string.IsNullOrEmpty(content.ETag) && _options.SupportETag && loaded.Count == 1;
+
+                if (useETag)
+                {
+                    HttpETag.Use(context.HttpContext.Response, content.ETag);
+                }
+
+                await context.HttpContext.Response.Body.WriteAsync(content.Data, 0, content.Data.Length);
+            }
+
+            // not modified
+            else if (content.Status == ResponseStatus.NotModified)
+            {
+                context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotModified;
+            }
+        }
+
     }
 }
