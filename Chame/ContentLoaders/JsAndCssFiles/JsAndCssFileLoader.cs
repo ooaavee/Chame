@@ -194,7 +194,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
 
             if (_options1.SupportETag)
             {
-                eTag = HttpETag.Calculate(data);
+                eTag = HttpETagHelper.Calculate(data);
             }
 
             return new FileContent {Data = data, ETag = eTag};

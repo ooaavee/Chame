@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demo", "Demo", "{766EF9B5-7
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSite", "Demo\WebSite\WebSite.csproj", "{310CC559-8AEB-4D83-960A-9632EF08019D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSiteContent", "Demo\WebSiteContent\WebSiteContent.csproj", "{BF54A291-B4A8-46CA-AEEB-9A41AC530ADC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,12 +25,17 @@ Global
 		{310CC559-8AEB-4D83-960A-9632EF08019D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{310CC559-8AEB-4D83-960A-9632EF08019D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{310CC559-8AEB-4D83-960A-9632EF08019D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF54A291-B4A8-46CA-AEEB-9A41AC530ADC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF54A291-B4A8-46CA-AEEB-9A41AC530ADC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF54A291-B4A8-46CA-AEEB-9A41AC530ADC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF54A291-B4A8-46CA-AEEB-9A41AC530ADC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{310CC559-8AEB-4D83-960A-9632EF08019D} = {766EF9B5-7C45-4E67-8EF5-8515FD23BCA2}
+		{BF54A291-B4A8-46CA-AEEB-9A41AC530ADC} = {766EF9B5-7C45-4E67-8EF5-8515FD23BCA2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E002D2A5-671C-4EC5-B0D9-AA7710045407}

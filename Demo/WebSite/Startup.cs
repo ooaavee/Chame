@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Chame;
+using Chame.Razor;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -17,6 +20,9 @@ namespace WebSite
 {
     public class Startup
     {
+        private readonly IConfigurationRoot _configuration;
+        private readonly IHostingEnvironment _env;
+
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -24,28 +30,39 @@ namespace WebSite
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
-            Configuration = builder.Build();
+
+            _configuration = builder.Build();
+            _env = env;
         }
-
-        public IConfigurationRoot Configuration { get; }
-
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Resolve an absolute path of the'Root' directory under the 'WebSiteContent' project.
+            string physicalFileProviderRoot = new DirectoryInfo(_env.ContentRootPath)
+                .Parent
+                .GetDirectories()
+                .First(x => x.Name == "WebSiteContent")
+                .GetDirectories()
+                .First(x => x.Name == "Root")
+                .FullName;
+
 
             services.AddContentLoader(options =>
                 {
                     options.ThemeResolver = new DemoThemeResolver();
                 })
-                .AddFileSystemLoader();
+                .AddJsAndCssFileLoader();
 
-
+          
             // Add MVC.
             services.AddMvc()
                 .AddRazorOptions(options =>
-                {
-                    options.EnableThemes();
+                {                   
+                    options.EnableThemes(o =>
+                    {
+                        o.WithPhysicalFileProvider(physicalFileProviderRoot);
+                    });
                 });
 
             services.AddTransient<DemoService, DemoService>();
@@ -57,28 +74,20 @@ namespace WebSite
                 {
                     options.Cookie.Name = "Chame";
                 });
-
-
-
         }
 
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+            loggerFactory.AddConsole(_configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
             app.UseDeveloperExceptionPage();
 
-            if (env.IsDevelopment())
-            {
-                app.UseBrowserLink();
-            }
-
             app.UseAuthentication();
 
-            app.UseThemes();
+            app.UseContentLoader();
 
             app.UseStaticFiles();
 

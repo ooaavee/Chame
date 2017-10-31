@@ -7,7 +7,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace Chame
 {
-    public class HttpETag
+    public static class HttpETagHelper
     {
         /// <summary>
         /// Tries to parse HTTP ETag from the request.

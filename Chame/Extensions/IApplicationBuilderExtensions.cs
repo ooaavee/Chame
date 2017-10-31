@@ -10,7 +10,7 @@ namespace Microsoft.AspNetCore.Builder
     {
         private const string DefaultPathTemplate = "/chame-loader/{0}";
 
-        public static IApplicationBuilder UseThemes(this IApplicationBuilder app, string pathTemplate = null)
+        public static IApplicationBuilder UseContentLoader(this IApplicationBuilder app, string pathTemplate = null)
         {
             if (app == null)
             {

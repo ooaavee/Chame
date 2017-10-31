@@ -1,10 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using Chame;
+using Chame.Razor;
 using Microsoft.AspNetCore.Mvc.Razor;
-using Microsoft.Extensions.FileProviders;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -19,22 +15,14 @@ namespace Microsoft.Extensions.DependencyInjection
             
             // Create and configure options.
             var themes = new RazorThemeOptions();
-            configureOptions?.Invoke(themes);
-
-            // Register a view-location-expander.
-            options.ViewLocationExpanders.Add(new ThemedViewLocationExpander(themes));
-
-            // Register assemblies for embedded Razor views.
-            if (themes.EmbeddedViewAssemblies.Any())
+            if (configureOptions != null)
             {
-                var providers = new List<IFileProvider>();
-                foreach (Assembly assembly in themes.EmbeddedViewAssemblies)
-                {
-                    providers.Add(new EmbeddedFileProvider(assembly));
-                }
-                options.FileProviders.Add(new CompositeFileProvider(providers));
+                configureOptions(themes);
             }
 
+            // Register a view-location-expander.
+            IViewLocationExpander expander = new ThemedViewLocationExpander(themes);
+            options.ViewLocationExpanders.Add(expander);            
         }
     }
 }

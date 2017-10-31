@@ -1,9 +1,8 @@
-using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
 
-namespace Chame
+namespace Chame.Razor
 {
     public class RazorThemeResolvingContext
     {

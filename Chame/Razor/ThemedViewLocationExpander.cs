@@ -8,13 +8,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Chame
+namespace Chame.Razor
 {
     // http://benfoster.io/blog/asp-net-core-themes-and-multi-tenancy
 
     public class ThemedViewLocationExpander : IViewLocationExpander
     {
-        private const string ThemeKey = "chame.theme.id";
+        private const string Key = "__Chame.Razor.ThemedViewLocationExpander__";
 
         private readonly RazorThemeOptions _options;
 
@@ -25,44 +25,44 @@ namespace Chame
 
         public void PopulateValues(ViewLocationExpanderContext context)
         {
+            // current http context
             HttpContext httpContext = context.ActionContext.HttpContext;
             if (httpContext == null)
             {
                 throw new InvalidOperationException("HttpContext is not available.");
             }
 
+            // logger
             ILogger<ThemedViewLocationExpander> logger = httpContext.RequestServices.GetRequiredService<ILogger<ThemedViewLocationExpander>>();
 
+            // options
             IOptions<ContentLoaderOptions> options = httpContext.RequestServices.GetRequiredService<IOptions<ContentLoaderOptions>>();
            
             // resolve theme
-            ITheme theme = ThemeResolver.Resolve(new RazorThemeResolvingContext(context), options.Value.ThemeResolver, options.Value.DefaultTheme);
+            ITheme theme = ThemeHelper.ResolveTheme(new RazorThemeResolvingContext(context), options.Value.ThemeResolver, options.Value.DefaultTheme);
             if (theme == null)
             {
                 logger.LogCritical("Could not resolve a theme.");
                 throw new InvalidOperationException("Could not resolve a theme.");
             }
 
-            context.Values[ThemeKey] = theme.GetName();
+            string themeName = theme.GetName();
+
+            context.Values[Key] = themeName;
         }
 
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
-            if (context.Values.TryGetValue(ThemeKey, out string theme))
+            string themeName;
+
+            if (context.Values.TryGetValue(Key, out themeName))
             {
-                IEnumerable<string> themeLocations = GetViewLocationForTheme(theme);
+                IEnumerable<string> themeLocations = _options.ViewLocationTemplates.Select(template => string.Format(template, themeName));
+
                 viewLocations = themeLocations.Concat(viewLocations);
             }
-            return viewLocations;
-        }
 
-        private IEnumerable<string> GetViewLocationForTheme(string theme)
-        {
-            foreach (string template in _options.ViewLocationTemplates)
-            {
-                string location = string.Format(template, theme);
-                yield return location;
-            }
+            return viewLocations;
         }
 
     }

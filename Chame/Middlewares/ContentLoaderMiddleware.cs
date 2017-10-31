@@ -13,7 +13,7 @@ using Microsoft.Extensions.Options;
 namespace Chame.Middlewares
 {
     /// <summary>
-    /// A middleware for loading JavaScript and CSS content.
+    /// A middleware for loading content files.
     /// </summary>
     internal sealed class ContentLoaderMiddleware
     {
@@ -43,11 +43,11 @@ namespace Chame.Middlewares
         {
             IContentInfo content;
 
-            if (IsValidRequest(httpContext, out content))
+            if (IsValid(httpContext, out content))
             {
                 Tuple<ContentLoadingContext, IReadOnlyCollection<IContentLoader>> assets;
 
-                if (TryPrepare(httpContext, content, out assets))
+                if (Prepare(httpContext, content, out assets))
                 {
                     ContentLoadingContext context = assets.Item1;
                     IReadOnlyCollection<IContentLoader> loaders = assets.Item2;
@@ -65,7 +65,7 @@ namespace Chame.Middlewares
             await _next(httpContext);
         }
 
-        private bool IsValidRequest(HttpContext httpContext, out IContentInfo content)
+        private bool IsValid(HttpContext httpContext, out IContentInfo content)
         {
             content = null;
 
@@ -85,7 +85,7 @@ namespace Chame.Middlewares
             return true;
         }
 
-        private bool TryPrepare(HttpContext httpContext, IContentInfo content, out Tuple<ContentLoadingContext, IReadOnlyCollection<IContentLoader>> assets)
+        private bool Prepare(HttpContext httpContext, IContentInfo content, out Tuple<ContentLoadingContext, IReadOnlyCollection<IContentLoader>> assets)
         {
             assets = null;
 
@@ -127,7 +127,7 @@ namespace Chame.Middlewares
             string eTag = null;
             if (_options.SupportETag)
             {
-                bool eTagAvailable = HttpETag.TryParse(httpContext.Request, out eTag);
+                bool eTagAvailable = HttpETagHelper.TryParse(httpContext.Request, out eTag);
                 if (eTagAvailable && loaders.Count > 1)
                 {
                     eTag = null;
@@ -136,7 +136,7 @@ namespace Chame.Middlewares
             }
 
             // resolve theme
-            ITheme theme = ThemeResolver.Resolve(new ContentFileThemeResolvingContext(httpContext, content, filter), _options.ThemeResolver, _options.DefaultTheme);
+            ITheme theme = ThemeHelper.ResolveTheme(new ContentFileThemeResolvingContext(httpContext, content, filter), _options.ThemeResolver, _options.DefaultTheme);
             if (theme == null)
             {
                 _logger.LogCritical("Could not resolve theme.");
@@ -217,7 +217,7 @@ namespace Chame.Middlewares
             return items;
         }
 
-        private async Task WriteResponseAsync(ContentLoadingContext context, List<Content> loaded)
+        private async Task WriteResponseAsync(ContentLoadingContext context, IReadOnlyCollection<Content> loaded)
         {
             Content content;
             if (loaded.Count == 1)
@@ -240,7 +240,7 @@ namespace Chame.Middlewares
 
                 if (useETag)
                 {
-                    HttpETag.Use(context.HttpContext.Response, content.ETag);
+                    HttpETagHelper.Use(context.HttpContext.Response, content.ETag);
                 }
 
                 await context.HttpContext.Response.Body.WriteAsync(content.Data, 0, content.Data.Length);

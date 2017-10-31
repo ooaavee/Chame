@@ -16,4 +16,15 @@
         /// <returns>theme name</returns>
         string GetName();
     }
+
+    /// <summary>
+    /// 'default' theme
+    /// </summary>
+    internal sealed class DefaultTheme : ITheme
+    {
+        public string GetName()
+        {
+            return "default";
+        }
+    }
 }

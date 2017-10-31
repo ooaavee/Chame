@@ -1,4 +1,5 @@
 ﻿using Chame.ContentLoaders;
+using Chame.Razor;
 
 namespace Chame
 {

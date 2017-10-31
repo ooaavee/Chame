@@ -11,7 +11,7 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class IThemeBuilderExtensions
     {
-        public static IContentLoaderBuilder AddFileSystemLoader(this IContentLoaderBuilder builder, Action<JsAndCssFileLoaderOptions> configureOptions = null)
+        public static IContentLoaderBuilder AddJsAndCssFileLoader(this IContentLoaderBuilder builder, Action<JsAndCssFileLoaderOptions> configureOptions = null)
         {
             if (builder == null)
             {
