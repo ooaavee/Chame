@@ -13,6 +13,7 @@ namespace Chame.ContentLoaders
             SupportETag = true;
             ContentLoaderSorter = new DefaultContentLoaderSorter();
             ContentModel = new DefaultContentModel();
+            RequestPathTemplate = "/chame-loader/{0}";
         }
 
         /// <summary>
@@ -37,7 +38,7 @@ namespace Chame.ContentLoaders
         public bool SupportETag { get; set; }
 
         /// <summary>
-        /// An execution order sorter for <see cref="IContentLoader"/> implementations.
+        /// An execution order sorter for <see cref="IContentLoader"/> instances.
         /// </summary>
         public IContentLoaderSorter ContentLoaderSorter { get; set; }
 
@@ -45,5 +46,10 @@ namespace Chame.ContentLoaders
         /// Defines supported content.
         /// </summary>
         public IContentModel ContentModel { get; set; }
+
+        /// <summary>
+        /// Request path template, like '/chame-loader/{0}'.
+        /// </summary>
+        public string RequestPathTemplate { get; set; }
     }
 }

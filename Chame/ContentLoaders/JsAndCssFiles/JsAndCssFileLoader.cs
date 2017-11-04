@@ -69,7 +69,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
         /// Content-type extensions that are supported by the content loader.
         /// </summary>
         /// <returns>supported content-type extensions</returns>
-        public IEnumerable<string> ContentTypeExtensions()
+        public IEnumerable<string> Supports()
         {
             yield return "js";
             yield return "css";
@@ -337,8 +337,8 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             {
                 try
                 {
-                    string content = File.ReadAllText(file.PhysicalPath);
-                    return ContentSchema.Deserialize(content);
+                    var json = File.ReadAllText(file.PhysicalPath);
+                    return ContentSchema.Deserialize(json);
                 }
                 catch (Exception ex)
                 {
@@ -346,11 +346,9 @@ namespace Chame.ContentLoaders.JsAndCssFiles
                     throw;
                 }
             }
-            else
-            {
-                _logger.LogError(string.Format("Requested file '{0}' does not exist.", _options2.ContentSchemaFile));
-                return null;
-            }        
+
+            _logger.LogError(string.Format("Requested file '{0}' does not exist.", _options2.ContentSchemaFile));
+            return null;
         }
     }
 }

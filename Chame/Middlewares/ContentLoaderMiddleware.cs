@@ -26,16 +26,18 @@ namespace Chame.Middlewares
         /// </summary>
         private readonly IDictionary<string, IContentInfo> _paths = new Dictionary<string, IContentInfo>();
 
-        public ContentLoaderMiddleware(RequestDelegate next, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger, string pathTemplate)
+        public ContentLoaderMiddleware(RequestDelegate next, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger)
         {
             _next = next;
             _options = options.Value;
             _logger = logger;
 
-            // Register valid request paths for this middleware.
+            // register valid request paths for this middleware
             foreach (IContentInfo content in _options.ContentModel.SupportedContent)
             {
-                _paths[string.Format(pathTemplate, content.Extension).ToLower(CultureInfo.InvariantCulture)] = content;
+                var path = string.Format(_options.RequestPathTemplate, content.Extension);
+                path = path.ToLower(CultureInfo.InvariantCulture);
+                _paths[path] = content;
             }
         }
 
@@ -69,13 +71,13 @@ namespace Chame.Middlewares
         {
             content = null;
 
-            // Must be HTTP GET.
+            // must be HTTP GET
             if (httpContext.Request.Method != HttpMethods.Get)
             {
                 return false;
             }
 
-            // Check that request path is valid.
+            // check that request path is valid
             string path = httpContext.Request.Path.ToString().ToLower(CultureInfo.InvariantCulture);
             if (!_paths.TryGetValue(path, out content))
             {
@@ -98,7 +100,7 @@ namespace Chame.Middlewares
             List<IContentLoader> loaders = new List<IContentLoader>();
             foreach (IContentLoader loader in httpContext.RequestServices.GetServices<IContentLoader>().Concat(_options.ContentLoaders))
             {
-                if (loader.ContentTypeExtensions().Any(x => x == content.Extension || x == "*"))
+                if (loader.Supports().Any(x => x == content.Extension || x == "*"))
                 {
                     loaders.Add(loader);
                 }

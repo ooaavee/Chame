@@ -1,28 +1,34 @@
 using System;
 using Chame.Razor;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.Extensions.FileProviders;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
     public static class RazorViewEngineOptionsExtensions
     {
-        public static void EnableThemes(this RazorViewEngineOptions options, Action<RazorThemeOptions> configureOptions = null)
+        public static void EnableThemes(this RazorViewEngineOptions options, Action<RazorThemeOptions> setupAction = null)
         {
             if (options == null)
             {
                 throw new ArgumentNullException(nameof(options));
             }
             
-            // Create and configure options.
-            var themes = new RazorThemeOptions();
-            if (configureOptions != null)
+            // create and configure options
+            var o = new RazorThemeOptions();
+            setupAction?.Invoke(o);
+
+            // register view-location expanders
+            foreach (IViewLocationExpander item in o.ViewLocationExpanders)
             {
-                configureOptions(themes);
+                options.ViewLocationExpanders.Add(item);
             }
 
-            // Register a view-location-expander.
-            IViewLocationExpander expander = new ThemedViewLocationExpander(themes);
-            options.ViewLocationExpanders.Add(expander);            
+            // register file providers
+            foreach (IFileProvider item in o.FileProviders)
+            {
+                options.FileProviders.Add(item);
+            }
         }
     }
 }

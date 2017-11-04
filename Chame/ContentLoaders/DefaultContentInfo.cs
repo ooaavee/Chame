@@ -12,6 +12,5 @@ namespace Chame.ContentLoaders
         public string MimeType { get; }
         public string Extension { get; }
         public bool CanCombine { get; }
-
     }
 }

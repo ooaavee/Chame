@@ -14,13 +14,20 @@ namespace Chame.Razor
 
     public class ThemedViewLocationExpander : IViewLocationExpander
     {
-        private const string Key = "__Chame.Razor.ThemedViewLocationExpander__";
+        private const string Key = "__Chame.Razor.ThemedViewLocationExpander";
 
-        private readonly RazorThemeOptions _options;
+        /// <summary>
+        /// View location templates.
+        /// </summary>
+        private readonly IList<string> _viewLocationTemplates;
 
         public ThemedViewLocationExpander(RazorThemeOptions options)
         {
-            _options = options;
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+            _viewLocationTemplates = options.ViewLocationTemplates;
         }
 
         public void PopulateValues(ViewLocationExpanderContext context)
@@ -37,13 +44,14 @@ namespace Chame.Razor
 
             // options
             IOptions<ContentLoaderOptions> options = httpContext.RequestServices.GetRequiredService<IOptions<ContentLoaderOptions>>();
-           
+
             // resolve theme
             ITheme theme = ThemeHelper.ResolveTheme(new RazorThemeResolvingContext(context), options.Value.ThemeResolver, options.Value.DefaultTheme);
             if (theme == null)
             {
-                logger.LogCritical("Could not resolve a theme.");
-                throw new InvalidOperationException("Could not resolve a theme.");
+                var message = "Could not resolve a theme.";
+                logger.LogCritical(message);
+                throw new InvalidOperationException(message);
             }
 
             string themeName = theme.GetName();
@@ -53,15 +61,11 @@ namespace Chame.Razor
 
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
-            string themeName;
-
-            if (context.Values.TryGetValue(Key, out themeName))
+            if (context.Values.TryGetValue(Key, out string themeName))
             {
-                IEnumerable<string> themeLocations = _options.ViewLocationTemplates.Select(template => string.Format(template, themeName));
-
+                IEnumerable<string> themeLocations = _viewLocationTemplates.Select(template => string.Format(template, themeName));
                 viewLocations = themeLocations.Concat(viewLocations);
             }
-
             return viewLocations;
         }
 

@@ -11,20 +11,20 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class IServiceCollectionExtensions
     {
-        public static IContentLoaderBuilder AddContentLoader(this IServiceCollection services, Action<ContentLoaderOptions> configureOptions = null)
+        public static IContentLoaderBuilder AddContentLoader(this IServiceCollection services, Action<ContentLoaderOptions> setupAction = null)
         {
             if (services == null)
             {
                 throw new ArgumentNullException(nameof(services));
             }
 
-            if (configureOptions == null)
+            if (setupAction == null)
             {
-                configureOptions = options => { };
+                setupAction = options => { };
             }
 
             // options
-            services.Configure<ContentLoaderOptions>(configureOptions);
+            services.Configure<ContentLoaderOptions>(setupAction);
 
             // my services
             services.TryAddSingleton<ContentCache>();

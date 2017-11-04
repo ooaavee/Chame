@@ -11,20 +11,20 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public static class IThemeBuilderExtensions
     {
-        public static IContentLoaderBuilder AddJsAndCssFileLoader(this IContentLoaderBuilder builder, Action<JsAndCssFileLoaderOptions> configureOptions = null)
+        public static IContentLoaderBuilder AddJsAndCssFileLoader(this IContentLoaderBuilder builder, Action<JsAndCssFileLoaderOptions> setupAction = null)
         {
             if (builder == null)
             {
                 throw new ArgumentNullException(nameof(builder));
             }
 
-            if (configureOptions == null)
+            if (setupAction == null)
             {
-                configureOptions = options => { };
+                setupAction = options => { };
             }
 
             // options
-            builder.Services.Configure<JsAndCssFileLoaderOptions>(configureOptions);
+            builder.Services.Configure<JsAndCssFileLoaderOptions>(setupAction);
 
             // my services
             builder.Services.TryAddSingleton<IContentLoader, JsAndCssFileLoader>();

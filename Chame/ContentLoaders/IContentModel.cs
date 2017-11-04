@@ -7,6 +7,9 @@ namespace Chame.ContentLoaders
     /// </summary>
     public interface IContentModel
     {
+        /// <summary>
+        /// Supported content
+        /// </summary>
         IReadOnlyCollection<IContentInfo> SupportedContent { get; }
     }
 }

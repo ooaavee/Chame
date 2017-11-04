@@ -62,6 +62,7 @@ namespace WebSite
                     options.EnableThemes(o =>
                     {
                         o.WithPhysicalFileProvider(physicalFileProviderRoot);
+                        o.WithViewLocationExpander();
                     });
                 });
 

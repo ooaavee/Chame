@@ -16,7 +16,7 @@ namespace Chame.ContentLoaders
         /// Content-type extensions that are supported by the content loader.
         /// </summary>
         /// <returns>supported content-type extensions</returns>
-        IEnumerable<string> ContentTypeExtensions();
+        IEnumerable<string> Supports();
 
         /// <summary>
         /// Loads content.
