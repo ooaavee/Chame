@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace Chame.ContentLoaders
 {
@@ -14,10 +13,9 @@ namespace Chame.ContentLoaders
         {
             var supported = new List<IContentInfo>();
 
-            void Use(string mimeType, string extension, bool canCombine = false)
+            void Use(string mimeType, string extension, bool allowBundling = false)
             {
-                IContentInfo content = new DefaultContentInfo(mimeType, extension, canCombine);
-
+                var content = new DefaultContentInfo(mimeType, extension, allowBundling);
                 if (IsSupported(content))
                 {
                     supported.Add(content);
@@ -290,8 +288,8 @@ namespace Chame.ContentLoaders
             Use("application/json", "json");
             Use("application/vnd.joost.joda-archive", "joda");
             Use("video/jpm", "jpm");
-            Use("image/jpeg", "jpeg, .jpg");
-            Use("image/x-citrix-jpeg", "jpeg, .jpg");
+            Use("image/jpeg", "jpeg");
+            Use("image/jpeg", "jpg");
             Use("image/pjpeg", "pjpeg");
             Use("video/jpeg", "jpgv");
             Use("application/vnd.kahootz", "ktz");
@@ -435,7 +433,6 @@ namespace Chame.ContentLoaders
             Use("application/mp21", "m21");
             Use("audio/mp4", "mp4a");
             Use("video/mp4", "mp4");
-            Use("application/mp4", "mp4");
             Use("application/vnd.apple.mpegurl", "m3u8");
             Use("application/vnd.musician", "mus");
             Use("application/vnd.muvee.style", "msty");
@@ -526,8 +523,6 @@ namespace Chame.ContentLoaders
             Use("application/x-chess-pgn", "pgn");
             Use("image/x-portable-graymap", "pgm");
             Use("image/png", "png");
-            Use("image/x-citrix-png", "png");
-            Use("image/x-png", "png");
             Use("image/x-portable-pixmap", "ppm");
             Use("application/pskc+xml", "pskcxml");
             Use("application/vnd.ctc-posml", "pml");
@@ -535,7 +530,6 @@ namespace Chame.ContentLoaders
             Use("application/x-font-type1", "pfa");
             Use("application/vnd.powerbuilder6", "pbd");
             Use("application/pgp-encrypted", "pgp");
-            Use("application/pgp-signature", "pgp");
             Use("application/vnd.previewsystems.box", "box");
             Use("application/vnd.pvi.ptid1", "ptid");
             Use("application/pls+xml", "pls");
@@ -715,7 +709,7 @@ namespace Chame.ContentLoaders
             Use("application/vnd.handheld-entertainment+xml", "zmm");
             Use("application/vnd.zzazz.deck+xml", "zaz");
 
-            SupportedContent = new ReadOnlyCollection<IContentInfo>(supported);
+            SupportedContent = supported.AsReadOnly();
         }
       
         protected virtual bool IsSupported(IContentInfo content)

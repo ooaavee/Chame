@@ -16,6 +16,7 @@ namespace Chame.ContentLoaders.FileSystem
         private readonly ContentLoaderOptions _options1;
         private readonly FileSystemLoaderOptions _options2;
         private readonly ContentCache _cache;
+        private readonly bool _useCache;
         private readonly IHostingEnvironment _env;
         private readonly ILogger<FileSystemLoader> _logger;
         private readonly PhysicalFileProvider _provider;
@@ -50,6 +51,7 @@ namespace Chame.ContentLoaders.FileSystem
             _options1 = options1.Value;
             _options2 = options2.Value;
             _cache = cache;
+            _useCache = options2.Value.Caching.IsEnabled(env);
             _env = env;
             _logger = logger;
             _provider = new PhysicalFileProvider(_options2.Root);
@@ -76,7 +78,7 @@ namespace Chame.ContentLoaders.FileSystem
         /// </summary>
         /// <param name="context">A context object that tells you what was requested.</param>
         /// <returns>loaded content</returns>
-        public Task<Content> LoadContentAsync(ContentLoadingContext context)
+        public Task<ContentLoaderResponse> LoadContentAsync(ContentLoadingContext context)
         {
             if (context == null)
             {
@@ -86,34 +88,33 @@ namespace Chame.ContentLoaders.FileSystem
             return Task.FromResult(Load(context));
         }
 
-        /// <summary>
-        /// Is caching enabled?
-        /// </summary>
-        private bool IsCacheEnabled
+      
+
+        private ContentLoaderResponse Load(ContentLoadingContext context)
         {
-            get
+            FileContent content;
+
+            // first try to use cached content
+            if (_useCache)
             {
-                switch (_options2.CachingMode)
+                content = _cache.Get<FileContent>(context);
+                if (content != null)
                 {
-                    case CachingModes.Disabled:
-                        return false;
-                    case CachingModes.Enabled:
-                        return true;
-                    case CachingModes.EnabledButDisabledOnDev:
-                        if (_env.IsDevelopment())
-                        {
-                            return false;
-                        }
-                        return true;
-                    default:
-                        return false;
+                    return ContentLoaderResponse.CreateResponse(content, context, _options1);
                 }
             }
-        }
 
-        private Content Load(ContentLoadingContext context)
-        {
-            return Content.NotFound();
+            Bundle bundle;
+            if (context.ContentInfo.AllowBundling && TryGetBundle(context, out bundle))
+            {
+                content = LoadBundle(bundle, context);
+            }
+            else
+            {
+                content = LoadPlain(context);
+            }
+
+            return ContentLoaderResponse.CreateResponse(content, context, _options1);
         }
 
         private bool TryGetBundle(ContentLoadingContext context, out Bundle bundle)
@@ -125,7 +126,24 @@ namespace Chame.ContentLoaders.FileSystem
             return false;
         }
 
+        // lataa bundlesta filterin perusteella (jos ei ole filteriä, niin error!)
+        private FileContent LoadBundle(Bundle bundle, ContentLoadingContext context)
+        {
+            return null;
+        }
 
+        // lataa ilman bundlea käyttäällä filteriä (jos ei ole filteriä, niin error!)
+        private FileContent LoadPlain(ContentLoadingContext context)
+        {
+            return null;
+        }
+
+
+        private static string PathFor(ITheme theme, IContentInfo contentInfo, string fileName)
+        {
+            string path = $"/{theme.GetName()}/{contentInfo.Extension}/{fileName}";
+            return path;
+        }
 
     }
 }

@@ -24,7 +24,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             // options
-            services.Configure<ContentLoaderOptions>(setupAction);
+            services.Configure(setupAction);
 
             // my services
             services.TryAddSingleton<ContentCache>();

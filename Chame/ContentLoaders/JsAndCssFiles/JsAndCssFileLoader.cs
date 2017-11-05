@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace Chame.ContentLoaders.JsAndCssFiles
 {
@@ -21,6 +22,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
         private readonly ContentLoaderOptions _options1;
         private readonly JsAndCssFileLoaderOptions _options2;
         private readonly ContentCache _cache;
+        private readonly bool _useCache;
         private readonly IHostingEnvironment _env;
         private readonly ILogger<JsAndCssFileLoader> _logger;
 
@@ -54,7 +56,8 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             _options1 = options1.Value;
             _options2 = options2.Value;
             _cache = cache;
-            _env = env;          
+            _useCache = options2.Value.Caching.IsEnabled(env);
+            _env = env;
             _logger = logger;
         }
 
@@ -80,7 +83,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
         /// </summary>
         /// <param name="context">A context object that tells you what was requested.</param>
         /// <returns>loaded content</returns>
-        public Task<Content> LoadContentAsync(ContentLoadingContext context)
+        public Task<ContentLoaderResponse> LoadContentAsync(ContentLoadingContext context)
         {
             if (context == null)
             {
@@ -90,42 +93,17 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             return Task.FromResult(Load(context));
         }
 
-        /// <summary>
-        /// Is caching enabled?
-        /// </summary>
-        private bool IsCacheEnabled
+        private ContentLoaderResponse Load(ContentLoadingContext context)
         {
-            get
-            {
-                switch (_options2.CachingMode)
-                {
-                    case CachingModes.Disabled:
-                        return false;
-                    case CachingModes.Enabled:
-                        return true;
-                    case CachingModes.EnabledButDisabledOnDev:
-                        if (_env.IsDevelopment())
-                        {
-                            return false;
-                        }
-                        return true;
-                    default:
-                        return false;
-                }
-            }
-        }
-
-        private Content Load(ContentLoadingContext context)
-        {
-            FileContent fileContent = null;
+            FileContent content = null;
 
             // first try to use cached content
-            if (IsCacheEnabled)
+            if (_useCache)
             {
-                fileContent = _cache.Get<FileContent>(context);
-                if (fileContent != null)
+                content = _cache.Get<FileContent>(context);
+                if (content != null)
                 {
-                    return GetContent(fileContent, context);
+                    return ContentLoaderResponse.CreateResponse(content, context, _options1);
                 }
             }
 
@@ -133,74 +111,36 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             ContentFile[] files = GetFiles(context);
             if (files.Any())
             {
-                fileContent = GetFileContent(files, context);
-                if (IsCacheEnabled)
+                content = GetContent(files, context);
+                if (_useCache)
                 {
-                    _cache.Set<FileContent>(fileContent, _options2.CacheAbsoluteExpirationRelativeToNow, context);
+                    _cache.Set<FileContent>(content, _options2.Caching.AbsoluteExpirationRelativeToNow, context);
                 }
             }
 
-            return GetContent(fileContent, context);
+            return ContentLoaderResponse.CreateResponse(content, context, _options1);
         }
 
-        //
-        // TODO: Siirä tämä FileContent-luokkaan, koska käytetään kahdesta palvelusta
-        //
-        private Content GetContent(FileContent fileContent, ContentLoadingContext context)
+        private FileContent GetContent(IEnumerable<ContentFile> files, ContentLoadingContext context)
         {
-            Content content;
-
-            if (fileContent != null)
+            var data = new List<byte>();
+            foreach (ContentFile file in Filter(files, context.Filter))
             {
-                if (_options1.SupportETag && context.ETag != null && fileContent.ETag != null && context.ETag == fileContent.ETag)
-                {
-                    content = Content.NotModified();
-                }
-                else
-                {
-                    if (fileContent.ETag != null)
-                    {
-                        content = Content.Ok(fileContent.Data, fileContent.ETag);
-                    }
-                    else
-                    {
-                        content = Content.Ok(fileContent.Data);
-                    }
-                }
-            }
-            else
-            {
-                content = Content.NotFound();
-            }
-
-            return content;
-        }
-
-        private FileContent GetFileContent(IEnumerable<ContentFile> files, ContentLoadingContext context)
-        {
-            List<byte> bytes = new List<byte>(); 
-                
-            IEnumerable<ContentFile> filtered = Filter(files, context.Filter);
-
-            foreach (ContentFile file in filtered)
-            {
-                byte[] tmp = ReadAllBytes(file);
+                var tmp = ReadAllBytes(file);
                 if (tmp != null)
                 {
-                    bytes.AddRange(tmp);
+                    data.AddRange(tmp);
                 }
             }
 
-            byte[] data = bytes.ToArray();
-
-            string eTag = null;
+            var content = new FileContent { Data = data.ToArray() };
 
             if (_options1.SupportETag)
             {
-                eTag = HttpETagHelper.Calculate(data);
+                content.ETag = HttpETagHelper.Calculate(content.Data);
             }
 
-            return new FileContent {Data = data, ETag = eTag};
+            return content;
         }
 
         private static IEnumerable<ContentFile> Filter(IEnumerable<ContentFile> files, string filter)
@@ -245,14 +185,14 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             _logger.LogError(string.Format("Content file '{0}' does not exist.", file.Path));
             return null;
         }
-       
+
         private ContentFile[] GetFiles(ContentLoadingContext context)
         {
             List<ContentFile> files = new List<ContentFile>();
 
             ContentSchema schema = null;
 
-            if (IsCacheEnabled)
+            if (_useCache)
             {
                 schema = _cache.Get<ContentSchema>(context);
             }
@@ -263,9 +203,9 @@ namespace Chame.ContentLoaders.JsAndCssFiles
                 schema = LoadSchema();
                 if (schema != null)
                 {
-                    if (IsCacheEnabled)
+                    if (_useCache)
                     {
-                        _cache.Set<ContentSchema>(schema, _options2.CacheAbsoluteExpirationRelativeToNow, context);
+                        _cache.Set<ContentSchema>(schema, _options2.Caching.AbsoluteExpirationRelativeToNow, context);
                     }
                 }
             }
@@ -322,7 +262,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
 
             return files.ToArray();
         }
-     
+
         /// <summary>
         /// Loads themes from file.
         /// </summary>
@@ -341,7 +281,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
                 try
                 {
                     var json = File.ReadAllText(file.PhysicalPath);
-                    return ContentSchema.Deserialize(json);
+                    return Deserialize(json);
                 }
                 catch (Exception ex)
                 {
@@ -353,5 +293,16 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             _logger.LogError(string.Format("Requested file '{0}' does not exist.", _options2.ContentSchemaFile));
             return null;
         }
+
+        private static ContentSchema Deserialize(string json)
+        {
+            var schema = JsonConvert.DeserializeObject<ContentSchema>(json);
+            if (schema == null)
+            {
+                throw new InvalidOperationException("Unable to deserialize JSON content.");
+            }
+            return schema;
+        }
+
     }
 }

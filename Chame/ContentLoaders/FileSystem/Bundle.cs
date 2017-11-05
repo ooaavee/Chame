@@ -7,5 +7,6 @@ namespace Chame.ContentLoaders.FileSystem
 {
     public class Bundle
     {
+        public const string FileName = ".bundle";
     }
 }

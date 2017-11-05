@@ -8,11 +8,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
+    <Content Remove="Root\A\Views\DemoPartialView.cshtml" />
+    <Content Remove="Root\B\Views\DemoPartialView.cshtml" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Root\" />
+    <None Include="Root\A\Views\DemoPartialView.cshtml" />
+    <None Include="Root\B\Views\DemoPartialView.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
   </ItemGroup>
 
 </Project>

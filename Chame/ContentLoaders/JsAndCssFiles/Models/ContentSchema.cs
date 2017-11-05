@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace Chame.ContentLoaders.JsAndCssFiles.Models
@@ -23,20 +22,5 @@ namespace Chame.ContentLoaders.JsAndCssFiles.Models
         /// </summary>
         [JsonProperty("themes")]
         public virtual List<ContentFileTheme> Themes { get; set; } = new List<ContentFileTheme>();
-
-        public static ContentSchema Deserialize(string json)
-        {
-            if (json == null)
-            {
-                throw new ArgumentNullException(nameof(json));
-            }
-
-            var schema = JsonConvert.DeserializeObject<ContentSchema>(json);
-            if (schema == null)
-            {
-                throw new InvalidOperationException("Unable to deserialize JSON content.");
-            }
-            return schema;
-        }
     }
 }

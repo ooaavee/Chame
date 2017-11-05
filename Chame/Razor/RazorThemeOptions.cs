@@ -32,9 +32,10 @@ namespace Chame.Razor
             {
                 throw new ArgumentNullException(nameof(root));
             }
-          
-            FileProviders.Add(new ThemedPhysicalFileProvider(root));
 
+            IFileProvider provider = new ThemedPhysicalFileProvider(root);
+            FileProviders.Add(provider);
+           
             ViewLocationTemplates.Add("{0}/Views/{{1}}/{{0}}.cshtml");
             ViewLocationTemplates.Add("{0}/Views/Shared/{{0}}.cshtml");
             ViewLocationTemplates.Add("{0}/Views/{{0}}.cshtml");
@@ -45,7 +46,8 @@ namespace Chame.Razor
         /// </summary>
         public void WithViewLocationExpander()
         {
-            ViewLocationExpanders.Add(new ThemedViewLocationExpander(this));
+            IViewLocationExpander expander = new ThemedViewLocationExpander(this);
+            ViewLocationExpanders.Add(expander);
         }
     }
 

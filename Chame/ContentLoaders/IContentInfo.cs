@@ -13,8 +13,11 @@
         string Extension { get; }
 
         /// <summary>
+        /// Allow bundling for this content?
         /// 
+        /// Example:
+        /// JavaScript and CSS files can be bundled - you known ..but you cannot bundle multiple JPGs.
         /// </summary>
-        bool CanCombine { get; }
+        bool AllowBundling { get; }
     }
 }

@@ -10,8 +10,11 @@ namespace Chame.ContentLoaders.JsAndCssFiles
         {
             UseContentSchemaFile = true;
             ContentSchemaFile = @"\JsAndCssFileLoader.json";
-            CachingMode = CachingModes.EnabledButDisabledOnDev;
-            CacheAbsoluteExpirationRelativeToNow = new TimeSpan(0, 0, 1, 0);
+            Caching = new CachingSupport
+            {
+                Mode = CachingModes.EnabledButDisabledOnDev,
+                AbsoluteExpirationRelativeToNow = new TimeSpan(0, 0, 1, 0)
+            };
         }
 
         /// <summary>
@@ -29,14 +32,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
         /// </summary>
         public Func<ContentLoadingContext, ContentSchema> ContentSchemaResolver { get; set; }
 
-        /// <summary>
-        /// Caching mode, the default value is <see cref="CachingModes.EnabledButDisabledOnDev"/>.
-        /// </summary>
-        public CachingModes CachingMode { get; set; }
+        public CachingSupport Caching { get; set; }
 
-        /// <summary>
-        /// An absolute expiration time for caching, relative to now. The default value is 1 minute.
-        /// </summary>
-        public TimeSpan CacheAbsoluteExpirationRelativeToNow { get; set; }
     }
 }

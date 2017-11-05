@@ -64,8 +64,8 @@ namespace Chame
 
             using (var sha256 = SHA256.Create())
             {
+                var buffer = new StringBuilder(64);
                 var hash = sha256.ComputeHash(data);
-                var buffer = new StringBuilder();
                 foreach (var b in hash)
                 {
                     buffer.AppendFormat("{0:X2}", b);

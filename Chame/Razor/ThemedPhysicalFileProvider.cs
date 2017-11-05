@@ -20,22 +20,17 @@ namespace Chame.Razor
 
         public IFileInfo GetFileInfo(string subpath)
         {
-            return Provider.GetFileInfo(subpath);
+            return _provider.GetFileInfo(subpath);
         }
 
         public IDirectoryContents GetDirectoryContents(string subpath)
         {
-            return Provider.GetDirectoryContents(subpath);
+            return _provider.GetDirectoryContents(subpath);
         }
 
         public IChangeToken Watch(string filter)
         {
-            return Provider.Watch(filter);
+            return _provider.Watch(filter);
         }
-
-        /// <summary>
-        /// Gets the underlying file provider.
-        /// </summary>
-        private IFileProvider Provider => _provider;
     }
 }

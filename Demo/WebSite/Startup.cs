@@ -39,7 +39,7 @@ namespace WebSite
         public void ConfigureServices(IServiceCollection services)
         {
             // Resolve an absolute path of the'Root' directory under the 'WebSiteContent' project.
-            string physicalFileProviderRoot = new DirectoryInfo(_env.ContentRootPath)
+            string contentRoot = new DirectoryInfo(_env.ContentRootPath)
                 .Parent
                 .GetDirectories()
                 .First(x => x.Name == "WebSiteContent")
@@ -52,16 +52,21 @@ namespace WebSite
                 {
                     options.ThemeResolver = new DemoThemeResolver();
                 })
-                .AddJsAndCssFileLoader();
+                .AddJsAndCssFileLoader()
+                .AddFileSystemLoaders(options =>
+                {
+                    options.Root = contentRoot;
+                });
 
-          
+
+
             // Add MVC.
             services.AddMvc()
                 .AddRazorOptions(options =>
-                {                   
+                {
                     options.EnableThemes(o =>
                     {
-                        o.WithPhysicalFileProvider(physicalFileProviderRoot);
+                        o.WithPhysicalFileProvider(contentRoot);
                         o.WithViewLocationExpander();
                     });
                 });

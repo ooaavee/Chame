@@ -1,14 +1,14 @@
-﻿using System;
+﻿using Chame.ContentLoaders;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Chame.ContentLoaders;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Chame.Middlewares
 {
@@ -18,47 +18,54 @@ namespace Chame.Middlewares
     internal sealed class ContentLoaderMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly ContentLoaderOptions _options;
+
+        private readonly bool _supportETag;
+        private readonly IList<IContentLoader> _contentLoaders;
+        private readonly IContentLoaderSorter _contentLoaderSorter;
+        private readonly ITheme _defaultTheme;
+        private readonly IThemeResolver _themeResolver;
+
         private readonly ILogger<ContentLoaderMiddleware> _logger;
 
         /// <summary>
         /// All valid request paths and corresponding content-types.
         /// </summary>
-        private readonly IDictionary<string, IContentInfo> _paths = new Dictionary<string, IContentInfo>();
+        private readonly IDictionary<string, IContentInfo> _pathMap = new Dictionary<string, IContentInfo>();
 
         public ContentLoaderMiddleware(RequestDelegate next, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger)
         {
             _next = next;
-            _options = options.Value;
-            _logger = logger;
 
-            // register valid request paths for this middleware
-            foreach (IContentInfo content in _options.ContentModel.SupportedContent)
+            ContentLoaderOptions opt = options.Value;
+
+            _supportETag = opt.SupportETag;
+            _contentLoaders = opt.ContentLoaders;
+            _contentLoaderSorter = opt.ContentLoaderSorter;
+            _defaultTheme = opt.DefaultTheme;
+            _themeResolver = opt.ThemeResolver;
+
+            // resolves valid requests paths for this middleware
+            var template = opt.RequestPathTemplate;
+            foreach (IContentInfo content in opt.ContentModel.SupportedContent)
             {
-                var path = string.Format(_options.RequestPathTemplate, content.Extension);
-                path = path.ToLower(CultureInfo.InvariantCulture);
-                _paths[path] = content;
+                var path = string.Format(template, content.Extension).ToLower(CultureInfo.InvariantCulture);
+                _pathMap.Add(path, content);
+                logger.LogDebug($"Registering path '{path}' for MIME type {content.MimeType}.");
             }
+
+            _logger = logger;
         }
 
-        public async Task Invoke(HttpContext httpContext, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger)
+        public async Task Invoke(HttpContext httpContext)
         {
-            IContentInfo content;
-
-            if (IsValid(httpContext, out content))
+            if (TryGetContentInfo(httpContext, out IContentInfo contentInfo))
             {
-                Tuple<ContentLoadingContext, IReadOnlyCollection<IContentLoader>> assets;
-
-                if (Prepare(httpContext, content, out assets))
+                if (TryGetAssets(httpContext, contentInfo, out ContentLoadingAssets assets))
                 {
-                    ContentLoadingContext context = assets.Item1;
-                    IReadOnlyCollection<IContentLoader> loaders = assets.Item2;
-
-                    List<Content> loaded = await LoadContentAsync(context, loaders);
-
-                    if (loaded.Any())
+                    var responses = await LoadContentAsync(assets);
+                    if (responses.Any())
                     {
-                        await WriteResponseAsync(context, loaded);
+                        await WriteResponseAsync(assets.Context, responses);
                         return;
                     }
                 }
@@ -67,9 +74,9 @@ namespace Chame.Middlewares
             await _next(httpContext);
         }
 
-        private bool IsValid(HttpContext httpContext, out IContentInfo content)
+        private bool TryGetContentInfo(HttpContext httpContext, out IContentInfo contentInfo)
         {
-            content = null;
+            contentInfo = null;
 
             // must be HTTP GET
             if (httpContext.Request.Method != HttpMethods.Get)
@@ -79,7 +86,7 @@ namespace Chame.Middlewares
 
             // check that request path is valid
             string path = httpContext.Request.Path.ToString().ToLower(CultureInfo.InvariantCulture);
-            if (!_paths.TryGetValue(path, out content))
+            if (!_pathMap.TryGetValue(path, out contentInfo))
             {
                 return false;
             }
@@ -87,7 +94,7 @@ namespace Chame.Middlewares
             return true;
         }
 
-        private bool Prepare(HttpContext httpContext, IContentInfo content, out Tuple<ContentLoadingContext, IReadOnlyCollection<IContentLoader>> assets)
+        private bool TryGetAssets(HttpContext httpContext, IContentInfo contentInfo, out ContentLoadingAssets assets)
         {
             assets = null;
 
@@ -98,27 +105,32 @@ namespace Chame.Middlewares
 
             // get content loaders from request services and options
             List<IContentLoader> loaders = new List<IContentLoader>();
-            foreach (IContentLoader loader in httpContext.RequestServices.GetServices<IContentLoader>().Concat(_options.ContentLoaders))
+            foreach (IContentLoader loader in httpContext.RequestServices.GetServices<IContentLoader>().Concat(_contentLoaders))
             {
-                if (loader.Supports().Any(supports => supports == content.Extension ||
-                                          supports == ContentLoaderOptions.ContentLoaderSupportsAll))
+                if (loader.Supports().Any(supports => supports == contentInfo.Extension || supports == ContentLoaderOptions.ContentLoaderSupportsAll))
                 {
                     loaders.Add(loader);
                 }
+                else
+                {
+                    _logger.LogDebug($"Ignoring content loader '{loader.GetType().FullName}' - it doesn't suppport '{contentInfo.Extension}'.");
+                }
             }
 
-            if (loaders.Count == 0)
+            int loaderCount = loaders.Count;
+
+            if (loaderCount == 0)
             {
                 _logger.LogCritical("No content loaders found.");
                 return false;
             }
 
             // sort content loaders
-            if (loaders.Count > 1)
+            if (loaderCount > 1)
             {
-                if (_options.ContentLoaderSorter != null)
+                if (_contentLoaderSorter != null)
                 {
-                    _options.ContentLoaderSorter.Sort(loaders);
+                    _contentLoaderSorter.Sort(loaders);
                 }
                 else
                 {
@@ -128,10 +140,10 @@ namespace Chame.Middlewares
 
             // HTTP ETag
             string eTag = null;
-            if (_options.SupportETag)
+            if (_supportETag)
             {
-                bool eTagAvailable = HttpETagHelper.TryParse(httpContext.Request, out eTag);
-                if (eTagAvailable && loaders.Count > 1)
+                bool eTagFound = HttpETagHelper.TryParse(httpContext.Request, out eTag);
+                if (eTagFound && loaderCount > 1)
                 {
                     eTag = null;
                     _logger.LogDebug("HTTP ETag will be disabled for this request, because there are multiple content loaders for this request.");
@@ -139,7 +151,7 @@ namespace Chame.Middlewares
             }
 
             // resolve theme
-            ITheme theme = ThemeHelper.ResolveTheme(new ContentFileThemeResolvingContext(httpContext, content, filter), _options.ThemeResolver, _options.DefaultTheme);
+            ITheme theme = ThemeHelper.ResolveTheme(new ContentFileThemeResolvingContext(httpContext, contentInfo, filter), _themeResolver, _defaultTheme);
             if (theme == null)
             {
                 _logger.LogCritical("Could not resolve theme.");
@@ -148,26 +160,30 @@ namespace Chame.Middlewares
 
             _logger.LogInformation(string.Format("A theme '{0}' will be used.", theme));
 
-            ContentLoadingContext context = new ContentLoadingContext(httpContext, content, theme, filter, eTag);
+            var context = new ContentLoadingContext(httpContext, contentInfo, theme, filter, eTag);
 
-            assets = new Tuple<ContentLoadingContext, IReadOnlyCollection<IContentLoader>>(context, loaders);
+            assets = new ContentLoadingAssets {Context = context, ContentLoaders = loaders};
 
             return true;
         }
 
-        private async Task<List<Content>> LoadContentAsync(ContentLoadingContext context, IReadOnlyCollection<IContentLoader> loaders)
+        private async Task<IList<ContentLoaderResponse>> LoadContentAsync(ContentLoadingAssets assets)
         {
-            var items = new List<Content>();
+            var responses = new List<ContentLoaderResponse>();
 
-            foreach (IContentLoader loader in loaders)
+            var eTag = assets.Context.ETag;
+
+            var loaderCount = assets.ContentLoaders.Count;
+
+            foreach (IContentLoader loader in assets.ContentLoaders)
             {
                 _logger.LogDebug(string.Format("Loading content by using '{0}' content loader.", loader.GetType().FullName));
 
                 // load stuff
-                Content item;
+                ContentLoaderResponse response;
                 try
                 {
-                    item = await loader.LoadContentAsync(context);
+                    response = await loader.LoadContentAsync(assets.Context);
                 }
                 catch (Exception ex)
                 {
@@ -176,24 +192,17 @@ namespace Chame.Middlewares
                 }
 
                 // not found
-                if (item == null)
-                {
-                    _logger.LogDebug(string.Format("Content loader '{0}' did not found any content.", loader.GetType().FullName));
-                    continue;
-                }
-
-                // not found
-                if (item.Status == ResponseStatus.NotFound)
+                if (response == null || response.Status == ResponseStatus.NotFound)
                 {
                     _logger.LogDebug(string.Format("Content loader '{0}' did not found any content.", loader.GetType().FullName));
                 }
 
                 // ok
-                else if (item.Status == ResponseStatus.Ok)
+                else if (response.Status == ResponseStatus.Ok)
                 {
-                    if (item.Data != null)
+                    if (response.Data != null)
                     {
-                        items.Add(item);
+                        responses.Add(response);
                     }
                     else
                     {
@@ -202,13 +211,11 @@ namespace Chame.Middlewares
                 }
 
                 // not modified
-                else if (item.Status == ResponseStatus.NotModified)
+                else if (response.Status == ResponseStatus.NotModified)
                 {
-                    bool useETag = _options.SupportETag && !string.IsNullOrEmpty(context.ETag) && loaders.Count == 1;
-
-                    if (useETag)
+                    if (_supportETag && !string.IsNullOrEmpty(eTag) && loaderCount == 1)
                     {
-                        items.Add(item);
+                        responses.Add(response);
                     }
                     else
                     {
@@ -217,43 +224,55 @@ namespace Chame.Middlewares
                 }
             }
 
-            return items;
+            return responses;
         }
 
-        private async Task WriteResponseAsync(ContentLoadingContext context, IReadOnlyCollection<Content> loaded)
+        private async Task WriteResponseAsync(ContentLoadingContext context, IList<ContentLoaderResponse> responses)
         {
-            Content content;
-            if (loaded.Count == 1)
+            ContentLoaderResponse response;
+            if (responses.Count == 1)
             {
-                content = loaded.First();
+                response = responses.First();
             }
             else
             {
-                content = Content.Combine(loaded);
+                if (context.ContentInfo.AllowBundling)
+                {
+                    response = ContentLoaderResponse.Bundle(responses);
+                }
+                else
+                {                
+                    _logger.LogCritical($"Received multiple responses, but '{context.ContentInfo.MimeType}' content cannot be bundled. The first response will be used and others are ignored!");
+                    response = responses.First();
+                }
             }
 
             context.HttpContext.Response.ContentType = context.ContentInfo.MimeType;
 
             // ok
-            if (content.Status == ResponseStatus.Ok)
+            if (response.Status == ResponseStatus.Ok)
             {
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.OK;
 
-                bool useETag = !string.IsNullOrEmpty(content.ETag) && _options.SupportETag && loaded.Count == 1;
-
-                if (useETag)
+                if (!string.IsNullOrEmpty(response.ETag) && _supportETag && responses.Count == 1)
                 {
-                    HttpETagHelper.Use(context.HttpContext.Response, content.ETag);
+                    HttpETagHelper.Use(context.HttpContext.Response, response.ETag);
                 }
 
-                await context.HttpContext.Response.Body.WriteAsync(content.Data, 0, content.Data.Length);
+                await context.HttpContext.Response.Body.WriteAsync(response.Data, 0, response.Data.Length);
             }
 
             // not modified
-            else if (content.Status == ResponseStatus.NotModified)
+            else if (response.Status == ResponseStatus.NotModified)
             {
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotModified;
             }
+        }
+
+        private class ContentLoadingAssets
+        {
+            public ContentLoadingContext Context { get; set; }
+            public IList<IContentLoader> ContentLoaders { get; set; }
         }
 
     }

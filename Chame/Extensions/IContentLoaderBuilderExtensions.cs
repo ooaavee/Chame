@@ -3,7 +3,6 @@ using Chame;
 using Chame.ContentLoaders;
 using Chame.ContentLoaders.FileSystem;
 using Chame.ContentLoaders.JsAndCssFiles;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -28,12 +27,12 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.Configure(setupAction);
 
             // my services
-            builder.Services.TryAddSingleton<IContentLoader, JsAndCssFileLoader>();
+            builder.Services.AddSingleton<IContentLoader, JsAndCssFileLoader>();
 
             return builder;
         }
 
-        public static IContentLoaderBuilder AddFileSystemLoaders(this IContentLoaderBuilder builder, Action<FileSystemLoaderOptions> setupAction = null)
+        public static IContentLoaderBuilder AddFileSystemLoaders(this IContentLoaderBuilder builder, Action<FileSystemLoaderOptions> setupAction)
         {
             if (builder == null)
             {
@@ -42,14 +41,14 @@ namespace Microsoft.Extensions.DependencyInjection
 
             if (setupAction == null)
             {
-                setupAction = options => { };
+                throw new ArgumentNullException(nameof(setupAction));
             }
 
             // options
             builder.Services.Configure(setupAction);
 
             // my services
-            builder.Services.TryAddSingleton<IContentLoader, FileSystemLoader>();
+            builder.Services.AddSingleton<IContentLoader, FileSystemLoader>();
 
             return builder;
         }

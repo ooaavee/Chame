@@ -6,12 +6,12 @@
     public enum CachingModes
     {
         /// <summary>
-        /// No, caching is disabled.
+        /// Caching is disabled.
         /// </summary>
         Disabled,
 
         /// <summary>
-        /// Yes, caching is enabled.
+        /// Caching is enabled.
         /// </summary>
         Enabled,
 
