@@ -4,6 +4,8 @@ namespace Chame.ContentLoaders
 {
     public class ContentLoaderOptions
     {
+        public const string ContentLoaderSupportsAll = "*";
+
         /// <summary>
         /// Initializes a new instance of the ContentLoaderOptions class.
         /// </summary>

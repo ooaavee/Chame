@@ -29,6 +29,9 @@ namespace Microsoft.Extensions.DependencyInjection
             // my services
             services.TryAddSingleton<ContentCache>();
 
+            // framework services
+            services.AddMemoryCache();
+
             return new DefaultContentLoaderBuilder(services);
         }
     }

@@ -1,15 +1,16 @@
 ﻿using System;
 using Chame;
 using Chame.ContentLoaders;
+using Chame.ContentLoaders.FileSystem;
 using Chame.ContentLoaders.JsAndCssFiles;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
     /// <summary>
-    /// IThemeBuilder extension methods
+    /// IContentLoaderBuilder extension methods
     /// </summary>
-    public static class IThemeBuilderExtensions
+    public static class IContentLoaderBuilderExtensions
     {
         public static IContentLoaderBuilder AddJsAndCssFileLoader(this IContentLoaderBuilder builder, Action<JsAndCssFileLoaderOptions> setupAction = null)
         {
@@ -24,15 +25,34 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             // options
-            builder.Services.Configure<JsAndCssFileLoaderOptions>(setupAction);
+            builder.Services.Configure(setupAction);
 
             // my services
             builder.Services.TryAddSingleton<IContentLoader, JsAndCssFileLoader>();
 
-            // framework services
-            builder.Services.AddMemoryCache();
+            return builder;
+        }
+
+        public static IContentLoaderBuilder AddFileSystemLoaders(this IContentLoaderBuilder builder, Action<FileSystemLoaderOptions> setupAction = null)
+        {
+            if (builder == null)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            if (setupAction == null)
+            {
+                setupAction = options => { };
+            }
+
+            // options
+            builder.Services.Configure(setupAction);
+
+            // my services
+            builder.Services.TryAddSingleton<IContentLoader, FileSystemLoader>();
 
             return builder;
         }
+
     }
 }

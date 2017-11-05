@@ -100,7 +100,8 @@ namespace Chame.Middlewares
             List<IContentLoader> loaders = new List<IContentLoader>();
             foreach (IContentLoader loader in httpContext.RequestServices.GetServices<IContentLoader>().Concat(_options.ContentLoaders))
             {
-                if (loader.Supports().Any(x => x == content.Extension || x == "*"))
+                if (loader.Supports().Any(supports => supports == content.Extension ||
+                                          supports == ContentLoaderOptions.ContentLoaderSupportsAll))
                 {
                     loaders.Add(loader);
                 }
