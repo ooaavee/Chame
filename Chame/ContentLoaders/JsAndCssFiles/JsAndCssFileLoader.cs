@@ -143,6 +143,9 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             return GetContent(fileContent, context);
         }
 
+        //
+        // TODO: Siirä tämä FileContent-luokkaan, koska käytetään kahdesta palvelusta
+        //
         private Content GetContent(FileContent fileContent, ContentLoadingContext context)
         {
             Content content;

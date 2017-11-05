@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Chame.Caching;
 using Chame.ContentLoaders.JsAndCssFiles;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -17,6 +18,7 @@ namespace Chame.ContentLoaders.FileSystem
         private readonly ContentCache _cache;
         private readonly IHostingEnvironment _env;
         private readonly ILogger<FileSystemLoader> _logger;
+        private readonly PhysicalFileProvider _provider;
 
         public FileSystemLoader(IOptions<ContentLoaderOptions> options1, IOptions<FileSystemLoaderOptions> options2, ContentCache cache, IHostingEnvironment env, ILogger<FileSystemLoader> logger)
         {
@@ -50,6 +52,7 @@ namespace Chame.ContentLoaders.FileSystem
             _cache = cache;
             _env = env;
             _logger = logger;
+            _provider = new PhysicalFileProvider(_options2.Root);
         }
 
         /// <summary>
@@ -75,9 +78,12 @@ namespace Chame.ContentLoaders.FileSystem
         /// <returns>loaded content</returns>
         public Task<Content> LoadContentAsync(ContentLoadingContext context)
         {
-            return Task.FromResult(Content.NotFound());
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
 
-//            throw new NotImplementedException();
+            return Task.FromResult(Load(context));
         }
 
         /// <summary>
@@ -103,6 +109,20 @@ namespace Chame.ContentLoaders.FileSystem
                         return false;
                 }
             }
+        }
+
+        private Content Load(ContentLoadingContext context)
+        {
+            return Content.NotFound();
+        }
+
+        private bool TryGetBundle(ContentLoadingContext context, out Bundle bundle)
+        {
+            bundle = null;
+
+            // TODO: try to load bundle
+
+            return false;
         }
 
 

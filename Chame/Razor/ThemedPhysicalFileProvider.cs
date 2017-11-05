@@ -6,7 +6,7 @@ namespace Chame.Razor
 {
     public class ThemedPhysicalFileProvider : IFileProvider
     {
-        private readonly PhysicalFileProvider _physicalFile;
+        private readonly PhysicalFileProvider _provider;
 
         public ThemedPhysicalFileProvider(string root)
         {
@@ -15,7 +15,7 @@ namespace Chame.Razor
                 throw new ArgumentNullException(nameof(root));
             }
 
-            _physicalFile = new PhysicalFileProvider(root);
+            _provider = new PhysicalFileProvider(root);
         }
 
         public IFileInfo GetFileInfo(string subpath)
@@ -36,6 +36,6 @@ namespace Chame.Razor
         /// <summary>
         /// Gets the underlying file provider.
         /// </summary>
-        private IFileProvider Provider => _physicalFile;
+        private IFileProvider Provider => _provider;
     }
 }
