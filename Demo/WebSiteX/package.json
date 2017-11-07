@@ -1,0 +1,18 @@
+{
+    "version": "1.0.0",
+    "name": "asp.net",
+    "private": true,
+    "devDependencies": {
+        "gulp": "3.9.1",
+        "less": "2.7.1",
+        "gulp-less": "3.1.0",
+        "gulp-cssmin": "0.1.7",
+        "gulp-rename": "1.2.2"
+    },
+    "dependencies": {
+        "bootstrap": "3.3.7",
+        "bootswatch-less": "3.3.4",
+        "font-awesome": "4.7.0"
+    }
+    
+}

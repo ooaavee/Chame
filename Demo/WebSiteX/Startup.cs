@@ -40,7 +40,7 @@ namespace WebSite
 
             // Add content loaders.
             services.AddContentLoader(options => { options.ThemeResolver = new DemoThemeResolver(); })
-                .AddFileSystemLoaders(options => { options.Root = contentRoot; });
+                    .AddFileSystemLoaders(options => { options.Root = contentRoot; });
 
             // Add MVC.
             services.AddMvc()

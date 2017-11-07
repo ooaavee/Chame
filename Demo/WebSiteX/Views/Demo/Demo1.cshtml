@@ -19,16 +19,20 @@
                     Demo
                 </h1>
                 <h2>
-                    This simple demo shows you how Chame works.
+                    This is a simple demo that shows you how Chame works.
                 </h2>
+                <p>
+                    So what is this...
+                </p>
 
-                <div class="demo-container">
-                    @Html.Partial("DemoPartialView")
-                </div>
+
 
                 <form asp-controller="Demo" asp-action="SwitchTheme" method="post">
-                    <button type="submit" class="btn btn-primary btn-lg">Click here to switch theme!</button>
+                    <button type="submit" class="btn btn-primary btn-lg">Switch theme</button>
                 </form>
+                <br />
+                <br />
+                @*@Html.Partial("DemoPartialView")*@
             </div>
         </div>
     </main>

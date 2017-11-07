@@ -50,7 +50,7 @@ namespace Chame.Middlewares
             {
                 var path = string.Format(template, content.Extension).ToLower(CultureInfo.InvariantCulture);
                 _pathMap.Add(path, content);
-                logger.LogDebug($"Registering path '{path}' for MIME type {content.MimeType}.");
+                //logger.LogDebug($"Registering path '{path}' for MIME type {content.MimeType}.");
             }
 
             _logger = logger;

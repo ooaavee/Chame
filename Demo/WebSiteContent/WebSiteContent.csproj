@@ -13,6 +13,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Root\A\js\demo.js">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Root\B\css\demo.css">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Root\B\js\demo.js">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="Root\A\Views\DemoPartialView.cshtml" />
     <None Include="Root\B\Views\DemoPartialView.cshtml" />
   </ItemGroup>
