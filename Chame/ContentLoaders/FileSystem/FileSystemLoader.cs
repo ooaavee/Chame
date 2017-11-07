@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using Chame.Caching;
 using Chame.ContentLoaders.JsAndCssFiles;
@@ -8,6 +11,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace Chame.ContentLoaders.FileSystem
 {
@@ -16,12 +20,10 @@ namespace Chame.ContentLoaders.FileSystem
         private readonly ContentLoaderOptions _options1;
         private readonly FileSystemLoaderOptions _options2;
         private readonly ContentCache _cache;
-        private readonly bool _useCache;
-        private readonly IHostingEnvironment _env;
         private readonly ILogger<FileSystemLoader> _logger;
         private readonly PhysicalFileProvider _provider;
 
-        public FileSystemLoader(IOptions<ContentLoaderOptions> options1, IOptions<FileSystemLoaderOptions> options2, ContentCache cache, IHostingEnvironment env, ILogger<FileSystemLoader> logger)
+        public FileSystemLoader(IOptions<ContentLoaderOptions> options1, IOptions<FileSystemLoaderOptions> options2, ContentCache cache, ILogger<FileSystemLoader> logger)
         {
             if (options1 == null)
             {
@@ -38,11 +40,6 @@ namespace Chame.ContentLoaders.FileSystem
                 throw new ArgumentNullException(nameof(cache));
             }
 
-            if (env == null)
-            {
-                throw new ArgumentNullException(nameof(env));
-            }
-
             if (logger == null)
             {
                 throw new ArgumentNullException(nameof(logger));
@@ -51,8 +48,6 @@ namespace Chame.ContentLoaders.FileSystem
             _options1 = options1.Value;
             _options2 = options2.Value;
             _cache = cache;
-            _useCache = options2.Value.Caching.IsEnabled(env);
-            _env = env;
             _logger = logger;
             _provider = new PhysicalFileProvider(_options2.Root);
         }
@@ -87,31 +82,44 @@ namespace Chame.ContentLoaders.FileSystem
 
             return Task.FromResult(Load(context));
         }
-
-      
-
+     
         private ContentLoaderResponse Load(ContentLoadingContext context)
         {
-            FileContent content;
-
             // first try to use cached content
-            if (_useCache)
+            FileContent content = _cache.Get<FileContent>(_options2.Caching, context);
+            if (content != null)
             {
-                content = _cache.Get<FileContent>(context);
-                if (content != null)
-                {
-                    return ContentLoaderResponse.CreateResponse(content, context, _options1);
-                }
+                return ContentLoaderResponse.CreateResponse(content, context, _options1);
             }
 
-            Bundle bundle;
-            if (context.ContentInfo.AllowBundling && TryGetBundle(context, out bundle))
-            {
-                content = LoadBundle(bundle, context);
+            if (string.IsNullOrEmpty(context.Filter))
+            { 
+                _logger.LogInformation($"Unable to process request - filter is mandatory for {nameof(FileSystemLoader)}.");
             }
             else
             {
-                content = LoadPlain(context);
+                // should we use .bundle file first?
+                bool useBundle = false;
+                Bundle bundle = null;
+                if (context.ContentInfo.AllowBundling)
+                {
+                    if (TryGetBundle(context, out bundle))
+                    {
+                        useBundle = true;
+                    }
+                }
+
+                // ...if .bundle file is enabled -> try loading by using it.
+                if (useBundle)
+                {
+                    content = LoadBundle(bundle, context);
+                }
+
+                // finally load by filter
+                if (content == null)
+                {
+                    content = LoadPlain(context);
+                }
             }
 
             return ContentLoaderResponse.CreateResponse(content, context, _options1);
@@ -119,9 +127,26 @@ namespace Chame.ContentLoaders.FileSystem
 
         private bool TryGetBundle(ContentLoadingContext context, out Bundle bundle)
         {
-            bundle = null;
+            bundle = _cache.Get<Bundle>(_options2.Caching, context);
+            if (bundle != null)
+            {
+                return true;
+            }
 
-            // TODO: try to load bundle
+            string path = PathFor(context.Theme, context.ContentInfo, Bundle.FileName);         
+            IFileInfo file = _provider.GetFileInfo(path);
+            if (!file.Exists)
+            {
+                return false;
+            }
+
+            string json = File.ReadAllText(file.PhysicalPath);
+            bundle = JsonConvert.DeserializeObject<Bundle>(json);
+            if (bundle != null)
+            {
+                _cache.Set<Bundle>(bundle, _options2.Caching, context);
+                return true;
+            }
 
             return false;
         }
@@ -129,6 +154,18 @@ namespace Chame.ContentLoaders.FileSystem
         // lataa bundlesta filterin perusteella (jos ei ole filteriä, niin error!)
         private FileContent LoadBundle(Bundle bundle, ContentLoadingContext context)
         {
+            Bundle.Group group = bundle.Groups.FirstOrDefault(x => x.Filter == context.Filter);
+            if (group != null)
+            {
+
+
+                string path = PathFor(context.Theme, context.ContentInfo, Bundle.FileName);
+                IFileInfo file = _provider.GetFileInfo(path);
+
+                //  IFileInfo fi =
+            }
+
+
             return null;
         }
 
@@ -138,6 +175,10 @@ namespace Chame.ContentLoaders.FileSystem
             return null;
         }
 
+        private FileContent LoadPlainXXX(IFileInfo file, ContentLoadingContext context)
+        {
+            return null;
+        }
 
         private static string PathFor(ITheme theme, IContentInfo contentInfo, string fileName)
         {

@@ -22,7 +22,6 @@ namespace Chame.ContentLoaders.JsAndCssFiles
         private readonly ContentLoaderOptions _options1;
         private readonly JsAndCssFileLoaderOptions _options2;
         private readonly ContentCache _cache;
-        private readonly bool _useCache;
         private readonly IHostingEnvironment _env;
         private readonly ILogger<JsAndCssFileLoader> _logger;
 
@@ -56,7 +55,6 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             _options1 = options1.Value;
             _options2 = options2.Value;
             _cache = cache;
-            _useCache = options2.Value.Caching.IsEnabled(env);
             _env = env;
             _logger = logger;
         }
@@ -95,16 +93,11 @@ namespace Chame.ContentLoaders.JsAndCssFiles
 
         private ContentLoaderResponse Load(ContentLoadingContext context)
         {
-            FileContent content = null;
-
             // first try to use cached content
-            if (_useCache)
+            FileContent content = _cache.Get<FileContent>(_options2.Caching, context);
+            if (content != null)
             {
-                content = _cache.Get<FileContent>(context);
-                if (content != null)
-                {
-                    return ContentLoaderResponse.CreateResponse(content, context, _options1);
-                }
+                return ContentLoaderResponse.CreateResponse(content, context, _options1);
             }
 
             // read content files and optionally cache the content
@@ -112,10 +105,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             if (files.Any())
             {
                 content = GetContent(files, context);
-                if (_useCache)
-                {
-                    _cache.Set<FileContent>(content, _options2.Caching.AbsoluteExpirationRelativeToNow, context);
-                }
+                _cache.Set<FileContent>(content, _options2.Caching, context);
             }
 
             return ContentLoaderResponse.CreateResponse(content, context, _options1);
@@ -190,12 +180,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
         {
             List<ContentFile> files = new List<ContentFile>();
 
-            ContentSchema schema = null;
-
-            if (_useCache)
-            {
-                schema = _cache.Get<ContentSchema>(context);
-            }
+            ContentSchema schema = _cache.Get<ContentSchema>(_options2.Caching, context);
 
             if (_options2.UseContentSchemaFile)
             {
@@ -203,10 +188,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
                 schema = LoadSchema();
                 if (schema != null)
                 {
-                    if (_useCache)
-                    {
-                        _cache.Set<ContentSchema>(schema, _options2.Caching.AbsoluteExpirationRelativeToNow, context);
-                    }
+                    _cache.Set<ContentSchema>(schema, _options2.Caching, context);
                 }
             }
             else

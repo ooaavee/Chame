@@ -13,13 +13,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Root\A\js\demo.js">
+    <Content Include="Root\A\js\customization.js">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Include="Root\B\css\demo.css">
+    <Content Include="Root\B\css\customization.css">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Include="Root\B\js\demo.js">
+    <Content Include="Root\B\js\customization.js">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
   </ItemGroup>
