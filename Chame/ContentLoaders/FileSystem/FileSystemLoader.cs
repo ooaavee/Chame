@@ -98,6 +98,9 @@ namespace Chame.ContentLoaders.FileSystem
             }
             else
             {
+                // TODO: Ihan eka pitäisi tutkia löytyykö cachesta!!!
+
+
                 // should we use .bundle file first?
                 bool useBundle = false;
                 Bundle bundle = null;
@@ -112,14 +115,17 @@ namespace Chame.ContentLoaders.FileSystem
                 // ...if .bundle file is enabled -> try loading by using it.
                 if (useBundle)
                 {
-                    content = LoadBundle(bundle, context);
+                    content = LoadUsingFilter(bundle, context);
                 }
 
                 // finally load by filter
                 if (content == null)
                 {
-                    content = LoadPlain(context);
+                    content = LoadUsingFilter(context);
                 }
+
+                // TODO: Täällä jos löytyi, niin content pitäisi laittaa cacheen!!!
+
             }
 
             return ContentLoaderResponse.CreateResponse(content, context, _options1);
@@ -152,30 +158,48 @@ namespace Chame.ContentLoaders.FileSystem
         }
 
         // lataa bundlesta filterin perusteella (jos ei ole filteriä, niin error!)
-        private FileContent LoadBundle(Bundle bundle, ContentLoadingContext context)
+        private FileContent LoadUsingFilter(Bundle bundle, ContentLoadingContext context)
         {
+            List<FileContent> content = new List<FileContent>();
+
             Bundle.Group group = bundle.Groups.FirstOrDefault(x => x.Filter == context.Filter);
             if (group != null)
             {
+                foreach (var tmp in group.Files)
+                {
+                    string path = PathFor(context.Theme, context.ContentInfo, tmp);
+                    IFileInfo file = _provider.GetFileInfo(path);
 
+                    if (file.Exists)
+                    {
+                        var xxxx = LoadFile(file);
+                        if (xxxx != null)
+                        {
+                            content.Add(xxxx);
+                        }
+                    }
+                    else
+                    {
+                        // todo: lokata ettei fileä löydy!!
+                    }
 
-                string path = PathFor(context.Theme, context.ContentInfo, Bundle.FileName);
-                IFileInfo file = _provider.GetFileInfo(path);
+                }
 
                 //  IFileInfo fi =
             }
 
+           
 
             return null;
         }
 
         // lataa ilman bundlea käyttäällä filteriä (jos ei ole filteriä, niin error!)
-        private FileContent LoadPlain(ContentLoadingContext context)
+        private FileContent LoadUsingFilter(ContentLoadingContext context)
         {
             return null;
         }
 
-        private FileContent LoadPlainXXX(IFileInfo file, ContentLoadingContext context)
+        private FileContent LoadFile(IFileInfo file)
         {
             return null;
         }
