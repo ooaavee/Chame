@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chame</title>
+    <title>How Chame works?</title>
 
     <link rel="stylesheet" href="/css/bootstrap.css" />
     <link rel="stylesheet" href="/css/fontawesome.css" />
@@ -16,23 +16,43 @@
         <div class="container">
             <div class="jumbotron page">
                 <h1>
-                    This simple demo shows you how Chame works!
+                    How Chame works?
                 </h1>
 
-                <p class="lead">
-                    We have two themes in this demo: A and B. You can switch the theme by clicking that button below.
-                    <br />
-                    <br />
-                    That blue-and-dotted area below is reserved for themed content, so we use different Razor, CSS and JavaScript files for different themes.
+                <p>
+                    This simple demo application shows you how Chame works!
+                    <br/>
+                    <br/>
+                    We have two themes in this demo: <i>A</i> and <i>B</i>. You can switch the theme by clicking that button below.
                 </p>
+
+                <form asp-controller="Demo" asp-action="SwitchTheme" method="post">
+                    <button type="submit" class="btn btn-primary btn-lg">Click here to switch themes</button>
+                </form>
+                
+                <br />
+                <br />
+
+                <p>
+                    That blue-and-dotted area below is reserved for themed content, so we use different Razor files for different themes.
+                </p>
+
 
                 <div class="demo-container">
                     @Html.Partial("DemoPartialView")
                 </div>
+                
+                @{
 
-                <form asp-controller="Demo" asp-action="SwitchTheme" method="post">
-                    <button type="submit" class="btn btn-primary btn-lg">Click here to switch themes!</button>
-                </form>
+                    var s = "<img src=\"/chame-loader/png?filter=logo.png\"/>";
+                }
+<pre>@s</pre>
+
+                <img src="/chame-loader/png?filter=logo.png"/>
+                
+                
+
+                
 
             </div>
         </div>
