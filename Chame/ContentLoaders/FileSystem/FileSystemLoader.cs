@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using Chame.Caching;
-using Chame.ContentLoaders.JsAndCssFiles;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -85,12 +81,7 @@ namespace Chame.ContentLoaders.FileSystem
      
         private ContentLoaderResponse Load(ContentLoadingContext context)
         {
-            // first try to use cached content
-            FileContent content = _cache.Get<FileContent>(_options2.Caching, context);
-            if (content != null)
-            {
-                return ContentLoaderResponse.CreateResponse(content, context, _options1);
-            }
+            FileContent content = null;
 
             if (string.IsNullOrEmpty(context.Filter))
             { 
@@ -98,10 +89,14 @@ namespace Chame.ContentLoaders.FileSystem
             }
             else
             {
-                // TODO: Ihan eka pitäisi tutkia löytyykö cachesta!!!
+                // first try to use cached content
+                content = _cache.Get<FileContent>(_options2.Caching, context);
+                if (content != null)
+                {
+                    return ContentLoaderResponse.Create(content, context, _options1.SupportETag);
+                }
 
-
-                // should we use .bundle file first?
+                // check if we should use the bundle file?
                 bool useBundle = false;
                 Bundle bundle = null;
                 if (context.ContentInfo.AllowBundling)
@@ -112,25 +107,31 @@ namespace Chame.ContentLoaders.FileSystem
                     }
                 }
 
-                // ...if .bundle file is enabled -> try loading by using it.
+                // get content by using the bunble file
                 if (useBundle)
                 {
-                    content = LoadUsingFilter(bundle, context);
+                    content = GetFilesInBundle(bundle, context);
                 }
 
-                // finally load by filter
+                // get content from single file
                 if (content == null)
                 {
-                    content = LoadUsingFilter(context);
+                    content = GetSingleFile(context);
                 }
 
-                // TODO: Täällä jos löytyi, niin content pitäisi laittaa cacheen!!!
-
+                // cache content for later usage
+                if (content != null)
+                {
+                    _cache.Set<FileContent>(content, _options2.Caching, context);
+                }
             }
 
-            return ContentLoaderResponse.CreateResponse(content, context, _options1);
+            return ContentLoaderResponse.Create(content, context, _options1.SupportETag);
         }
 
+        /// <summary>
+        /// Tries to find a 'bundle.json' file for the current request.
+        /// </summary>
         private bool TryGetBundle(ContentLoadingContext context, out Bundle bundle)
         {
             bundle = _cache.Get<Bundle>(_options2.Caching, context);
@@ -139,7 +140,7 @@ namespace Chame.ContentLoaders.FileSystem
                 return true;
             }
 
-            string path = PathFor(context.Theme, context.ContentInfo, Bundle.FileName);         
+            string path = GetRelativePath(context.Theme, context.ContentInfo, Bundle.FileName);         
             IFileInfo file = _provider.GetFileInfo(path);
             if (!file.Exists)
             {
@@ -157,54 +158,99 @@ namespace Chame.ContentLoaders.FileSystem
             return false;
         }
 
-        // lataa bundlesta filterin perusteella (jos ei ole filteriä, niin error!)
-        private FileContent LoadUsingFilter(Bundle bundle, ContentLoadingContext context)
+        /// <summary>
+        /// Reads files from the bundle. 
+        /// If the bundle doesn't contain any files for the current request, a null will be returned.
+        /// </summary>
+        private FileContent GetFilesInBundle(Bundle bundle, ContentLoadingContext context)
         {
-            List<FileContent> content = new List<FileContent>();
-
             Bundle.Group group = bundle.Groups.FirstOrDefault(x => x.Filter == context.Filter);
-            if (group != null)
+            if (group == null || !group.Files.Any())
             {
-                foreach (var tmp in group.Files)
-                {
-                    string path = PathFor(context.Theme, context.ContentInfo, tmp);
-                    IFileInfo file = _provider.GetFileInfo(path);
+                return null;
+            }
 
-                    if (file.Exists)
+            List<byte> data = new List<byte>();
+
+            foreach (string file in group.Files)
+            {
+                try
+                {
+                    string path = GetRelativePath(context.Theme, context.ContentInfo, file);
+                    IFileInfo info = _provider.GetFileInfo(path);
+
+                    if (info.Exists)
                     {
-                        var xxxx = LoadFile(file);
-                        if (xxxx != null)
-                        {
-                            content.Add(xxxx);
-                        }
+                        byte[] tmp = File.ReadAllBytes(info.PhysicalPath);
+                        data.AddRange(tmp);
                     }
                     else
                     {
-                        // todo: lokata ettei fileä löydy!!
+                        _logger.LogError($"Bundle file not found [{path}].");
                     }
-
                 }
-
-                //  IFileInfo fi =
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"An error occurred while reading bundle file [{context.ContentInfo.Extension}/{context.Filter}/{file}].");
+                    throw;
+                }
             }
 
-           
+            FileContent content = new FileContent {Data = data.ToArray()};
 
-            return null;
+            if (_options1.SupportETag)
+            {
+                content.ETag = HttpETagHelper.Calculate(content.Data);
+            }
+
+            return content;
         }
 
-        // lataa ilman bundlea käyttäällä filteriä (jos ei ole filteriä, niin error!)
-        private FileContent LoadUsingFilter(ContentLoadingContext context)
+        /// <summary>
+        /// Reads a single file defined by the current request. 
+        /// If the file doesn't exist, a null will be returned.
+        /// </summary>
+        private FileContent GetSingleFile(ContentLoadingContext context)
         {
-            return null;
+            byte[] data = null;
+
+            try
+            {
+                string path = GetRelativePath(context.Theme, context.ContentInfo, context.Filter);
+                IFileInfo info = _provider.GetFileInfo(path);
+
+                if (info.Exists)
+                {
+                    data = File.ReadAllBytes(info.PhysicalPath);
+                }
+                else
+                {
+                    _logger.LogError($"Bundle file not found [{path}].");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while reading bundle file [{context.ContentInfo.Extension}/{context.Filter}].");
+                throw;
+            }
+
+            if (data == null)
+            {
+                return null;
+            }
+
+            FileContent content = new FileContent { Data = data };
+
+            if (_options1.SupportETag)
+            {
+                content.ETag = HttpETagHelper.Calculate(content.Data);
+            }
+
+            return content;
         }
 
-        private FileContent LoadFile(IFileInfo file)
-        {
-            return null;
-        }
 
-        private static string PathFor(ITheme theme, IContentInfo contentInfo, string fileName)
+        private static string GetRelativePath(ITheme theme, IContentInfo contentInfo, string fileName)
         {
             string path = $"/{theme.GetName()}/{contentInfo.Extension}/{fileName}";
             return path;

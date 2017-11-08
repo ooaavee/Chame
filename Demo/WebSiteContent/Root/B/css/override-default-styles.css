@@ -1,0 +1,15 @@
+﻿body {
+    background: white;
+    font-family: "Helvetica";
+}
+
+    body > h1 {
+        font-family: "Helvetica";
+    }
+
+
+.page {
+    border: 4px solid #e95420;
+    background-color: white;
+    color: #e95420;
+}

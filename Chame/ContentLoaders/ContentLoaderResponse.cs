@@ -12,12 +12,12 @@ namespace Chame.ContentLoaders
 
         public static ContentLoaderResponse NotFound()
         {
-            return new ContentLoaderResponse { Status = ResponseStatus.NotFound };
+            return new ContentLoaderResponse {Status = ResponseStatus.NotFound};
         }
 
         public static ContentLoaderResponse NotModified()
         {
-            return new ContentLoaderResponse { Status = ResponseStatus.NotModified };
+            return new ContentLoaderResponse {Status = ResponseStatus.NotModified};
         }
 
         public static ContentLoaderResponse Ok(FileContent content)
@@ -27,7 +27,7 @@ namespace Chame.ContentLoaders
                 throw new ArgumentNullException(nameof(content));
             }
 
-            return new ContentLoaderResponse { Status = ResponseStatus.Ok, Data = content.Data, ETag = content.ETag };
+            return new ContentLoaderResponse {Status = ResponseStatus.Ok, Data = content.Data, ETag = content.ETag};
         }
 
         /// <summary>
@@ -50,21 +50,14 @@ namespace Chame.ContentLoaders
                 }
             }
 
-            var content = new FileContent { Data = data.ToArray() };
-
-            return Ok(content);
+            return Ok(new FileContent {Data = data.ToArray()});
         }
 
-        public static ContentLoaderResponse CreateResponse(FileContent content, ContentLoadingContext context, ContentLoaderOptions options)
+        public static ContentLoaderResponse Create(FileContent content, ContentLoadingContext context, bool supportETag)
         {
             if (context == null)
             {
                 throw new ArgumentNullException(nameof(context));
-            }
-
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
             }
 
             if (content == null)
@@ -72,7 +65,7 @@ namespace Chame.ContentLoaders
                 return NotFound();
             }
 
-            if (options.SupportETag && context.ETag != null && content.ETag != null && context.ETag == content.ETag)
+            if (supportETag && context.ETag != null && content.ETag != null && context.ETag == content.ETag)
             {
                 return NotModified();
             }

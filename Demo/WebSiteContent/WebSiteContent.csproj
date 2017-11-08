@@ -16,7 +16,7 @@
     <Content Include="Root\A\js\customization.js">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Include="Root\B\css\customization.css">
+    <Content Include="Root\A\css\customization.css">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="Root\B\js\customization.js">

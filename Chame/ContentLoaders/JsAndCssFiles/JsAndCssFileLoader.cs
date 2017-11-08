@@ -97,7 +97,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             FileContent content = _cache.Get<FileContent>(_options2.Caching, context);
             if (content != null)
             {
-                return ContentLoaderResponse.CreateResponse(content, context, _options1);
+                return ContentLoaderResponse.Create(content, context, _options1.SupportETag);
             }
 
             // read content files and optionally cache the content
@@ -108,12 +108,13 @@ namespace Chame.ContentLoaders.JsAndCssFiles
                 _cache.Set<FileContent>(content, _options2.Caching, context);
             }
 
-            return ContentLoaderResponse.CreateResponse(content, context, _options1);
+            return ContentLoaderResponse.Create(content, context, _options1.SupportETag);
         }
 
         private FileContent GetContent(IEnumerable<ContentFile> files, ContentLoadingContext context)
         {
             var data = new List<byte>();
+
             foreach (ContentFile file in Filter(files, context.Filter))
             {
                 var tmp = ReadAllBytes(file);
@@ -123,7 +124,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
                 }
             }
 
-            var content = new FileContent { Data = data.ToArray() };
+            var content = new FileContent {Data = data.ToArray()};
 
             if (_options1.SupportETag)
             {

@@ -16,22 +16,28 @@
         <div class="container">
             <div class="jumbotron page">
                 <h1>
-                    Demo
+                    This simple demo shows you how Chame works!
                 </h1>
-                <h2>
-                    This simple demo shows you how Chame works.
-                </h2>
+
+                <p class="lead">
+                    We have two themes in this demo: A and B. You can switch the theme by clicking that button below.
+                    <br />
+                    <br />
+                    That blue-and-dotted area below is reserved for themed content, so we use different Razor, CSS and JavaScript files for different themes.
+                </p>
 
                 <div class="demo-container">
                     @Html.Partial("DemoPartialView")
                 </div>
 
                 <form asp-controller="Demo" asp-action="SwitchTheme" method="post">
-                    <button type="submit" class="btn btn-primary btn-lg">Click here to switch theme!</button>
+                    <button type="submit" class="btn btn-primary btn-lg">Click here to switch themes!</button>
                 </form>
+
             </div>
         </div>
     </main>
+
     <script src="/js/jquery.js"></script>
     <script src="/js/bootstrap.js"></script>
     <script src="/js/site.js"></script>

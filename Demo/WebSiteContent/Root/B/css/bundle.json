@@ -3,8 +3,8 @@
     {
       "filter": "customization.css",
       "files": [
-        "style1.css",
-        "style2.css"
+        "override-default-styles.css",
+        "customization.css"
       ]
     }
   ]

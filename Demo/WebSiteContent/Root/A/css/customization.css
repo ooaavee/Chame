@@ -1,12 +1,13 @@
 ﻿.demo-container {
-    font-family: "Helvetica";
+    font-family: "Courier New";
 }
 
     .demo-container > h1,
     .demo-container > h2,
     .demo-container > h3,
     .demo-container > h4,
-    .demo-container > h5 .demo-container > h6 {
-        font-family: "Helvetica";
+    .demo-container > h5 
+    .demo-container > h6{
+        font-family: "Courier New";
         margin-bottom: 30px;
     }
