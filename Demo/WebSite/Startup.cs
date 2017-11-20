@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using Chame.Razor;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -48,7 +50,11 @@ namespace WebSite
                 {
                     options.EnableThemes(o =>
                     {
-                        o.WithPhysicalFileProvider(contentRoot);
+                        o.WithPhysicalFileProvider(new RazorPhysicalFileProviderOptions
+                        {
+                            Root = contentRoot,
+                            NamedControllers =  new List<string>(new [] {"Demo"})
+                        }, _env);
                         o.WithViewLocationExpander();
                     });
                 });
