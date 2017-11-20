@@ -249,7 +249,6 @@ namespace Chame.ContentLoaders.FileSystem
             return content;
         }
 
-
         private static string GetRelativePath(ITheme theme, IContentInfo contentInfo, string fileName)
         {
             string path = $"/{theme.GetName()}/{contentInfo.Extension}/{fileName}";

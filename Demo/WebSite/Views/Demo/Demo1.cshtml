@@ -23,12 +23,28 @@
                     This simple demo application shows you how Chame works!
                     <br/>
                     <br/>
-                    We have two themes in this demo: <i>A</i> and <i>B</i>. You can switch the theme by clicking that button below.
+                    We have three themes in this demo: <i>A</i>, <i>B</i> and <i>C</i>. You can switch themes by clicking buttons below.
                 </p>
 
-                <form asp-controller="Demo" asp-action="SwitchTheme" method="post">
-                    <button type="submit" class="btn btn-primary btn-lg">Click here to switch themes</button>
-                </form>
+                <br />
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <form asp-controller="Demo" asp-action="SetThemeA" method="post">
+                            <button type="submit" class="btn btn-primary btn-lg">Theme A</button>
+                        </form>                        
+                    </div>
+                    <div class="col-md-4">
+                        <form asp-controller="Demo" asp-action="SetThemeB" method="post">
+                            <button type="submit" class="btn btn-primary btn-lg">Theme B</button>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <form asp-controller="Demo" asp-action="SetThemeC" method="post">
+                            <button type="submit" class="btn btn-primary btn-lg">Theme C</button>
+                        </form>
+                    </div>
+                </div>
                 
                 <br />
                 <br />
@@ -36,7 +52,6 @@
                 <p>
                     That blue-and-dotted area below is reserved for themed content, so we use different Razor files for different themes.
                 </p>
-
 
                 <div class="demo-container">
                     @Html.Partial("DemoPartialView")
@@ -47,13 +62,8 @@
                     var s = "<img src=\"/chame-loader/png?filter=logo.png\"/>";
                 }
 <pre>@s</pre>
-
                 <img src="/chame-loader/png?filter=logo.png"/>
-                
-                
-
-                
-
+              
             </div>
         </div>
     </main>

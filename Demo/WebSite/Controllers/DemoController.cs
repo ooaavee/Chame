@@ -15,6 +15,32 @@ namespace WebSite.Controllers
         }
 
         [HttpPost]
+        public async Task<ActionResult> SetThemeA()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Demo1");
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> SetThemeB()
+        {
+            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "themeB") }, "demo");
+            var principal = new ClaimsPrincipal(identity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+            return RedirectToAction("Demo1");
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> SetThemeC()
+        {
+            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "themeC") }, "demo");
+            var principal = new ClaimsPrincipal(identity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+            return RedirectToAction("Demo1");
+        }
+
+        [HttpPost]
         public async Task<ActionResult> SwitchTheme()
         {
             if (HttpContext.User.Identity.IsAuthenticated)
@@ -30,5 +56,9 @@ namespace WebSite.Controllers
 
             return RedirectToAction("Demo1");
         }
+
+
+      
+
     }
 }

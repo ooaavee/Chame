@@ -48,9 +48,7 @@ namespace Chame.Middlewares
             var template = opt.RequestPathTemplate;
             foreach (IContentInfo content in opt.ContentModel.SupportedContent)
             {
-                var path = string.Format(template, content.Extension).ToLower(CultureInfo.InvariantCulture);
-                _pathMap.Add(path, content);
-                //logger.LogDebug($"Registering path '{path}' for MIME type {content.MimeType}.");
+                _pathMap.Add(string.Format(template, content.Extension).ToLower(CultureInfo.InvariantCulture), content);
             }
 
             _logger = logger;

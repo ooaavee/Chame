@@ -27,7 +27,14 @@ namespace WebSite
             }
             else
             {
-                themeName = "B";
+                if (context.User.Identity.Name == "themeB")
+                {
+                    themeName = "B";
+                }
+                else
+                {
+                    themeName = "C";
+                }
             }
 
             ITheme theme = new DemoTheme(themeName);

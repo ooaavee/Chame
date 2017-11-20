@@ -63,9 +63,11 @@ namespace Chame.Razor
         {
             if (context.Values.TryGetValue(Key, out string themeName))
             {
-                IEnumerable<string> themeLocations = _viewLocationTemplates.Select(template => string.Format(template, themeName));
-                viewLocations = themeLocations.Concat(viewLocations);
+                viewLocations = _viewLocationTemplates.Select(template => string.Format(template, themeName))
+                    .Concat(viewLocations)
+                    .ToArray();
             }
+
             return viewLocations;
         }
 
