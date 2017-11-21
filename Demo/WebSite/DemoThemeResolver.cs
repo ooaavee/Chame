@@ -37,7 +37,7 @@ namespace WebSite
                 }
             }
 
-            ITheme theme = new DemoTheme(themeName);
+            ITheme theme = new DemoTheme(themeName);          
             return theme;
         }
 

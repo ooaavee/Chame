@@ -42,20 +42,20 @@ namespace WebSite
 
             // Add content loaders.
             services.AddContentLoader(options => { options.ThemeResolver = new DemoThemeResolver(); })
-                .AddFileSystemLoaders(options => { options.Root = contentRoot; });
+                    .AddFileSystemLoader(options => { options.Root = contentRoot; });
 
             // Add MVC.
             services.AddMvc()
                 .AddRazorOptions(options =>
                 {
-                    options.EnableThemes(o =>
+                    options.EnableThemes(themes =>
                     {
-                        o.WithPhysicalFileProvider(new RazorPhysicalFileProviderOptions
+                        themes.WithPhysicalFileProvider(new RazorPhysicalFileProviderOptions
                         {
                             Root = contentRoot,
-                            NamedControllers =  new List<string>(new [] {"Demo"})
+                            NamedControllers = new List<string>(new[] {"Demo"})
                         }, _env);
-                        o.WithViewLocationExpander();
+                        themes.WithViewLocationExpander();
                     });
                 });
 

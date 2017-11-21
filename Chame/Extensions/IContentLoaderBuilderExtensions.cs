@@ -32,7 +32,7 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder;
         }
 
-        public static IContentLoaderBuilder AddFileSystemLoaders(this IContentLoaderBuilder builder, Action<FileSystemLoaderOptions> setupAction)
+        public static IContentLoaderBuilder AddFileSystemLoader(this IContentLoaderBuilder builder, Action<FileSystemLoaderOptions> setupAction)
         {
             if (builder == null)
             {

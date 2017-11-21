@@ -36,7 +36,6 @@ namespace WebSite.Controllers
             var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "themeC") }, "demo");
             var principal = new ClaimsPrincipal(identity);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-
             return RedirectToAction("Demo1");
         }
 
@@ -56,9 +55,5 @@ namespace WebSite.Controllers
 
             return RedirectToAction("Demo1");
         }
-
-
-      
-
     }
 }

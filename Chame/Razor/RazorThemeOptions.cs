@@ -45,40 +45,39 @@ namespace Chame.Razor
             IFileProvider provider = new ThemedPhysicalFileProvider(options.Root);
             FileProviders.Add(provider);
 
-            List<string> templates = new List<string>();
-
             if (options.NamedControllers.Any())
             {
-                Tuple<string, string>[] viewFolders = GetViewFolders(env, options.NamedControllers).ToArray();
+                IList<Tuple<string, string>> viewFolders = GetViewFolders(env, options.NamedControllers);
 
+                // THEMED VIEWS: 
+                // [theme name]/Views/[controller name]/[page name]/{0}.cshtml
                 foreach (Tuple<string, string> viewFolder in viewFolders)
                 {
                     string controller = viewFolder.Item1;
                     string page = viewFolder.Item2;
                     string template = "{0}/Views/" + controller + "/" + page + "/{{0}}.cshtml";
-                    templates.Add(template);
+                    ViewLocationTemplates.Add(template);
                 }
 
+                // THEMED VIEWS:
+                // [theme name]/Views/Shared/{0}.cshtml
+                ViewLocationTemplates.Add("{0}/Views/Shared/{{0}}.cshtml");
+
+                // DEFAULT VIEWS: 
+                // Views /[controller name]/[page name]/{0}.cshtml
                 foreach (Tuple<string, string> viewFolder in viewFolders)
                 {
                     string controller = viewFolder.Item1;
                     string page = viewFolder.Item2;
                     string template = "Views/" + controller + "/" + page + "/{{0}}.cshtml";
-                    templates.Add(template);
+                    ViewLocationTemplates.Add(template);
                 }
-
-                templates.Add("{0}/Views/Shared/{{0}}.cshtml");
             }
             else
             {
-                templates.Add("{0}/Views/{{1}}/{{0}}.cshtml");
-                templates.Add("{0}/Views/Shared/{{0}}.cshtml");
-                templates.Add("{0}/Views/{{0}}.cshtml");
-            }
-
-            foreach (var template in templates)
-            {
-                ViewLocationTemplates.Add(template);
+                ViewLocationTemplates.Add("{0}/Views/{{1}}/{{0}}.cshtml");
+                ViewLocationTemplates.Add("{0}/Views/Shared/{{0}}.cshtml");
+                ViewLocationTemplates.Add("{0}/Views/{{0}}.cshtml");
             }
         }
 
@@ -91,26 +90,24 @@ namespace Chame.Razor
             ViewLocationExpanders.Add(expander);
         }
 
-        private static IEnumerable<Tuple<string, string>> GetViewFolders(IHostingEnvironment env, IEnumerable<string> controllers)
+        private static IList<Tuple<string, string>> GetViewFolders(IHostingEnvironment env, IEnumerable<string> controllers)
         {
+            List<Tuple<string, string>> l = new List<Tuple<string, string>>();
             IDirectoryContents viewsSubFolders = env.ContentRootFileProvider.GetDirectoryContents("Views");
-
             foreach (string controller in controllers)
             {
                 IFileInfo controllerFolder = viewsSubFolders.ToArray().FirstOrDefault(x => x.Name == controller && x.IsDirectory);
-
                 if (controllerFolder != null)
                 {
                     string[] pages = Directory.GetDirectories(controllerFolder.PhysicalPath);
-
                     foreach (string page in pages)
                     {
                         DirectoryInfo pageInfo = new DirectoryInfo(page);
-
-                        yield return new Tuple<string, string>(controller, pageInfo.Name);
+                        l.Add(new Tuple<string, string>(controller, pageInfo.Name));
                     }
                 }
             }
+            return l;
         }
 
     }
