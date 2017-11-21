@@ -34,16 +34,12 @@ namespace Chame.Caching
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (!IsEnabled(support))
+            if (IsEnabled(support))
             {
-                return null;
-            }
-
-            string key = KeyFor<T>(context);
-
-            if (_mem.TryGetValue(key, out T item))
-            {
-                return item;
+                if (_mem.TryGetValue(KeyFor<T>(context), out T item))
+                {
+                    return item;
+                }
             }
 
             return null;
@@ -61,14 +57,10 @@ namespace Chame.Caching
                 throw new ArgumentNullException(nameof(context));
             }
 
-            if (!IsEnabled(support))
+            if (IsEnabled(support))
             {
-                return;
+                _mem.Set(KeyFor<T>(context), item, support.AbsoluteExpirationRelativeToNow);
             }
-
-            string key = KeyFor<T>(context);
-
-            _mem.Set(key, item, support.AbsoluteExpirationRelativeToNow);
         }
 
         private bool IsEnabled(CachingSupport support)
