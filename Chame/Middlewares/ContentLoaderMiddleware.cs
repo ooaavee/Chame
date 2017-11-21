@@ -35,23 +35,19 @@ namespace Chame.Middlewares
         public ContentLoaderMiddleware(RequestDelegate next, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger)
         {
             _next = next;
-
-            ContentLoaderOptions opt = options.Value;
-
-            _supportETag = opt.SupportETag;
-            _contentLoaders = opt.ContentLoaders;
-            _contentLoaderSorter = opt.ContentLoaderSorter;
-            _defaultTheme = opt.DefaultTheme;
-            _themeResolver = opt.ThemeResolver;
+            _supportETag = options.Value.SupportETag;
+            _contentLoaders = options.Value.ContentLoaders;
+            _contentLoaderSorter = options.Value.ContentLoaderSorter;
+            _defaultTheme = options.Value.DefaultTheme;
+            _themeResolver = options.Value.ThemeResolver;
+            _logger = logger;
 
             // resolves valid requests paths for this middleware
-            var template = opt.RequestPathTemplate;
-            foreach (IContentInfo content in opt.ContentModel.SupportedContent)
+            foreach (IContentInfo content in options.Value.ContentModel.SupportedContent)
             {
-                _pathMap.Add(string.Format(template, content.Extension).ToLower(CultureInfo.InvariantCulture), content);
+                string path = string.Format(options.Value.RequestPathTemplate, content.Extension).ToLower(CultureInfo.InvariantCulture);
+                _pathMap.Add(path, content);
             }
-
-            _logger = logger;
         }
 
         public async Task Invoke(HttpContext httpContext)
