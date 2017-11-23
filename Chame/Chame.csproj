@@ -10,6 +10,15 @@
     <OutputTypeEx>library</OutputTypeEx>
     <StartupObject />
     <AssemblyName>Chame</AssemblyName>
+    <Authors>Ossi Vartiainen</Authors>
+    <Company />
+    <Product />
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseUrl>https://github.com/ooaavee/Chame/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/ooaavee/Chame</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ooaavee/Chame</RepositoryUrl>
+    <Description>ASP.NET Core JavaScript, CSS and Razor view loader for multi-tenant and themeable applications.</Description>
+    <Copyright>Copyright (c) 2017 Ossi Vartiainen</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,8 +28,8 @@
     <None Remove="Services\**" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore" Version="2.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.0.0" />
   </ItemGroup>
   <ItemGroup>

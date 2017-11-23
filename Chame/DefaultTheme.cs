@@ -3,13 +3,11 @@
     /// <summary>
     /// 'default' theme
     /// </summary>
-    public sealed class DefaultTheme : ITheme
+    public class DefaultTheme : ITheme
     {
-        public const string Name = "default";
-
-        public string GetName()
+        public virtual string GetName()
         {
-            return Name;
+            return "default";
         }
     }
 }

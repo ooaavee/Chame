@@ -1,33 +1,21 @@
 using Chame;
-using Chame.ContentLoaders;
-using Chame.Razor;
 using Microsoft.AspNetCore.Http;
 
 namespace WebSite
 {
     public class DemoThemeResolver : IThemeResolver
     {
-        public ITheme Resolve(ContentFileThemeResolvingContext context)
-        {
-            return GetThemeFromHttpContext(context.HttpContext);
-        }
-
-        public ITheme Resolve(RazorThemeResolvingContext context)
-        {
-            return GetThemeFromHttpContext(context.HttpContext);
-        }
-
-        private static ITheme GetThemeFromHttpContext(HttpContext context)
+        public ITheme GetTheme(HttpContext httpContext)
         {
             string themeName;
 
-            if (!context.User.Identity.IsAuthenticated)
+            if (!httpContext.User.Identity.IsAuthenticated)
             {
                 themeName = "A";
             }
             else
             {
-                if (context.User.Identity.Name == "themeB")
+                if (httpContext.User.Identity.Name == "themeB")
                 {
                     themeName = "B";
                 }

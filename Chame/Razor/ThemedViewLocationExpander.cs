@@ -45,8 +45,8 @@ namespace Chame.Razor
             // options
             IOptions<ContentLoaderOptions> options = httpContext.RequestServices.GetRequiredService<IOptions<ContentLoaderOptions>>();
 
-            // resolve theme
-            ITheme theme = ThemeHelper.ResolveTheme(new RazorThemeResolvingContext(context), options.Value.ThemeResolver, options.Value.DefaultTheme);
+            // theme
+            ITheme theme = GetTheme(httpContext, options.Value.DefaultTheme);
             if (theme == null)
             {
                 var message = "Could not resolve a theme.";
@@ -69,6 +69,17 @@ namespace Chame.Razor
             }
 
             return viewLocations;
+        }
+
+        private static ITheme GetTheme(HttpContext httpContext, ITheme defaultTheme)
+        {
+            ITheme theme = null;
+            IThemeResolver resolver = httpContext.RequestServices.GetService<IThemeResolver>();
+            if (resolver != null)
+            {
+                theme = resolver.GetTheme(httpContext);
+            }
+            return theme ?? defaultTheme;
         }
 
     }

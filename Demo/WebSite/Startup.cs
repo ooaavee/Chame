@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Chame;
 using Chame.Razor;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -41,8 +42,10 @@ namespace WebSite
                 .FullName;
 
             // Add content loaders.
-            services.AddContentLoader(options => { options.ThemeResolver = new DemoThemeResolver(); })
-                    .AddFileSystemLoader(options => { options.Root = contentRoot; });
+            services.AddContentLoader().AddFileSystemLoader(options => { options.Root = contentRoot; });
+
+            // Add theme resolver.
+            services.AddSingleton<IThemeResolver, DemoThemeResolver>();
 
             // Add MVC.
             services.AddMvc()

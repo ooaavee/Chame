@@ -1,22 +1,14 @@
-﻿using Chame.ContentLoaders;
-using Chame.Razor;
+﻿using Microsoft.AspNetCore.Http;
 
 namespace Chame
-{
+{    
     public interface IThemeResolver
     {
         /// <summary>
-        /// Resolves a theme that should be used when loading content files.
+        /// Resolves a theme that should be used with the specified HTTP context.
         /// </summary>
-        /// <param name="context">context</param>
+        /// <param name="httpContext">HTTP context</param>
         /// <returns>theme</returns>
-        ITheme Resolve(ContentFileThemeResolvingContext context);
-
-        /// <summary>
-        /// Resolves a theme that should be used when loading Razor views.
-        /// </summary>
-        /// <param name="context">context</param>
-        /// <returns>theme</returns>
-        ITheme Resolve(RazorThemeResolvingContext context);
+        ITheme GetTheme(HttpContext httpContext);
     }
 }

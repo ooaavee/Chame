@@ -23,8 +23,6 @@ namespace Chame.Middlewares
         private readonly IList<IContentLoader> _contentLoaders;
         private readonly IContentLoaderSorter _contentLoaderSorter;
         private readonly ITheme _defaultTheme;
-        private readonly IThemeResolver _themeResolver;
-
         private readonly ILogger<ContentLoaderMiddleware> _logger;
 
         /// <summary>
@@ -39,9 +37,8 @@ namespace Chame.Middlewares
             _contentLoaders = options.Value.ContentLoaders;
             _contentLoaderSorter = options.Value.ContentLoaderSorter;
             _defaultTheme = options.Value.DefaultTheme;
-            _themeResolver = options.Value.ThemeResolver;
             _logger = logger;
-
+            
             // resolves valid requests paths for this middleware
             foreach (IContentInfo content in options.Value.ContentModel.SupportedContent)
             {
@@ -144,8 +141,8 @@ namespace Chame.Middlewares
                 }
             }
 
-            // resolve theme
-            ITheme theme = ThemeHelper.ResolveTheme(new ContentFileThemeResolvingContext(httpContext, contentInfo, filter), _themeResolver, _defaultTheme);
+            // theme
+            ITheme theme = GetTheme(httpContext);
             if (theme == null)
             {
                 _logger.LogCritical("Could not resolve theme.");
@@ -261,6 +258,16 @@ namespace Chame.Middlewares
             {
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotModified;
             }
+        }
+        private ITheme GetTheme(HttpContext httpContext)
+        {
+            ITheme theme = null;
+            IThemeResolver resolver = httpContext.RequestServices.GetService<IThemeResolver>();
+            if (resolver != null)
+            {
+                theme = resolver.GetTheme(httpContext);
+            }
+            return theme ?? _defaultTheme;
         }
 
         private class ContentLoadingAssets

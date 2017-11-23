@@ -23,12 +23,7 @@ namespace Chame.ContentLoaders
         /// it returns a null value.
         /// </summary>
         public ITheme DefaultTheme { get; set; }
-
-        /// <summary>
-        /// Resolves the theme that should be used. If not set, the <see cref="DefaultTheme"/> will be used.
-        /// </summary>
-        public IThemeResolver ThemeResolver { get; set; }
-
+        
         /// <summary>
         /// Content loaders
         /// </summary>

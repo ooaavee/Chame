@@ -76,7 +76,8 @@ namespace Chame.ContentLoaders.FileSystem
                 throw new ArgumentNullException(nameof(context));
             }
 
-            return Task.FromResult(Load(context));
+            ContentLoaderResponse response = Load(context);
+            return Task.FromResult(response);
         }
      
         private ContentLoaderResponse Load(ContentLoadingContext context)
