@@ -47,7 +47,7 @@ namespace Chame.Razor
 
             if (options.NamedControllers.Any())
             {
-                IList<Tuple<string, string>> viewFolders = GetViewFolders(env, options.NamedControllers);
+                Tuple<string, string>[] viewFolders = GetViewFolders(env, options.NamedControllers).ToArray();
 
                 // THEMED VIEWS: 
                 // [theme name]/Views/[controller name]/[page name]/{0}.cshtml
@@ -55,7 +55,17 @@ namespace Chame.Razor
                 {
                     string controller = viewFolder.Item1;
                     string page = viewFolder.Item2;
-                    string template = "{0}/Views/" + controller + "/" + page + "/{{0}}.cshtml";
+                    string template;
+
+                    if (page != null)
+                    {
+                        template = "{0}/Views/" + controller + "/" + page + "/{{0}}.cshtml";
+                    }
+                    else
+                    {
+                        template = "{0}/Views/" + controller + "/{{0}}.cshtml";
+                    }
+
                     ViewLocationTemplates.Add(template);
                 }
 
@@ -69,7 +79,17 @@ namespace Chame.Razor
                 {
                     string controller = viewFolder.Item1;
                     string page = viewFolder.Item2;
-                    string template = "Views/" + controller + "/" + page + "/{{0}}.cshtml";
+                    string template;
+
+                    if (page != null)
+                    {
+                        template = "Views/" + controller + "/" + page + "/{{0}}.cshtml";
+                    }
+                    else
+                    {
+                        template = "Views/" + controller + "/{{0}}.cshtml";
+                    }
+
                     ViewLocationTemplates.Add(template);
                 }
             }
@@ -90,24 +110,24 @@ namespace Chame.Razor
             ViewLocationExpanders.Add(expander);
         }
 
-        private static IList<Tuple<string, string>> GetViewFolders(IHostingEnvironment env, IEnumerable<string> controllers)
+        private static IEnumerable<Tuple<string, string>> GetViewFolders(IHostingEnvironment env, IEnumerable<string> controllers)
         {
-            List<Tuple<string, string>> l = new List<Tuple<string, string>>();
-            IDirectoryContents viewsSubFolders = env.ContentRootFileProvider.GetDirectoryContents("Views");
+            IFileInfo[] viewsSubFolders = env.ContentRootFileProvider.GetDirectoryContents("Views").ToArray();
+
             foreach (string controller in controllers)
             {
-                IFileInfo controllerFolder = viewsSubFolders.ToArray().FirstOrDefault(x => x.Name == controller && x.IsDirectory);
+                IFileInfo controllerFolder = viewsSubFolders.FirstOrDefault(x => x.Name == controller && x.IsDirectory);
+
                 if (controllerFolder != null)
                 {
-                    string[] pages = Directory.GetDirectories(controllerFolder.PhysicalPath);
-                    foreach (string page in pages)
+                    foreach (string page in Directory.GetDirectories(controllerFolder.PhysicalPath))
                     {
-                        DirectoryInfo pageInfo = new DirectoryInfo(page);
-                        l.Add(new Tuple<string, string>(controller, pageInfo.Name));
+                        yield return new Tuple<string, string>(controller, new DirectoryInfo(page).Name);
                     }
+
+                    yield return new Tuple<string, string>(controller, null);
                 }
             }
-            return l;
         }
 
     }

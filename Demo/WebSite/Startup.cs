@@ -53,11 +53,7 @@ namespace WebSite
                 {
                     options.EnableThemes(themes =>
                     {
-                        themes.WithPhysicalFileProvider(new RazorPhysicalFileProviderOptions
-                        {
-                            Root = contentRoot,
-                            NamedControllers = new List<string>(new[] {"Demo"})
-                        }, _env);
+                        themes.WithPhysicalFileProvider(new RazorPhysicalFileProviderOptions(contentRoot, new[] {"Demo"}), _env);
                         themes.WithViewLocationExpander();
                     });
                 });
