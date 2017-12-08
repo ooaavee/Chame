@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Chame.Middlewares
@@ -28,7 +29,7 @@ namespace Chame.Middlewares
         /// <summary>
         /// All valid request paths and corresponding content-types.
         /// </summary>
-        private readonly IDictionary<string, IContentInfo> _pathMap = new Dictionary<string, IContentInfo>();
+        private readonly IDictionary<string, IContentInfo> _paths;
 
         public ContentLoaderMiddleware(RequestDelegate next, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger)
         {
@@ -37,78 +38,95 @@ namespace Chame.Middlewares
             _contentLoaders = options.Value.ContentLoaders;
             _contentLoaderSorter = options.Value.ContentLoaderSorter;
             _defaultTheme = options.Value.DefaultTheme;
+            _paths = GetValidPaths(options.Value.ContentModel, options.Value.RequestPathTemplate, logger);
             _logger = logger;
-            
-            // resolves valid requests paths for this middleware
-            foreach (IContentInfo content in options.Value.ContentModel.SupportedContent)
-            {
-                string path = string.Format(options.Value.RequestPathTemplate, content.Extension).ToLower(CultureInfo.InvariantCulture);
-                _pathMap.Add(path, content);
-            }
         }
 
-        public async Task Invoke(HttpContext httpContext)
+        /// <summary>
+        /// Resolves valid request paths for this middleware.
+        /// </summary>
+        private static IDictionary<string, IContentInfo> GetValidPaths(IContentModel contentModel, string requestTemplatePath, ILogger logger)
         {
-            if (TryGetContentInfo(httpContext, out IContentInfo contentInfo))
+            var paths = new Dictionary<string, IContentInfo>();
+
+            foreach (var content in contentModel.SupportedContent)
             {
-                if (TryGetAssets(httpContext, contentInfo, out ContentLoadingAssets assets))
+                var path = string.Format(requestTemplatePath, content.Extension).ToLower(CultureInfo.InvariantCulture);
+                paths.Add(path, content);
+            }
+
+            var msg = new StringBuilder();
+            msg.AppendLine("Middleware initialized and listening following paths:");
+            foreach (var path in paths.Keys)
+            {
+                msg.AppendLine($" {path}");
+            }
+            logger.LogInformation(msg.ToString());
+
+            return paths;
+        }
+
+        public async Task Invoke(HttpContext http)
+        {
+            if (IsValidRequest(http, out ContentLoadingContext context, out List<IContentLoader> loaders))
+            {
+                var responses = await LoadContentAsync(context, loaders);
+
+                await OnAfterLoadContentAsync(context, responses);
+
+                if (responses.Any())
                 {
-                    var responses = await LoadContentAsync(assets);
-                    if (responses.Any())
-                    {
-                        await WriteResponseAsync(assets.Context, responses);
-                        return;
-                    }
+                    await WriteResponseAsync(context, responses);
+                    return;
                 }
             }
 
-            await _next(httpContext);
+            await _next(http);
         }
 
-        private bool TryGetContentInfo(HttpContext httpContext, out IContentInfo contentInfo)
+        private bool IsValidRequest(HttpContext http, out ContentLoadingContext context, out List<IContentLoader> loaders)
         {
-            contentInfo = null;
+            context = null;
+            loaders = null;
 
             // must be HTTP GET
-            if (httpContext.Request.Method != HttpMethods.Get)
+            if (http.Request.Method != HttpMethods.Get)
+            {
+                return false;
+            }
+
+            if (!http.Request.Path.HasValue)
             {
                 return false;
             }
 
             // check that request path is valid
-            string path = httpContext.Request.Path.ToString().ToLower(CultureInfo.InvariantCulture);
-            if (!_pathMap.TryGetValue(path, out contentInfo))
+            var path = http.Request.Path.ToString().ToLower(CultureInfo.InvariantCulture);
+            if (!_paths.TryGetValue(path, out IContentInfo info))
             {
                 return false;
             }
 
-            return true;
-        }
-
-        private bool TryGetAssets(HttpContext httpContext, IContentInfo contentInfo, out ContentLoadingAssets assets)
-        {
-            assets = null;
-
-            _logger.LogInformation(string.Format("Started to handle a HTTP request [path = {0}].", httpContext.Request.Path.ToString()));
+            _logger.LogInformation(string.Format("Started to handle a HTTP request [path = {0}].", http.Request.Path.ToString()));
 
             // parse an optional filter
-            string filter = httpContext.Request.Query["filter"].FirstOrDefault();
+            var filter = http.Request.Query["filter"].FirstOrDefault();
 
             // get content loaders from request services and options
-            List<IContentLoader> loaders = new List<IContentLoader>();
-            foreach (IContentLoader loader in httpContext.RequestServices.GetServices<IContentLoader>().Concat(_contentLoaders))
+            loaders = new List<IContentLoader>();
+            foreach (var loader in http.RequestServices.GetServices<IContentLoader>().Concat(_contentLoaders))
             {
-                if (loader.Supports().Any(supports => supports == contentInfo.Extension || supports == ContentLoaderOptions.ContentLoaderSupportsAll))
+                if (loader.Supports().Any(supports => supports == info.Extension || supports == ContentLoaderOptions.ContentLoaderSupportsAll))
                 {
                     loaders.Add(loader);
                 }
                 else
                 {
-                    _logger.LogDebug($"Ignoring content loader '{loader.GetType().FullName}' - it doesn't suppport '{contentInfo.Extension}'.");
+                    _logger.LogDebug($"Ignoring content loader '{loader.GetType().FullName}' - it doesn't suppport '{info.Extension}'.");
                 }
             }
 
-            int loaderCount = loaders.Count;
+            var loaderCount = loaders.Count;
 
             if (loaderCount == 0)
             {
@@ -133,7 +151,7 @@ namespace Chame.Middlewares
             string eTag = null;
             if (_supportETag)
             {
-                bool eTagFound = HttpETagHelper.TryParse(httpContext.Request, out eTag);
+                var eTagFound = HttpETagHelper.TryParse(http.Request, out eTag);
                 if (eTagFound && loaderCount > 1)
                 {
                     eTag = null;
@@ -142,7 +160,7 @@ namespace Chame.Middlewares
             }
 
             // theme
-            ITheme theme = GetTheme(httpContext);
+            var theme = GetTheme(http);
             if (theme == null)
             {
                 _logger.LogCritical("Could not resolve theme.");
@@ -151,22 +169,20 @@ namespace Chame.Middlewares
 
             _logger.LogInformation(string.Format("A theme '{0}' will be used.", theme));
 
-            var context = new ContentLoadingContext(httpContext, contentInfo, theme, filter, eTag);
-
-            assets = new ContentLoadingAssets {Context = context, ContentLoaders = loaders};
+            context = new ContentLoadingContext(http, info, theme, filter, eTag);
 
             return true;
         }
 
-        private async Task<IList<ContentLoaderResponse>> LoadContentAsync(ContentLoadingAssets assets)
+        private async Task<IList<ContentLoaderResponse>> LoadContentAsync(ContentLoadingContext context, List<IContentLoader> loaders)
         {
             var responses = new List<ContentLoaderResponse>();
 
-            var eTag = assets.Context.ETag;
+            var eTag = context.ETag;
 
-            var loaderCount = assets.ContentLoaders.Count;
+            var loaderCount = loaders.Count;
 
-            foreach (IContentLoader loader in assets.ContentLoaders)
+            foreach (IContentLoader loader in loaders)
             {
                 _logger.LogDebug(string.Format("Loading content by using '{0}' content loader.", loader.GetType().FullName));
 
@@ -174,7 +190,7 @@ namespace Chame.Middlewares
                 ContentLoaderResponse response;
                 try
                 {
-                    response = await loader.LoadContentAsync(assets.Context);
+                    response = await loader.LoadContentAsync(context);
                 }
                 catch (Exception ex)
                 {
@@ -218,6 +234,34 @@ namespace Chame.Middlewares
             return responses;
         }
 
+        private async Task OnAfterLoadContentAsync(ContentLoadingContext context, IList<ContentLoaderResponse> responses)
+        {
+            if (!responses.Any())
+            {
+                var callback = context.HttpContext.RequestServices.GetService(typeof(IContentNotFoundCallback)) as IContentNotFoundCallback;
+
+                if (callback != null)
+                {
+                    _logger.LogDebug($"Content not found - trying to get default content by using the {nameof(IContentNotFoundCallback)} service.");
+
+                    var data = await callback.GetDefaultContentAsync(context);
+
+                    if (data == null)
+                    {
+                        _logger.LogDebug($"The {nameof(IContentNotFoundCallback)} service did not return the default content.");
+                    }
+                    else
+                    {
+                        _logger.LogDebug($"The {nameof(IContentNotFoundCallback)} service returned the default content.");
+
+                        var file = new FileContent { Data = data };
+                        var response = ContentLoaderResponse.Ok(file);
+                        responses.Add(response);
+                    }
+                }
+            }
+        }
+
         private async Task WriteResponseAsync(ContentLoadingContext context, IList<ContentLoaderResponse> responses)
         {
             ContentLoaderResponse response;
@@ -232,7 +276,7 @@ namespace Chame.Middlewares
                     response = ContentLoaderResponse.Bundle(responses);
                 }
                 else
-                {                
+                {
                     _logger.LogCritical($"Received multiple responses, but '{context.ContentInfo.MimeType}' content cannot be bundled. The first response will be used and others are ignored!");
                     response = responses.First();
                 }
@@ -259,21 +303,16 @@ namespace Chame.Middlewares
                 context.HttpContext.Response.StatusCode = (int)HttpStatusCode.NotModified;
             }
         }
-        private ITheme GetTheme(HttpContext httpContext)
+
+        private ITheme GetTheme(HttpContext http)
         {
             ITheme theme = null;
-            IThemeResolver resolver = httpContext.RequestServices.GetService<IThemeResolver>();
+            IThemeResolver resolver = http.RequestServices.GetService<IThemeResolver>();
             if (resolver != null)
             {
-                theme = resolver.GetTheme(httpContext);
+                theme = resolver.GetTheme(http);
             }
             return theme ?? _defaultTheme;
-        }
-
-        private class ContentLoadingAssets
-        {
-            public ContentLoadingContext Context { get; set; }
-            public IList<IContentLoader> ContentLoaders { get; set; }
         }
 
     }

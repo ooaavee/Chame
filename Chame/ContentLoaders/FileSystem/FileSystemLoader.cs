@@ -226,7 +226,7 @@ namespace Chame.ContentLoaders.FileSystem
                 }
                 else
                 {
-                    _logger.LogError($"Bundle file not found [{path}].");
+                    _logger.LogDebug($"File not found [{path}].");
                 }
             }
             catch (Exception ex)

@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Chame;
+using Chame.ContentLoaders;
 using Chame.Razor;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -49,6 +50,8 @@ namespace WebSite
 
             // Add theme resolver.
             services.AddSingleton<IThemeResolver, DemoThemeResolver>();
+
+            services.AddSingleton<IContentNotFoundCallback, DemoContentNotFoundCallback>();
 
             // Add MVC.
             services.AddMvc()
