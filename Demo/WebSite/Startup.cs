@@ -42,7 +42,10 @@ namespace WebSite
                 .FullName;
 
             // Add content loaders.
-            services.AddContentLoader().AddFileSystemLoader(options => { options.Root = contentRoot; });
+            services.AddContentLoader(x =>
+            {
+               
+            }).AddFileSystemLoader(options => { options.Root = contentRoot; });
 
             // Add theme resolver.
             services.AddSingleton<IThemeResolver, DemoThemeResolver>();
@@ -87,5 +90,14 @@ namespace WebSite
                 routes.MapRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
         }
+
+        private class DummyContentModel : Chame.ContentLoaders.DefaultContentModel
+        {
+            public DummyContentModel()
+            {
+                
+            }
+        }
+
     }
 }

@@ -7,21 +7,10 @@ namespace Chame.ContentLoaders
     /// </summary>
     public class DefaultContentModel : IContentModel
     {
-        public virtual IReadOnlyCollection<IContentInfo> SupportedContent { get; }
+        public virtual IList<IContentInfo> SupportedContent { get; } = new List<IContentInfo>();
 
         public DefaultContentModel()
         {
-            var supported = new List<IContentInfo>();
-
-            void Use(string mimeType, string extension, bool allowBundling = false)
-            {
-                var content = new DefaultContentInfo(mimeType, extension, allowBundling);
-                if (IsSupported(content))
-                {
-                    supported.Add(content);
-                }
-            }
-
             Use("application/vnd.hzn-3d-crossword", "x3d");
             Use("video/3gpp", "3gp");
             Use("video/3gpp2", "3g2");
@@ -670,7 +659,8 @@ namespace Chame.ContentLoaders
             Use("image/vnd.wap.wbmp", "wbmp");
             Use("audio/x-wav", "wav");
             Use("application/davmount+xml", "davmount");
-            Use("application/x-font-woff", "woff");
+            Use("font/woff", "woff");
+            Use("font/woff2", "woff2");
             Use("application/wspolicy+xml", "wspolicy");
             Use("image/webp", "webp");
             Use("application/vnd.webturbo", "wtb");
@@ -708,13 +698,22 @@ namespace Chame.ContentLoaders
             Use("application/zip", "zip");
             Use("application/vnd.handheld-entertainment+xml", "zmm");
             Use("application/vnd.zzazz.deck+xml", "zaz");
-
-            SupportedContent = supported.AsReadOnly();
         }
       
         protected virtual bool IsSupported(IContentInfo content)
         {
             return true;
         }
+
+        protected void Use(string mimeType, string extension, bool allowBundling = false)
+        {
+            var content = new DefaultContentInfo(mimeType, extension, allowBundling);
+
+            if (IsSupported(content))
+            {
+                SupportedContent.Add(content);
+            }
+        }
+
     }
 }

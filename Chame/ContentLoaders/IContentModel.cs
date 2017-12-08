@@ -10,6 +10,6 @@ namespace Chame.ContentLoaders
         /// <summary>
         /// Supported content
         /// </summary>
-        IReadOnlyCollection<IContentInfo> SupportedContent { get; }
+        IList<IContentInfo> SupportedContent { get; }
     }
 }

@@ -13,7 +13,9 @@
     <RepositoryUrl>https://github.com/ooaavee/Chame</RepositoryUrl>
     <Description>ASP.NET Core JavaScript, CSS and Razor view loader for multi-tenant and themeable applications.</Description>
     <Copyright>Copyright (c) 2017 Ossi Vartiainen</Copyright>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
