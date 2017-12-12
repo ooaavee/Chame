@@ -167,7 +167,7 @@ namespace Chame.Middlewares
                 return false;
             }
 
-            _logger.LogInformation(string.Format("A theme '{0}' will be used.", theme));
+            _logger.LogInformation($"A theme '{theme.GetName()}' will be used.");
 
             context = new ContentLoadingContext(http, info, theme, filter, eTag);
 
