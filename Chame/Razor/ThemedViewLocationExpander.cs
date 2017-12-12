@@ -21,32 +21,25 @@ namespace Chame.Razor
         /// </summary>
         private readonly IList<string> _viewLocationTemplates;
 
-        public ThemedViewLocationExpander(RazorThemeOptions options)
+        public ThemedViewLocationExpander(IList<string> viewLocationTemplates)
         {
-            if (options == null)
+            if (viewLocationTemplates == null)
             {
-                throw new ArgumentNullException(nameof(options));
+                throw new ArgumentNullException(nameof(viewLocationTemplates));
             }
-            _viewLocationTemplates = options.ViewLocationTemplates;
+            _viewLocationTemplates = viewLocationTemplates;
         }
 
         public void PopulateValues(ViewLocationExpanderContext context)
         {
-            // current http context
-            HttpContext httpContext = context.ActionContext.HttpContext;
-            if (httpContext == null)
-            {
-                throw new InvalidOperationException("HttpContext is not available.");
-            }
-
             // logger
-            ILogger<ThemedViewLocationExpander> logger = httpContext.RequestServices.GetRequiredService<ILogger<ThemedViewLocationExpander>>();
+            ILogger<ThemedViewLocationExpander> logger = context.ActionContext.HttpContext.RequestServices.GetRequiredService<ILogger<ThemedViewLocationExpander>>();
 
             // options
-            IOptions<ContentLoaderOptions> options = httpContext.RequestServices.GetRequiredService<IOptions<ContentLoaderOptions>>();
+            IOptions<ContentLoaderOptions> options = context.ActionContext.HttpContext.RequestServices.GetRequiredService<IOptions<ContentLoaderOptions>>();
 
             // theme
-            ITheme theme = GetTheme(httpContext, options.Value.DefaultTheme);
+            ITheme theme = GetTheme(context.ActionContext.HttpContext, options.Value.DefaultTheme);
             if (theme == null)
             {
                 var message = "Could not resolve a theme.";
@@ -54,20 +47,17 @@ namespace Chame.Razor
                 throw new InvalidOperationException(message);
             }
 
-            string themeName = theme.GetName();
-
-            context.Values[Key] = themeName;
+            context.Values[Key] = theme.GetName();
         }
 
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
             if (context.Values.TryGetValue(Key, out string themeName))
             {
-                viewLocations = _viewLocationTemplates.Select(template => string.Format(template, themeName))
-                    .Concat(viewLocations)
-                    .ToArray();
+                IEnumerable<string> themedViewLocations = _viewLocationTemplates.Select(template => string.Format(template, themeName));
+                IEnumerable<string> newViewLocations = themedViewLocations.Concat(viewLocations);
+                return newViewLocations.ToArray();
             }
-
             return viewLocations;
         }
 

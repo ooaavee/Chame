@@ -44,8 +44,7 @@ namespace WebSite
 
             // Add content loaders.
             services.AddContentLoader(x =>
-            {
-               
+            {               
             }).AddFileSystemLoader(options => { options.Root = contentRoot; });
 
             // Add theme resolver.
@@ -59,7 +58,7 @@ namespace WebSite
                 {
                     options.EnableThemes(themes =>
                     {
-                        themes.WithPhysicalFileProvider(new RazorPhysicalFileProviderOptions(contentRoot, new[] {"Demo"}), _env);
+                        themes.WithPhysicalFileProvider(contentRoot, _env, new[] {"Demo"});
                         themes.WithViewLocationExpander();
                     });
                 });
@@ -93,14 +92,5 @@ namespace WebSite
                 routes.MapRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
         }
-
-        private class DummyContentModel : Chame.ContentLoaders.DefaultContentModel
-        {
-            public DummyContentModel()
-            {
-                
-            }
-        }
-
     }
 }
