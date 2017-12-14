@@ -11,5 +11,7 @@ namespace Chame.ContentLoaders
         /// Supported content
         /// </summary>
         IList<IContentInfo> SupportedContent { get; }
+
+        IContentInfo GetByExtension(string extension);
     }
 }

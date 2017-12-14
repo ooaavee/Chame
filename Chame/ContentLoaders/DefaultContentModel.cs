@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Chame.ContentLoaders
 {
@@ -700,20 +702,31 @@ namespace Chame.ContentLoaders
             Use("application/vnd.zzazz.deck+xml", "zaz");
         }
       
-        protected virtual bool IsSupported(IContentInfo content)
+        protected virtual bool IsSupported(IContentInfo info)
         {
             return true;
         }
 
         protected void Use(string mimeType, string extension, bool allowBundling = false)
         {
-            var content = new DefaultContentInfo(mimeType, extension, allowBundling);
-
-            if (IsSupported(content))
+            IContentInfo info = new DefaultContentInfo(mimeType, extension, allowBundling);
+            if (IsSupported(info))
             {
-                SupportedContent.Add(content);
+                SupportedContent.Add(info);
             }
         }
+
+        public virtual IContentInfo GetByExtension(string extension)
+        {
+            if (extension == null)
+            {
+                throw new ArgumentNullException(nameof(extension));
+            }
+
+            IContentInfo info = SupportedContent.FirstOrDefault(x => x.Extension == extension);
+            return info;
+        }
+
 
     }
 }
