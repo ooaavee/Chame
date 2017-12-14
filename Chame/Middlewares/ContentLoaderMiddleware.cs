@@ -107,44 +107,19 @@ namespace Chame.Middlewares
                 return false;
             }
 
+            var dummy = ContentLoadingContextFactory.Create(http);
+
+
             _logger.LogInformation(string.Format("Started to handle a HTTP request [path = {0}].", http.Request.Path.ToString()));
 
             // parse an optional filter
             var filter = http.Request.Query["filter"].FirstOrDefault();
 
-            // get content loaders from request services and options
-            loaders = new List<IContentLoader>();
-            foreach (var loader in http.RequestServices.GetServices<IContentLoader>().Concat(_contentLoaders))
+            // get content loaders 
+            loaders = ContentLoadingUtility.GetContentLoaders(http, info);
+            if (!loaders.Any())
             {
-                if (loader.Supports().Any(supports => supports == info.Extension || supports == ContentLoaderOptions.ContentLoaderSupportsAll))
-                {
-                    loaders.Add(loader);
-                }
-                else
-                {
-                    _logger.LogDebug($"Ignoring content loader '{loader.GetType().FullName}' - it doesn't suppport '{info.Extension}'.");
-                }
-            }
-
-            var loaderCount = loaders.Count;
-
-            if (loaderCount == 0)
-            {
-                _logger.LogCritical("No content loaders found.");
                 return false;
-            }
-
-            // sort content loaders
-            if (loaderCount > 1)
-            {
-                if (_contentLoaderSorter != null)
-                {
-                    _contentLoaderSorter.Sort(loaders);
-                }
-                else
-                {
-                    _logger.LogWarning(string.Format("{0} implementation is not configured. Content loaders are invoked in arbitrary order.", nameof(IContentLoaderSorter)));
-                }
             }
 
             // HTTP ETag
@@ -152,7 +127,7 @@ namespace Chame.Middlewares
             if (_supportETag)
             {
                 var eTagFound = HttpETagHelper.TryParse(http.Request, out eTag);
-                if (eTagFound && loaderCount > 1)
+                if (eTagFound && loaders.Count > 1)
                 {
                     eTag = null;
                     _logger.LogDebug("HTTP ETag will be disabled for this request, because there are multiple content loaders for this request.");
