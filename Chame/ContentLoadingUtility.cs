@@ -12,16 +12,16 @@ namespace Chame
 {
     public static class ContentLoadingUtility
     {
-        public static async Task<byte[]> GetContentAsync(string extension, string filter, string themeName, HttpContext httpContext)
+        public static async Task<byte[]> GetContentAsync(string extension, string filter, ITheme theme, HttpContext httpContext)
         {
             if (extension == null)
             {
                 throw new ArgumentNullException(nameof(extension));
             }
 
-            if (themeName == null)
+            if (theme == null)
             {
-                throw new ArgumentNullException(nameof(themeName));
+                throw new ArgumentNullException(nameof(theme));
             }
 
             if (httpContext == null)
@@ -37,7 +37,6 @@ namespace Chame
                 throw new InvalidOperationException($"'{extension}' is not supported extension, please check you IContentModel implementation.");
             }
 
-            var theme = new AdHocTheme(themeName);
             var context = new ContentLoadingContext(httpContext, contentInfo, theme, filter, null);
             var loaders = GetContentLoaders(httpContext, contentInfo);
             var responses = await LoadContentAsync(context, loaders);
@@ -45,16 +44,16 @@ namespace Chame
             return response.Status == ResponseStatus.Ok ? response.Data : null;
         }
 
-        public static async Task<IList<ContentLoaderResponse>> LoadContentAsync(string extension, string filter, string themeName, HttpContext httpContext)
+        public static async Task<IList<ContentLoaderResponse>> LoadContentAsync(string extension, string filter, ITheme theme, HttpContext httpContext)
         {
             if (extension == null)
             {
                 throw new ArgumentNullException(nameof(extension));
             }
 
-            if (themeName == null)
+            if (theme == null)
             {
-                throw new ArgumentNullException(nameof(themeName));
+                throw new ArgumentNullException(nameof(theme));
             }
 
             if (httpContext == null)
@@ -70,7 +69,6 @@ namespace Chame
                 throw new InvalidOperationException($"'{extension}' is not supported extension, please check you IContentModel implementation.");
             }
 
-            var theme = new AdHocTheme(themeName);
             var context = new ContentLoadingContext(httpContext, contentInfo, theme, filter, null);
             var loaders = GetContentLoaders(httpContext, contentInfo);
             return await LoadContentAsync(context, loaders);

@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Chame.ContentLoaders;
+﻿using Chame.ContentLoaders;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Chame.Razor
 {
@@ -14,7 +13,8 @@ namespace Chame.Razor
 
     public class ThemedViewLocationExpander : IViewLocationExpander
     {
-        private const string Key = "__Chame.Razor.ThemedViewLocationExpander";
+        private const string ViewLocationExpanderContextKey = "__Chame.Razor.ThemedViewLocationExpander";
+        private const string HttpContextItemsKey = "__Chame.Razor.ThemedViewLocationExpander.HttpContext.Items";
 
         /// <summary>
         /// View location templates.
@@ -32,30 +32,25 @@ namespace Chame.Razor
 
         public void PopulateValues(ViewLocationExpanderContext context)
         {
-            // logger
-            ILogger<ThemedViewLocationExpander> logger = context.ActionContext.HttpContext.RequestServices.GetRequiredService<ILogger<ThemedViewLocationExpander>>();
-
             // options
-            IOptions<ContentLoaderOptions> options = context.ActionContext.HttpContext.RequestServices.GetRequiredService<IOptions<ContentLoaderOptions>>();
+            var options = context.ActionContext.HttpContext.RequestServices.GetRequiredService<IOptions<ContentLoaderOptions>>();
 
             // theme
-            ITheme theme = GetTheme(context.ActionContext.HttpContext, options.Value.DefaultTheme);
+            var theme = GetTheme(context.ActionContext.HttpContext, options.Value.DefaultTheme);
             if (theme == null)
             {
-                var message = "Could not resolve a theme.";
-                logger.LogCritical(message);
-                throw new InvalidOperationException(message);
+                throw new InvalidOperationException("Could not resolve a theme.");
             }
 
-            context.Values[Key] = theme.GetName();
+            context.Values[ViewLocationExpanderContextKey] = theme.GetName();
         }
 
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
-            if (context.Values.TryGetValue(Key, out string themeName))
+            if (context.Values.TryGetValue(ViewLocationExpanderContextKey, out string themeName))
             {
-                IEnumerable<string> themedViewLocations = _viewLocationTemplates.Select(template => string.Format(template, themeName));
-                IEnumerable<string> newViewLocations = themedViewLocations.Concat(viewLocations);
+                var themedViewLocations = _viewLocationTemplates.Select(template => string.Format(template, themeName));
+                var newViewLocations = themedViewLocations.Concat(viewLocations);
                 return newViewLocations.ToArray();
             }
             return viewLocations;
@@ -63,13 +58,34 @@ namespace Chame.Razor
 
         private static ITheme GetTheme(HttpContext httpContext, ITheme defaultTheme)
         {
-            ITheme theme = null;
-            IThemeResolver resolver = httpContext.RequestServices.GetService<IThemeResolver>();
+            if (TryGetThemeFromHttpContext(httpContext, out ITheme theme))
+            {
+                return theme;
+            }
+
+            var resolver = httpContext.RequestServices.GetService<IThemeResolver>();
             if (resolver != null)
             {
                 theme = resolver.GetTheme(httpContext);
             }
+
             return theme ?? defaultTheme;
+        }
+
+        internal static void UseThemeWithHttpContext(ITheme theme, HttpContext httpContext)
+        {
+            httpContext.Items[HttpContextItemsKey] = theme;
+        }
+
+        private static bool TryGetThemeFromHttpContext(HttpContext httpContext, out ITheme theme)
+        {
+            if (httpContext.Items.TryGetValue(HttpContextItemsKey, out object v))
+            {
+                theme = (ITheme)v;
+                return true;
+            }
+            theme = null;
+            return false;
         }
 
     }

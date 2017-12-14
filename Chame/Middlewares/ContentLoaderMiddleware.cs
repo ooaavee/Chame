@@ -164,12 +164,20 @@ namespace Chame.Middlewares
         private ITheme GetTheme(HttpContext http)
         {
             ITheme theme = null;
+
             IThemeResolver resolver = http.RequestServices.GetService<IThemeResolver>();
+
             if (resolver != null)
             {
                 theme = resolver.GetTheme(http);
             }
-            return theme ?? _options.Value.DefaultTheme;
+
+            if (theme == null)
+            {
+                theme = _options.Value.DefaultTheme;
+            }
+
+            return theme;
         }
 
     }
