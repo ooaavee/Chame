@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using Chame.ContentLoaders;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Caching.Memory;
@@ -50,7 +49,7 @@ namespace Chame.Caching
             if (item == null)
             {
                 throw new ArgumentNullException(nameof(item));
-            }            
+            }
 
             if (context == null)
             {
@@ -84,26 +83,10 @@ namespace Chame.Caching
 
         private static string KeyFor<T>(ContentLoadingContext context)
         {
-            var s = new StringBuilder(256);
-            s.Append(typeof(ContentCache).FullName);
-            s.Append("{type:'");
-            s.Append(typeof(T).FullName);
-            s.Append("';content:'");
-            s.Append(context.ContentInfo.Extension);
-            s.Append("';filter:");
-            s.Append("'");
-            if (context.Filter != null)
-            {
-                s.Append(context.Filter);
-            }
-            s.Append("';theme:");
-            s.Append("'");
-            if (context.Theme != null)
-            {
-                s.Append(context.Theme);
-            }
-            s.Append("';}");
-            return s.ToString();
+            var key = context.Filter == null ?
+                $"__Chame.Caching.ContentCache.Key(type:'{typeof(T).FullName}';content:'{context.ContentInfo.Extension}';filter:'';theme:'{context.Theme.GetName()}';)" :
+                $"__Chame.Caching.ContentCache.Key(type:'{typeof(T).FullName}';content:'{context.ContentInfo.Extension}';filter:'{context.Filter}';theme:'{context.Theme.GetName()}';)";
+            return key;
         }
     }
 }

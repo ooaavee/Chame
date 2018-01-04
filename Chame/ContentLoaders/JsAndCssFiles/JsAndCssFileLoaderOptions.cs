@@ -12,7 +12,7 @@ namespace Chame.ContentLoaders.JsAndCssFiles
             ContentSchemaFile = @"\JsAndCssFileLoader.json";
             Caching = new CachingSupport
             {
-                Mode = CachingModes.EnabledButDisabledOnDev,
+                Mode = CachingModes.Disabled,
                 AbsoluteExpirationRelativeToNow = new TimeSpan(0, 0, 1, 0)
             };
         }

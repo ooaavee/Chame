@@ -12,10 +12,10 @@
     <PackageProjectUrl>https://github.com/ooaavee/Chame</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ooaavee/Chame</RepositoryUrl>
     <Description>ASP.NET Core Razor view and content loader for multi-tenant and themeable applications</Description>
-    <Copyright>Copyright (c) 2017 Ossi Vartiainen</Copyright>
-    <Version>1.4.0</Version>
-    <AssemblyVersion>1.4.0.0</AssemblyVersion>
-    <FileVersion>1.4.0.0</FileVersion>
+    <Copyright>Copyright (c) 2018 Ossi Vartiainen</Copyright>
+    <Version>1.4.1</Version>
+    <AssemblyVersion>1.4.1.0</AssemblyVersion>
+    <FileVersion>1.4.1.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
