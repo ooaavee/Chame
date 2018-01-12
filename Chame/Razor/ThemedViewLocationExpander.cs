@@ -42,9 +42,8 @@ namespace Chame.Razor
             ITheme theme = GetTheme(context.ActionContext.HttpContext, options.Value.DefaultTheme);
             if (theme == null)
             {
-                var message = "Could not resolve a theme.";
-                logger.LogCritical(message);
-                throw new InvalidOperationException(message);
+                logger.LogCritical("Could not resolve a theme.");
+                throw new InvalidOperationException("Could not resolve a theme.");
             }
 
             context.Values[Key] = theme.GetName();

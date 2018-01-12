@@ -5,12 +5,12 @@ namespace Chame.Caching
     public struct CachingSupport
     {
         /// <summary>
-        /// Caching mode, the default value is <see cref="CachingModes.EnabledButDisabledOnDev"/>.
+        /// Caching mode.
         /// </summary>
         public CachingModes Mode { get; set; }
 
         /// <summary>
-        /// An absolute expiration time for caching, relative to now. The default value is 1 minute.
+        /// An absolute expiration time for caching, relative to now.
         /// </summary>
         public TimeSpan AbsoluteExpirationRelativeToNow { get; set; }
     }

@@ -86,7 +86,7 @@ namespace Chame.ContentLoaders.FileSystem
 
             if (string.IsNullOrEmpty(context.Filter))
             { 
-                _logger.LogInformation($"Unable to process request - filter is mandatory for {nameof(FileSystemLoader)}.");
+                _logger.LogError($"Unable to process request - filter is mandatory for {nameof(FileSystemLoader)}.");
             }
             else
             {
