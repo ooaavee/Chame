@@ -35,7 +35,9 @@
 
   <ItemGroup>
     <Folder Include="Root\A\png\" />
+    <Folder Include="Root\B\html\" />
     <Folder Include="Root\B\png\" />
+    <Folder Include="Root\C\html\" />
   </ItemGroup>
 
 </Project>
