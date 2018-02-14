@@ -1,14 +1,14 @@
 ﻿using Chame.ContentLoaders;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
+using Chame.Internal;
 
 namespace Chame.Middlewares
 {
@@ -18,51 +18,35 @@ namespace Chame.Middlewares
     internal sealed class ContentLoaderMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ChameUtility _utils;
         private readonly IOptions<ContentLoaderOptions> _options;
         private readonly ILogger<ContentLoaderMiddleware> _logger;
 
         /// <summary>
         /// All valid request paths and corresponding content-types.
         /// </summary>
-        private readonly IDictionary<string, IContentInfo> _paths;
+        private readonly IDictionary<string, IContentInfo> _paths = new Dictionary<string, IContentInfo>();
 
-        public ContentLoaderMiddleware(RequestDelegate next, IOptions<ContentLoaderOptions> options, ILogger<ContentLoaderMiddleware> logger)
+        public ContentLoaderMiddleware(RequestDelegate next, IOptions<ContentLoaderOptions> options, ChameUtility utils, ILogger<ContentLoaderMiddleware> logger)
         {
             _next = next;
+            _utils = utils;
             _options = options;
-            _paths = GetValidPaths(options.Value.ContentModel, options.Value.RequestPathTemplate, logger);
             _logger = logger;
+
+            foreach (IContentInfo info in _options.Value.ContentModel.SupportedContent)
+            {
+                string path = string.Format(_options.Value.RequestPathTemplate, info.Extension).ToLower(CultureInfo.InvariantCulture);
+                _paths.Add(path, info);
+            }
         }
 
-        /// <summary>
-        /// Resolves valid request paths for this middleware.
-        /// </summary>
-        private static IDictionary<string, IContentInfo> GetValidPaths(IContentModel contentModel, string requestTemplatePath, ILogger logger)
+        public async Task Invoke(HttpContext httpContext)
         {
-            var paths = new Dictionary<string, IContentInfo>();
-
-            foreach (var content in contentModel.SupportedContent)
+            if (IsValidRequest(httpContext, out ContentLoadingContext context, out List<IContentLoader> loaders))
             {
-                var path = string.Format(requestTemplatePath, content.Extension).ToLower(CultureInfo.InvariantCulture);
-                paths.Add(path, content);
-            }
+                var responses = await _utils.LoadContentAsync(context, loaders);
 
-            var msg = new StringBuilder();
-            msg.AppendLine("Middleware initialized and listening following paths:");
-            foreach (var path in paths.Keys)
-            {
-                msg.AppendLine($" {path}");
-            }
-            logger.LogDebug(msg.ToString());
-
-            return paths;
-        }
-
-        public async Task Invoke(HttpContext http)
-        {
-            if (IsValidRequest(http, out ContentLoadingContext context, out List<IContentLoader> loaders))
-            {
-                var responses = await ContentLoadingUtility.LoadContentAsync(context, loaders);
                 if (responses.Any())
                 {
                     await WriteResponseAsync(context, responses);
@@ -70,39 +54,39 @@ namespace Chame.Middlewares
                 }
             }
 
-            await _next(http);
+            await _next(httpContext);
         }
 
-        private bool IsValidRequest(HttpContext http, out ContentLoadingContext context, out List<IContentLoader> loaders)
+        private bool IsValidRequest(HttpContext httpContext, out ContentLoadingContext context, out List<IContentLoader> loaders)
         {
             context = null;
             loaders = null;
 
             // must be HTTP GET
-            if (http.Request.Method != HttpMethods.Get)
+            if (httpContext.Request.Method != HttpMethods.Get)
             {
                 return false;
             }
 
-            if (!http.Request.Path.HasValue)
+            if (!httpContext.Request.Path.HasValue)
             {
                 return false;
             }
 
             // check that request path is valid
-            var path = http.Request.Path.ToString().ToLower(CultureInfo.InvariantCulture);
+            var path = httpContext.Request.Path.ToString().ToLower(CultureInfo.InvariantCulture);
             if (!_paths.TryGetValue(path, out IContentInfo info))
             {
                 return false;
             }
 
-            _logger.LogDebug(string.Format("Started to handle a HTTP request [path = {0}].", http.Request.Path.ToString()));
+            _logger.LogDebug($"Started to handle a HTTP request [path = {httpContext.Request.Path}].");
 
             // an optional filter
-            var filter = http.Request.Query["filter"].FirstOrDefault();
+            var filter = httpContext.Request.Query["filter"].FirstOrDefault();
 
             // content loaders 
-            loaders = ContentLoadingUtility.GetContentLoaders(http, info);
+            loaders = _utils.GetContentLoaders(httpContext, info);
             if (!loaders.Any())
             {
                 return false;
@@ -112,7 +96,7 @@ namespace Chame.Middlewares
             string eTag = null;
             if (_options.Value.SupportETag)
             {
-                var eTagFound = HttpETagHelper.TryParse(http.Request, out eTag);
+                var eTagFound = TryParseHttpETag(httpContext.Request, out eTag);
                 if (eTagFound && loaders.Count > 1)
                 {
                     eTag = null;
@@ -121,23 +105,18 @@ namespace Chame.Middlewares
             }
 
             // theme
-            var theme = GetTheme(http);
-            if (theme == null)
-            {
-                _logger.LogCritical("Could not resolve theme.");
-                return false;
-            }
+            var theme = _utils.GetTheme(httpContext);
 
             _logger.LogDebug($"A theme '{theme.GetName()}' will be used.");
 
-            context = new ContentLoadingContext(http, info, theme, filter, eTag);
+            context = new ContentLoadingContext(httpContext, info, theme, filter, eTag);
 
             return true;
         }
 
         private async Task WriteResponseAsync(ContentLoadingContext context, IList<ContentLoaderResponse> responses)
         {
-            ContentLoaderResponse response = ContentLoadingUtility.Bundle(context, responses);
+            ContentLoaderResponse response = _utils.Bundle(context, responses);
 
             context.HttpContext.Response.ContentType = context.ContentInfo.MimeType;
 
@@ -148,7 +127,7 @@ namespace Chame.Middlewares
 
                 if (!string.IsNullOrEmpty(response.ETag) && _options.Value.SupportETag && responses.Count == 1)
                 {
-                    HttpETagHelper.Use(context.HttpContext.Response, response.ETag);
+                    UseHttpETag(context.HttpContext.Response, response.ETag);
                 }
 
                 await context.HttpContext.Response.Body.WriteAsync(response.Data, 0, response.Data.Length);
@@ -161,23 +140,30 @@ namespace Chame.Middlewares
             }
         }
 
-        private ITheme GetTheme(HttpContext http)
+        /// <summary>
+        /// Tries to parse HTTP ETag from the request.
+        /// </summary>
+        /// <param name="request">request</param>
+        /// <param name="value">parse HTTP ETag</param>
+        /// <returns>true if succeed</returns>
+        private static bool TryParseHttpETag(HttpRequest request, out string value)
         {
-            ITheme theme = null;
-
-            IThemeResolver resolver = http.RequestServices.GetService<IThemeResolver>();
-
-            if (resolver != null)
+            value = null;
+            if (request.Headers.ContainsKey("If-None-Match"))
             {
-                theme = resolver.GetTheme(http);
+                value = request.Headers["If-None-Match"].FirstOrDefault();
             }
+            return !string.IsNullOrEmpty(value);
+        }
 
-            if (theme == null)
-            {
-                theme = _options.Value.DefaultTheme;
-            }
-
-            return theme;
+        /// <summary>
+        /// Uses specified HTTP ETag with the response.
+        /// </summary>
+        /// <param name="response">response</param>
+        /// <param name="value">HTTP ETag</param>
+        private static void UseHttpETag(HttpResponse response, string value)
+        {
+            response.Headers.Add("ETag", new StringValues(value));
         }
 
     }

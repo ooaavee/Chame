@@ -7,11 +7,11 @@ namespace Chame.ContentLoaders
     /// <summary>
     /// Supported content by the default.
     /// </summary>
-    public class DefaultContentModel : IContentModel
+    public class ContentModel : IContentModel
     {
         public virtual IList<IContentInfo> SupportedContent { get; } = new List<IContentInfo>();
 
-        public DefaultContentModel()
+        public ContentModel()
         {
             Use("application/vnd.hzn-3d-crossword", "x3d");
             Use("video/3gpp", "3gp");
@@ -704,12 +704,28 @@ namespace Chame.ContentLoaders
       
         protected virtual bool IsSupported(IContentInfo info)
         {
+            if (info == null)
+            {
+                throw new ArgumentNullException(nameof(info));
+            }
+
             return true;
         }
 
         protected void Use(string mimeType, string extension, bool allowBundling = false)
         {
-            IContentInfo info = new DefaultContentInfo(mimeType, extension, allowBundling);
+            if (mimeType == null)
+            {
+                throw new ArgumentNullException(nameof(mimeType));
+            }
+
+            if (extension == null)
+            {
+                throw new ArgumentNullException(nameof(extension));
+            }
+
+            IContentInfo info = new ContentInfo(mimeType, extension, allowBundling);
+
             if (IsSupported(info))
             {
                 SupportedContent.Add(info);
@@ -726,7 +742,6 @@ namespace Chame.ContentLoaders
             IContentInfo info = SupportedContent.FirstOrDefault(x => x.Extension == extension);
             return info;
         }
-
 
     }
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using Chame;
 using Chame.ContentLoaders;
 using Chame.Razor;
+using Chame.Themes;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;

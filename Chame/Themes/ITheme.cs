@@ -1,4 +1,4 @@
-﻿namespace Chame
+﻿namespace Chame.Themes
 {
     public interface ITheme
     {

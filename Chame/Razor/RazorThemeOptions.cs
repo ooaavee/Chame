@@ -10,6 +10,8 @@ namespace Chame.Razor
 {
     public class RazorThemeOptions
     {
+        private const string ViewsFolderName = "Views";
+
         /// <summary>
         /// Gets the sequence of <see cref="IFileProvider"/> instances used by <see cref="RazorViewEngine"/> to locate Razor files.
         /// </summary>
@@ -28,7 +30,7 @@ namespace Chame.Razor
         /// <summary>
         /// Enables the physical file provider.
         /// </summary>
-        public void WithPhysicalFileProvider(string root, IHostingEnvironment env, IEnumerable<string> namedControllers = null)
+        public void WithPhysicalFileProvider(string root, IHostingEnvironment env, IEnumerable<string> controllers = null)
         {
             if (root == null)
             {
@@ -39,12 +41,13 @@ namespace Chame.Razor
             {
                 throw new ArgumentNullException(nameof(env));
             }
-            
-            FileProviders.Add(new ThemedPhysicalFileProvider(root));
 
-            if (namedControllers != null)
+            IFileProvider fileProvider = new ThemedPhysicalFileProvider(root);
+            FileProviders.Add(fileProvider);
+
+            if (controllers != null)
             {
-                Tuple<string, string>[] viewFolders = GetViewFolders(env, namedControllers).ToArray();
+                Tuple<string, string>[] viewFolders = GetViewFolders(env, controllers).ToArray();
 
                 // THEMED VIEWS: 
                 // /[theme name]/Views/[controller name]/[page name]/{0}.cshtml
@@ -52,15 +55,14 @@ namespace Chame.Razor
                 {
                     string controller = viewFolder.Item1;
                     string page = viewFolder.Item2;
+                    string template = page != null ? $"/{{0}}/{ViewsFolderName}/{controller}/{page}/{{{{0}}}}.cshtml" : $"/{{0}}/{ViewsFolderName}/{controller}/{{{{0}}}}.cshtml";
 
-                    ViewLocationTemplates.Add(page != null
-                        ? $"/{{0}}/Views/{controller}/{page}/{{{{0}}}}.cshtml"
-                        : $"/{{0}}/Views/{controller}/{{{{0}}}}.cshtml");
+                    ViewLocationTemplates.Add(template);
                 }
 
                 // THEMED VIEWS:
                 // /[theme name]/Views/Shared/{0}.cshtml
-                ViewLocationTemplates.Add("/{0}/Views/Shared/{{0}}.cshtml");
+                ViewLocationTemplates.Add($"/{{0}}/{ViewsFolderName}/Shared/{{0}}.cshtml");
 
                 // DEFAULT VIEWS: 
                 // /Views/[controller name]/[page name]/{0}.cshtml
@@ -68,17 +70,16 @@ namespace Chame.Razor
                 {
                     string controller = viewFolder.Item1;
                     string page = viewFolder.Item2;
+                    string template = page != null ? $"/{ViewsFolderName}/{controller}/{page}/{{{{0}}}}.cshtml" : $"/Views/{controller}/{{{{0}}}}.cshtml";
 
-                    ViewLocationTemplates.Add(page != null
-                        ? $"/Views/{controller}/{page}/{{{{0}}}}.cshtml"
-                        : $"/Views/{controller}/{{{{0}}}}.cshtml");
+                    ViewLocationTemplates.Add(template);
                 }
             }
             else
             {
-                ViewLocationTemplates.Add("/{0}/Views/{{1}}/{{0}}.cshtml");
-                ViewLocationTemplates.Add("/{0}/Views/Shared/{{0}}.cshtml");
-                ViewLocationTemplates.Add("/{0}/Views/{{0}}.cshtml");
+                ViewLocationTemplates.Add($"/{{0}}/{ViewsFolderName}/{{1}}/{{0}}.cshtml");
+                ViewLocationTemplates.Add($"/{{0}}/{ViewsFolderName}/Shared/{{0}}.cshtml");
+                ViewLocationTemplates.Add($"/{{0}}/{ViewsFolderName}/{{0}}.cshtml");
             }
         }
 
@@ -92,7 +93,7 @@ namespace Chame.Razor
 
         private static IEnumerable<Tuple<string, string>> GetViewFolders(IHostingEnvironment env, IEnumerable<string> controllers)
         {
-            IFileInfo[] viewsSubFolders = env.ContentRootFileProvider.GetDirectoryContents("Views").ToArray();
+            IFileInfo[] viewsSubFolders = env.ContentRootFileProvider.GetDirectoryContents(ViewsFolderName).ToArray();
 
             foreach (string controller in controllers)
             {

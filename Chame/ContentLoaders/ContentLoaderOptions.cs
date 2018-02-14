@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Chame.Themes;
 
 namespace Chame.ContentLoaders
 {
@@ -13,8 +14,8 @@ namespace Chame.ContentLoaders
         {
             DefaultTheme = new DefaultTheme();
             SupportETag = true;
-            ContentLoaderSorter = new DefaultContentLoaderSorter();
-            ContentModel = new DefaultContentModel();
+            ContentLoaderSorter = new ContentLoaderSorter();
+            ContentModel = new ContentModel();
             RequestPathTemplate = "/chame-loader/{0}";
         }
 

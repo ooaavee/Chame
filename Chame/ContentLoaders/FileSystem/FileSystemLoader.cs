@@ -1,13 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Chame.Caching;
+﻿using Chame.Caching;
+using Chame.Themes;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Chame.ContentLoaders.FileSystem
 {
@@ -201,7 +204,7 @@ namespace Chame.ContentLoaders.FileSystem
 
             if (_options1.SupportETag)
             {
-                content.ETag = HttpETagHelper.Calculate(content.Data);
+                content.ETag = CreateHttpETag(content.Data);
             }
 
             return content;
@@ -244,7 +247,7 @@ namespace Chame.ContentLoaders.FileSystem
 
             if (_options1.SupportETag)
             {
-                content.ETag = HttpETagHelper.Calculate(content.Data);
+                content.ETag = CreateHttpETag(content.Data);
             }
 
             return content;
@@ -256,5 +259,23 @@ namespace Chame.ContentLoaders.FileSystem
             return path;
         }
 
+        /// <summary>
+        /// Calculates a HTTP ETag.
+        /// </summary>
+        /// <param name="data">data</param>
+        /// <returns>HTTP ETag</returns>
+        private static string CreateHttpETag(byte[] data)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var buffer = new StringBuilder(64);
+                var hash = sha256.ComputeHash(data);
+                foreach (var b in hash)
+                {
+                    buffer.AppendFormat("{0:X2}", b);
+                }
+                return buffer.ToString();
+            }
+        }
     }
 }

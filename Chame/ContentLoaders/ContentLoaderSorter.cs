@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Chame.ContentLoaders
 {
-    public class DefaultContentLoaderSorter : IContentLoaderSorter
+    public class ContentLoaderSorter : IContentLoaderSorter
     {
         public void Sort(List<IContentLoader> loaders)
         {

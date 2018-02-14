@@ -1,8 +1,8 @@
 namespace Chame.ContentLoaders
 {
-    public class DefaultContentInfo : IContentInfo
+    public class ContentInfo : IContentInfo
     {
-        public DefaultContentInfo(string mimeType, string extension, bool allowBundling)
+        public ContentInfo(string mimeType, string extension, bool allowBundling)
         {
             MimeType = mimeType;
             Extension = extension;
@@ -23,7 +23,7 @@ namespace Chame.ContentLoaders
         /// Allow bundling for this content?
         /// 
         /// Example:
-        /// JavaScript and CSS files can be bundled - you known ..but you cannot bundle multiple JPGs.
+        /// JavaScript and CSS files can be bundled - you know ...but you cannot bundle multiple JPGs :)
         /// </summary>
         public bool AllowBundling { get; }
     }

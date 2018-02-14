@@ -1,11 +1,11 @@
-﻿namespace Chame
+﻿namespace Chame.Themes
 {
     /// <summary>
     /// 'default' theme
     /// </summary>
-    public class DefaultTheme : ITheme
+    public sealed class DefaultTheme : ITheme
     {
-        public virtual string GetName()
+        public string GetName()
         {
             return "default";
         }

@@ -1,11 +1,10 @@
-﻿using Chame.ContentLoaders;
-using Microsoft.AspNetCore.Http;
+﻿using Chame.Themes;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Chame.Internal;
 
 namespace Chame.Razor
 {
@@ -14,7 +13,6 @@ namespace Chame.Razor
     public class ThemedViewLocationExpander : IViewLocationExpander
     {
         private const string ViewLocationExpanderContextKey = "__Chame.Razor.ThemedViewLocationExpander";
-        private const string HttpContextItemsKey = "__Chame.Razor.ThemedViewLocationExpander.HttpContext.Items";
 
         /// <summary>
         /// View location templates.
@@ -32,16 +30,10 @@ namespace Chame.Razor
 
         public void PopulateValues(ViewLocationExpanderContext context)
         {
-            // options
-            var options = context.ActionContext.HttpContext.RequestServices.GetRequiredService<IOptions<ContentLoaderOptions>>();
+            ChameUtility utils = context.ActionContext.HttpContext.RequestServices.GetRequiredService<ChameUtility>();
 
-            // theme
-            var theme = GetTheme(context.ActionContext.HttpContext, options.Value.DefaultTheme);
-            if (theme == null)
-            {
-                throw new InvalidOperationException("Could not resolve a theme.");
-            }
-
+            // resolve theme
+            ITheme theme = utils.GetTheme(context.ActionContext.HttpContext);
             context.Values[ViewLocationExpanderContextKey] = theme.GetName();
         }
 
@@ -49,44 +41,14 @@ namespace Chame.Razor
         {
             if (context.Values.TryGetValue(ViewLocationExpanderContextKey, out string themeName))
             {
-                var themedViewLocations = _viewLocationTemplates.Select(template => string.Format(template, themeName));
-                var newViewLocations = themedViewLocations.Concat(viewLocations);
+                IEnumerable<string> themedViewLocations = _viewLocationTemplates.Select(template => string.Format(template, themeName));
+
+                IEnumerable<string> newViewLocations = themedViewLocations.Concat(viewLocations);
+
                 return newViewLocations.ToArray();
             }
+
             return viewLocations;
         }
-
-        private static ITheme GetTheme(HttpContext httpContext, ITheme defaultTheme)
-        {
-            if (TryGetThemeFromHttpContext(httpContext, out ITheme theme))
-            {
-                return theme;
-            }
-
-            var resolver = httpContext.RequestServices.GetService<IThemeResolver>();
-            if (resolver != null)
-            {
-                theme = resolver.GetTheme(httpContext);
-            }
-
-            return theme ?? defaultTheme;
-        }
-
-        internal static void UseThemeWithHttpContext(ITheme theme, HttpContext httpContext)
-        {
-            httpContext.Items[HttpContextItemsKey] = theme;
-        }
-
-        private static bool TryGetThemeFromHttpContext(HttpContext httpContext, out ITheme theme)
-        {
-            if (httpContext.Items.TryGetValue(HttpContextItemsKey, out object v))
-            {
-                theme = (ITheme)v;
-                return true;
-            }
-            theme = null;
-            return false;
-        }
-
     }
 }

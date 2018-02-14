@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace Chame
+namespace Chame.Themes
 {    
     public interface IThemeResolver
     {
