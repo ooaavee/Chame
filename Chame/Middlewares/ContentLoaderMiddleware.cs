@@ -53,7 +53,7 @@ namespace Chame.Middlewares
             {
                 msg.AppendLine($" {path}");
             }
-            logger.LogInformation(msg.ToString());
+            logger.LogDebug(msg.ToString());
 
             return paths;
         }
@@ -96,7 +96,7 @@ namespace Chame.Middlewares
                 return false;
             }
 
-            _logger.LogInformation(string.Format("Started to handle a HTTP request [path = {0}].", http.Request.Path.ToString()));
+            _logger.LogDebug(string.Format("Started to handle a HTTP request [path = {0}].", http.Request.Path.ToString()));
 
             // an optional filter
             var filter = http.Request.Query["filter"].FirstOrDefault();
@@ -128,7 +128,7 @@ namespace Chame.Middlewares
                 return false;
             }
 
-            _logger.LogInformation($"A theme '{theme.GetName()}' will be used.");
+            _logger.LogDebug($"A theme '{theme.GetName()}' will be used.");
 
             context = new ContentLoadingContext(http, info, theme, filter, eTag);
 
