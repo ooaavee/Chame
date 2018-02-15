@@ -12,7 +12,7 @@ namespace Chame.ContentLoaders
         /// </summary>
         public ContentLoaderOptions()
         {
-            DefaultTheme = new DefaultTheme();
+            FallbackTheme = new Theme("default");
             SupportETag = true;
             ContentLoaderSorter = new ContentLoaderSorter();
             ContentModel = new ContentModel();
@@ -23,7 +23,7 @@ namespace Chame.ContentLoaders
         /// A fallback theme that will be used if there isn't a registered <see cref="IThemeResolver"/> implementation available or 
         /// it returns a null value.
         /// </summary>
-        public ITheme DefaultTheme { get; set; }
+        public ITheme FallbackTheme { get; set; }
         
         /// <summary>
         /// Content loaders

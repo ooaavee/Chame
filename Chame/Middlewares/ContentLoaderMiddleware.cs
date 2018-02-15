@@ -1,4 +1,5 @@
 ﻿using Chame.ContentLoaders;
+using Chame.Internal;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -8,7 +9,6 @@ using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Chame.Internal;
 
 namespace Chame.Middlewares
 {
@@ -80,7 +80,7 @@ namespace Chame.Middlewares
                 return false;
             }
 
-            _logger.LogDebug($"Started to handle a HTTP request [path = {httpContext.Request.Path}].");
+            _logger.LogDebug($"Started to handle a HTTP request - path is '{httpContext.Request.Path}'.");
 
             // an optional filter
             var filter = httpContext.Request.Query["filter"].FirstOrDefault();
@@ -104,7 +104,7 @@ namespace Chame.Middlewares
                 }
             }
 
-            // theme
+            // resolve a theme that will be used
             var theme = _utils.GetTheme(httpContext);
 
             _logger.LogDebug($"A theme '{theme.GetName()}' will be used.");
@@ -116,7 +116,7 @@ namespace Chame.Middlewares
 
         private async Task WriteResponseAsync(ContentLoadingContext context, IList<ContentLoaderResponse> responses)
         {
-            ContentLoaderResponse response = _utils.Bundle(context, responses);
+            ContentLoaderResponse response = _utils.BundleResponses(context, responses);
 
             context.HttpContext.Response.ContentType = context.ContentInfo.MimeType;
 
@@ -141,9 +141,9 @@ namespace Chame.Middlewares
         }
 
         /// <summary>
-        /// Tries to parse HTTP ETag from the request.
+        /// Tries to parse HTTP ETag from the HTTP request.
         /// </summary>
-        /// <param name="request">request</param>
+        /// <param name="request">HTTP request</param>
         /// <param name="value">parse HTTP ETag</param>
         /// <returns>true if succeed</returns>
         private static bool TryParseHttpETag(HttpRequest request, out string value)
@@ -157,9 +157,9 @@ namespace Chame.Middlewares
         }
 
         /// <summary>
-        /// Uses specified HTTP ETag with the response.
+        /// Uses specified HTTP ETag with the HTTP response.
         /// </summary>
-        /// <param name="response">response</param>
+        /// <param name="response">HTTP response</param>
         /// <param name="value">HTTP ETag</param>
         private static void UseHttpETag(HttpResponse response, string value)
         {

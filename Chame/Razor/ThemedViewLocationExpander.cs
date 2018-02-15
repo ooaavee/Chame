@@ -1,10 +1,11 @@
-﻿using Chame.Themes;
+﻿using Chame.Internal;
+using Chame.Themes;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Chame.Internal;
+using Microsoft.AspNetCore.Http;
 
 namespace Chame.Razor
 {
@@ -12,40 +13,41 @@ namespace Chame.Razor
 
     public class ThemedViewLocationExpander : IViewLocationExpander
     {
-        private const string ViewLocationExpanderContextKey = "__Chame.Razor.ThemedViewLocationExpander";
+        private const string Key = "__Chame.Razor.ThemedViewLocationExpander";
 
         /// <summary>
         /// View location templates.
         /// </summary>
-        private readonly IList<string> _viewLocationTemplates;
+        private readonly IList<string> _viewLocations;
 
-        public ThemedViewLocationExpander(IList<string> viewLocationTemplates)
+        public ThemedViewLocationExpander(IList<string> viewLocations)
         {
-            if (viewLocationTemplates == null)
+            if (viewLocations == null)
             {
-                throw new ArgumentNullException(nameof(viewLocationTemplates));
+                throw new ArgumentNullException(nameof(viewLocations));
             }
-            _viewLocationTemplates = viewLocationTemplates;
+            _viewLocations = viewLocations;
         }
 
         public void PopulateValues(ViewLocationExpanderContext context)
         {
-            ChameUtility utils = context.ActionContext.HttpContext.RequestServices.GetRequiredService<ChameUtility>();
+            HttpContext httpContext = context.ActionContext.HttpContext;
 
-            // resolve theme
-            ITheme theme = utils.GetTheme(context.ActionContext.HttpContext);
-            context.Values[ViewLocationExpanderContextKey] = theme.GetName();
+            // resolve a theme that will be used when loading Razor views
+            ITheme theme = httpContext.ChameUtility().GetTheme(httpContext);
+
+            context.Values[Key] = theme.GetName();
         }
 
         public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
         {
-            if (context.Values.TryGetValue(ViewLocationExpanderContextKey, out string themeName))
+            if (context.Values.TryGetValue(Key, out string themeName))
             {
-                IEnumerable<string> themedViewLocations = _viewLocationTemplates.Select(template => string.Format(template, themeName));
+                IEnumerable<string> themedViewLocations = _viewLocations.Select(template => string.Format(template, themeName));
 
                 IEnumerable<string> newViewLocations = themedViewLocations.Concat(viewLocations);
 
-                return newViewLocations.ToArray();
+                viewLocations = newViewLocations.ToArray();
             }
 
             return viewLocations;

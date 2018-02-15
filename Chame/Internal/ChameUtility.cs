@@ -1,45 +1,50 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Chame.ContentLoaders;
+﻿using Chame.ContentLoaders;
 using Chame.Themes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Chame.Internal
 {
-    internal class ChameUtility
+    internal sealed class ChameUtility
     {
         private const string HttpContextItemsKey = "__Chame.ChameUtility.HttpContext.Items";
 
         private readonly ContentLoaderOptions _options;
         private readonly ILogger<ChameUtility> _logger;
 
-        internal ChameUtility(IOptions<ContentLoaderOptions> options, ILogger<ChameUtility> logger)
+        public ChameUtility(IOptions<ContentLoaderOptions> options, ILogger<ChameUtility> logger)
         {
             _options = options.Value;
             _logger = logger;
         }
 
-        internal ITheme GetTheme(HttpContext httpContext)
+        /// <summary>
+        /// Gets a theme that should be used with the specified HTTP context.
+        /// </summary>
+        /// <param name="httpContext">HTTP context</param>
+        /// <returns>theme</returns>
+        public ITheme GetTheme(HttpContext httpContext)
         {
             ITheme theme;
 
-            if (httpContext.Items.TryGetValue(HttpContextItemsKey, out object v))
+            // try to get "cached" theme
+            if (httpContext.Items.TryGetValue(HttpContextItemsKey, out object cachedTheme))
             {
-                theme = (ITheme)v;
+                theme = (ITheme)cachedTheme;
                 return theme;
             }
 
-            IThemeResolver resolver = httpContext.RequestServices.GetService<IThemeResolver>();
-
+            // invoke theme resolver and cache result for later usage
+            IThemeResolver resolver = httpContext.ThemeResolver();
             if (resolver != null)
             {
                 theme = resolver.GetTheme(httpContext);
-
                 if (theme != null)
                 {
                     httpContext.Items[HttpContextItemsKey] = theme;
@@ -47,8 +52,8 @@ namespace Chame.Internal
                 }
             }
 
-            theme = _options.DefaultTheme;
-
+            // try to get fallback theme cache result for later usage
+            theme = _options.FallbackTheme;
             if (theme != null)
             {
                 httpContext.Items[HttpContextItemsKey] = theme;
@@ -56,45 +61,68 @@ namespace Chame.Internal
             }
 
             _logger.LogCritical("Unable to resolve theme for the HttpContext.");
-
             throw new InvalidOperationException("Unable to resolve theme for the HttpContext.");
         }
 
-        internal async Task<byte[]> GetContentAsync(string extension, string filter, ITheme theme, HttpContext httpContext)
+        /// <summary>
+        /// Gets content.
+        /// </summary>
+        public async Task<byte[]> GetContentAsync(string extension, string filter, ITheme theme, HttpContext httpContext)
         {
-            var contentInfo = _options.ContentModel.GetByExtension(extension);
-            if (contentInfo == null)
+            IContentInfo info = _options.ContentModel.GetByExtension(extension);
+            if (info == null)
             {
-                throw new InvalidOperationException($"'{extension}' is not supported extension, please check you IContentModel implementation.");
+                throw new InvalidOperationException($"'{extension}' is not supported extension, please check your {nameof(IContentModel)} implementation.");
             }
 
-            var context = new ContentLoadingContext(httpContext, contentInfo, theme, filter, null);
-            var loaders = GetContentLoaders(httpContext, contentInfo);
-            var responses = await LoadContentAsync(context, loaders);
-            var response = Bundle(context, responses);
-            return response.Status == ResponseStatus.Ok ? response.Data : null;
+            byte[] data = null;
+
+            ContentLoadingContext context = new ContentLoadingContext(httpContext, info, theme, filter, null);
+
+            List<IContentLoader> loaders = GetContentLoaders(httpContext, info);
+
+            List<ContentLoaderResponse> responses = await LoadContentAsync(context, loaders);
+
+            if (responses.Any())
+            {
+                ContentLoaderResponse response = BundleResponses(context, responses);
+                if (response.Status == ResponseStatus.Ok)
+                {
+                    data = response.Data;
+                }
+            }
+
+            return data;
         }
 
-        internal async Task<IList<ContentLoaderResponse>> LoadContentAsync(string extension, string filter, ITheme theme, HttpContext httpContext)
-        {           
-            var contentInfo = _options.ContentModel.GetByExtension(extension);
-            if (contentInfo == null)
+        /// <summary>
+        /// Loads content.
+        /// </summary>
+        public async Task<IList<ContentLoaderResponse>> LoadContentAsync(string extension, string filter, HttpContext httpContext, ITheme theme)
+        {
+            IContentInfo info = _options.ContentModel.GetByExtension(extension);
+            if (info == null)
             {
-                throw new InvalidOperationException($"'{extension}' is not supported extension, please check you IContentModel implementation.");
+                throw new InvalidOperationException($"'{extension}' is not supported extension, please check your {nameof(IContentModel)} implementation.");
             }
 
-            var context = new ContentLoadingContext(httpContext, contentInfo, theme, filter, null);
-            var loaders = GetContentLoaders(httpContext, contentInfo);
+            ContentLoadingContext context = new ContentLoadingContext(httpContext, info, theme, filter, null);
+
+            List<IContentLoader> loaders = GetContentLoaders(httpContext, info);
+
             return await LoadContentAsync(context, loaders);
         }
 
-        internal async Task<IList<ContentLoaderResponse>> LoadContentAsync(ContentLoadingContext context, List<IContentLoader> loaders)
+        /// <summary>
+        /// Loads content.
+        /// </summary>
+        public async Task<List<ContentLoaderResponse>> LoadContentAsync(ContentLoadingContext context, List<IContentLoader> loaders)
         {
             var responses = new List<ContentLoaderResponse>();
 
             foreach (IContentLoader loader in loaders)
             {
-                _logger.LogDebug(string.Format("Loading content by using '{0}' content loader.", loader.GetType().FullName));
+                _logger.LogDebug($"Loading content by using '{loader.GetType().FullName}' content loader.");
 
                 // load stuff
                 ContentLoaderResponse response;
@@ -104,14 +132,14 @@ namespace Chame.Internal
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Content loader '{0}' threw an unhandled exception.", loader.GetType().FullName);
+                    _logger.LogError(ex, $"Content loader '{loader.GetType().FullName}' threw an unhandled exception.");
                     throw;
                 }
 
                 // not found
                 if (response == null || response.Status == ResponseStatus.NotFound)
                 {
-                    _logger.LogDebug(string.Format("Content loader '{0}' did not found any content.", loader.GetType().FullName));
+                    _logger.LogDebug($"Content loader '{loader.GetType().FullName}' did not found any content.");
                 }
 
                 // ok
@@ -123,7 +151,7 @@ namespace Chame.Internal
                     }
                     else
                     {
-                        _logger.LogWarning(string.Format("Content loader '{0}' retuned null content -> ignoring item.", loader.GetType().FullName));
+                        _logger.LogWarning($"Content loader '{loader.GetType().FullName}' retuned null content -> ignoring item.");
                     }
                 }
 
@@ -136,7 +164,7 @@ namespace Chame.Internal
                     }
                     else
                     {
-                        _logger.LogWarning(string.Format("Content loader '{0}' returned status {1}, which is wrong because ETags were not enabled.", loader.GetType().FullName, ResponseStatus.NotModified));
+                        _logger.LogWarning($"Content loader '{loader.GetType().FullName}' returned status {ResponseStatus.NotModified}, which is wrong because ETags were not enabled.");
                     }
                 }
             }
@@ -144,7 +172,7 @@ namespace Chame.Internal
             // if not found -> invoke IContentNotFoundCallback if available
             if (!responses.Any())
             {
-                IContentNotFoundCallback callback = context.HttpContext.RequestServices.GetService(typeof(IContentNotFoundCallback)) as IContentNotFoundCallback;
+                IContentNotFoundCallback callback = context.HttpContext.ContentNotFoundCallback();
 
                 if (callback != null)
                 {
@@ -170,12 +198,16 @@ namespace Chame.Internal
             return responses;
         }
 
-        internal List<IContentLoader> GetContentLoaders(HttpContext httpContext, IContentInfo contentInfo)
+        /// <summary>
+        /// Gets a list of IContentLoader objects that should be used with the specified HTTP context when loading 
+        /// content defined by specified the IContentInfo object.
+        /// </summary>
+        public List<IContentLoader> GetContentLoaders(HttpContext httpContext, IContentInfo contentInfo)
         {
             var loaders = new List<IContentLoader>();
 
             // get content loaders from request services and options
-            foreach (var loader in httpContext.RequestServices.GetServices<IContentLoader>().Concat(_options.ContentLoaders))
+            foreach (IContentLoader loader in httpContext.ContentLoaders().Concat(_options.ContentLoaders))
             {
                 if (loader.Supports().Any(supports => supports == contentInfo.Extension || supports == ContentLoaderOptions.ContentLoaderSupportsAll))
                 {
@@ -198,7 +230,7 @@ namespace Chame.Internal
                     }
                     else
                     {
-                        _logger.LogWarning(string.Format("{0} implementation is not configured. Content loaders are invoked in arbitrary order.", nameof(IContentLoaderSorter)));
+                        _logger.LogWarning($"{nameof(IContentLoaderSorter)} implementation is not configured. Content loaders are invoked in arbitrary order.");
                     }
                 }
             }
@@ -210,7 +242,7 @@ namespace Chame.Internal
             return loaders;
         }
 
-        internal ContentLoaderResponse Bundle(ContentLoadingContext context, IList<ContentLoaderResponse> responses)
+        public ContentLoaderResponse BundleResponses(ContentLoadingContext context, IList<ContentLoaderResponse> responses)
         {
             if (responses.Count == 1)
             {
@@ -220,6 +252,7 @@ namespace Chame.Internal
             if (context.ContentInfo.AllowBundling)
             {
                 var data = new List<byte>();
+
                 foreach (var response in responses)
                 {
                     if (response.Data != null)
@@ -227,10 +260,12 @@ namespace Chame.Internal
                         data.AddRange(response.Data);
                     }
                 }
-                return ContentLoaderResponse.Ok(new FileContent {Data = data.ToArray()});
+
+                return ContentLoaderResponse.Ok(new FileContent { Data = data.ToArray() });
             }
 
             _logger.LogCritical($"Received multiple responses, but '{context.ContentInfo.MimeType}' content cannot be bundled. The first response will be used and others are ignored!");
+
             return responses.First();
         }
 

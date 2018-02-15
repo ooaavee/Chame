@@ -1,16 +1,30 @@
-﻿using System.Security.Claims;
+﻿using System.Runtime.InteropServices.ComTypes;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Chame;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebSite.Controllers
 {
     public class DemoController : Controller
     {
-        [HttpGet("demo1")]
-        public ActionResult Demo1()
+        private readonly IChameService _chameService;
+
+        public DemoController(IChameService chameService)
         {
+            _chameService = chameService;
+        }
+
+        [HttpGet("demo1")]
+        public async Task<ActionResult> Demo1()
+        {
+
+            var data = await _chameService.GetContentAsync("indeax.html");
+
+
             return View("Demo1/Demo1");
         }
 

@@ -87,8 +87,10 @@ namespace Chame.Razor
         /// Enables view location expander.
         /// </summary>
         public void WithViewLocationExpander()
-        {            
-            ViewLocationExpanders.Add(new ThemedViewLocationExpander(ViewLocationTemplates));
+        {
+            var expander = new ThemedViewLocationExpander(ViewLocationTemplates);
+
+            ViewLocationExpanders.Add(expander);
         }
 
         private static IEnumerable<Tuple<string, string>> GetViewFolders(IHostingEnvironment env, IEnumerable<string> controllers)

@@ -8,8 +8,10 @@ using Chame.Themes;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace WebSite
@@ -82,7 +84,7 @@ namespace WebSite
             app.UseDeveloperExceptionPage();
 
             app.UseAuthentication();
-
+           
             // Use content loader middleware.
             app.UseContentLoader();
 
