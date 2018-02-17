@@ -1,29 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using Chame.ContentLoaders;
+﻿using Chame.Services;
 using Chame.Themes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Chame.Internal
 {
     internal class ChameService : IChameService
     {
-        private readonly IServiceProvider _services;
+        private readonly IServiceProvider _serviceProvider;
         private readonly ChameUtility _utils;
-        private readonly ILogger<ChameService> _logger;
 
-        public ChameService(IServiceProvider services, ChameUtility utils, ILogger<ChameService> logger)
+        public ChameService(IServiceProvider serviceProvider, ChameUtility utils)
         {
-            _services = services;
+            _serviceProvider = serviceProvider;
             _utils = utils;
-            _logger = logger;
         }
 
-        public async Task<byte[]> GetContentAsync(string fileName)
+        public async Task<byte[]> LoadContentAsync(string fileName)
         {
             if (fileName == null)
             {
@@ -33,10 +31,10 @@ namespace Chame.Internal
             HttpContext httpContext = AccessHttpContext();
             ITheme theme = _utils.GetTheme(httpContext);
             string extension = GetExtension(fileName);
-            return await _utils.GetContentAsync(extension, fileName, theme, httpContext);
+            return await _utils.LoadContentAsync(extension, fileName, theme, httpContext);
         }
 
-        public async Task<byte[]> GetContentAsync(string fileName, ITheme theme)
+        public async Task<byte[]> LoadContentAsync(string fileName, ITheme theme)
         {
             if (fileName == null)
             {
@@ -50,10 +48,10 @@ namespace Chame.Internal
 
             HttpContext httpContext = AccessHttpContext();
             string extension = GetExtension(fileName);
-            return await _utils.GetContentAsync(extension, fileName, theme, httpContext);
+            return await _utils.LoadContentAsync(extension, fileName, theme, httpContext);
         }
 
-        public async Task<byte[]> GetContentAsync(string fileName, HttpContext httpContext)
+        public async Task<byte[]> LoadContentAsync(string fileName, HttpContext httpContext)
         {
             if (fileName == null)
             {
@@ -67,10 +65,10 @@ namespace Chame.Internal
 
             ITheme theme = _utils.GetTheme(httpContext);
             string extension = GetExtension(fileName);
-            return await _utils.GetContentAsync(extension, fileName, theme, httpContext);
+            return await _utils.LoadContentAsync(extension, fileName, theme, httpContext);
         }
 
-        public async Task<byte[]> GetContentAsync(string fileName, HttpContext httpContext, ITheme theme)
+        public async Task<byte[]> LoadContentAsync(string fileName, HttpContext httpContext, ITheme theme)
         {
             if (fileName == null)
             {
@@ -88,10 +86,10 @@ namespace Chame.Internal
             }
 
             string extension = GetExtension(fileName);
-            return await _utils.GetContentAsync(extension, fileName, theme, httpContext);
+            return await _utils.LoadContentAsync(extension, fileName, theme, httpContext);
         }
 
-        public async Task<byte[]> GetContentAsync(string extension, string filter, HttpContext httpContext)
+        public async Task<byte[]> LoadContentAsync(string extension, string filter, HttpContext httpContext)
         {
             if (extension == null)
             {
@@ -104,10 +102,10 @@ namespace Chame.Internal
             }
 
             ITheme theme = _utils.GetTheme(httpContext);
-            return await _utils.GetContentAsync(extension, filter, theme, httpContext);
+            return await _utils.LoadContentAsync(extension, filter, theme, httpContext);
         }
 
-        public async Task<byte[]> GetContentAsync(string extension, string filter)
+        public async Task<byte[]> LoadContentAsync(string extension, string filter)
         {
             if (extension == null)
             {
@@ -116,10 +114,10 @@ namespace Chame.Internal
 
             HttpContext httpContext = AccessHttpContext();
             ITheme theme = _utils.GetTheme(httpContext);
-            return await _utils.GetContentAsync(extension, filter, theme, httpContext);
+            return await _utils.LoadContentAsync(extension, filter, theme, httpContext);
         }
 
-        public async Task<byte[]> GetContentAsync(string extension, string filter, HttpContext httpContext, ITheme theme)
+        public async Task<byte[]> LoadContentAsync(string extension, string filter, HttpContext httpContext, ITheme theme)
         {
             if (extension == null)
             {
@@ -136,10 +134,10 @@ namespace Chame.Internal
                 throw new ArgumentNullException(nameof(theme));
             }
 
-            return await _utils.GetContentAsync(extension, filter, theme, httpContext);
+            return await _utils.LoadContentAsync(extension, filter, theme, httpContext);
         }
 
-        public async Task<byte[]> GetContentAsync(string extension, string filter, ITheme theme)
+        public async Task<byte[]> LoadContentAsync(string extension, string filter, ITheme theme)
         {
             if (extension == null)
             {
@@ -152,125 +150,186 @@ namespace Chame.Internal
             }
 
             HttpContext httpContext = AccessHttpContext();
-            return await _utils.GetContentAsync(extension, filter, theme, httpContext);
+            return await _utils.LoadContentAsync(extension, filter, theme, httpContext);
         }
 
-
-
-        public T GetService<T>()
+        public T GetThemedService<T>()
         {
-            throw new NotImplementedException();
+            HttpContext httpContext = AccessHttpContext();
+            ITheme theme = _utils.GetTheme(httpContext);
+            IEnumerable<T> services = GetServices<T>(httpContext);
+            T result = FindService(services, theme);
+            return result;
         }
-        public T GetService<T>(HttpContext httpContext, ITheme theme)
+
+        public T GetThemedService<T>(HttpContext httpContext, ITheme theme)
         {
-            throw new NotImplementedException();
+            if (httpContext == null)
+            {
+                throw new ArgumentNullException(nameof(httpContext));
+            }
+
+            if (theme == null)
+            {
+                throw new ArgumentNullException(nameof(theme));
+            }
+
+            IEnumerable<T> services = GetServices<T>(httpContext);
+            T result = FindService(services, theme);
+            return result;
         }
-        public T GetService<T>(HttpContext httpContext)
+
+        public T GetThemedService<T>(HttpContext httpContext)
         {
-            throw new NotImplementedException();
+            if (httpContext == null)
+            {
+                throw new ArgumentNullException(nameof(httpContext));
+            }
+
+            ITheme theme = _utils.GetTheme(httpContext);
+            IEnumerable<T> services = GetServices<T>(httpContext);
+            T result = FindService(services, theme);
+            return result;
         }
-        public T GetService<T>(ITheme theme)
+
+        public T GetThemedService<T>(ITheme theme)
         {
-            throw new NotImplementedException();
+            if (theme == null)
+            {
+                throw new ArgumentNullException(nameof(theme));
+            }
+
+            HttpContext httpContext = AccessHttpContext();
+            IEnumerable<T> services = GetServices<T>(httpContext);
+            T result = FindService(services, theme);
+            return result;
         }
 
-
-        public IEnumerable<T> GetServices<T>()
+        public IEnumerable<T> GetThemedServices<T>()
         {
-            throw new NotImplementedException();
+            HttpContext httpContext = AccessHttpContext();
+            ITheme theme = _utils.GetTheme(httpContext);
+            IEnumerable<T> services = GetServices<T>(httpContext);
+            IEnumerable<T> result = FindServices(services, theme);
+            return result;
         }
-        public IEnumerable<T> GetServices<T>(HttpContext httpContext, ITheme theme)
+
+        public IEnumerable<T> GetThemedServices<T>(HttpContext httpContext, ITheme theme)
         {
-            throw new NotImplementedException();
+            if (httpContext == null)
+            {
+                throw new ArgumentNullException(nameof(httpContext));
+            }
+
+            if (theme == null)
+            {
+                throw new ArgumentNullException(nameof(theme));
+            }
+
+            IEnumerable<T> services = GetServices<T>(httpContext);
+            IEnumerable<T> result = FindServices(services, theme);
+            return result;
         }
-        public IEnumerable<T> GetServices<T>(HttpContext httpContext)
+
+        public IEnumerable<T> GetThemedServices<T>(HttpContext httpContext)
         {
-            throw new NotImplementedException();
+            if (httpContext == null)
+            {
+                throw new ArgumentNullException(nameof(httpContext));
+            }
+
+            ITheme theme = _utils.GetTheme(httpContext);
+            IEnumerable<T> services = GetServices<T>(httpContext);
+            IEnumerable<T> result = FindServices(services, theme);
+            return result;
         }
-        public IEnumerable<T> GetServices<T>(ITheme theme)
+
+        public IEnumerable<T> GetThemedServices<T>(ITheme theme)
         {
-            throw new NotImplementedException();
+            if (theme == null)
+            {
+                throw new ArgumentNullException(nameof(theme));
+            }
+
+            HttpContext httpContext = AccessHttpContext();
+            IEnumerable<T> services = GetServices<T>(httpContext);
+            IEnumerable<T> result = FindServices(services, theme);
+            return result;
         }
 
+        private IEnumerable<T> GetServices<T>(HttpContext httpContext)
+        {
+            IEnumerable<T> services = httpContext.RequestServices.GetServices<T>();
+            return services;
+        }
 
+        private T FindService<T>(IEnumerable<T> services, ITheme theme)
+        {
+            IEnumerable<T> candidates = FindServices(services, theme);
+            T result = candidates.LastOrDefault();
+            return result;
+        }
 
-        ////public async Task<IList<ContentLoaderResponse>> LoadContentAsync(string fileName, HttpContext httpContext)
-        ////{
-        ////    if (fileName == null)
-        ////    {
-        ////        throw new ArgumentNullException(nameof(fileName));
-        ////    }
+        private IEnumerable<T> FindServices<T>(IEnumerable<T> services, ITheme theme)
+        {
+            List<T> matches = new List<T>();
+            List<T> fallbacks = new List<T>();
 
-        ////    if (httpContext == null)
-        ////    {
-        ////        throw new ArgumentNullException(nameof(httpContext));
-        ////    }
+            foreach (T candidate in services)
+            {
+                ThemedServiceMatchResult match = GetMatch(candidate, theme);
 
-        ////    ITheme theme = _utils.GetTheme(httpContext);
-        ////    string extension = GetExtension(fileName);
-        ////    return await _utils.LoadContentAsync(extension, fileName, httpContext, theme);
-        ////}
+                switch (match)
+                {
+                    case ThemedServiceMatchResult.Match:
+                        matches.Add(candidate);
+                        break;
+                    case ThemedServiceMatchResult.Fallback:
+                        fallbacks.Add(candidate);
+                        break;
+                }
+            }
 
-        ////public async Task<IList<ContentLoaderResponse>> LoadContentAsync(string fileName, HttpContext httpContext, ITheme theme)
-        ////{
-        ////    if (fileName == null)
-        ////    {
-        ////        throw new ArgumentNullException(nameof(fileName));
-        ////    }
+            if (matches.Any())
+            {
+                return matches;
+            }
 
-        ////    if (httpContext == null)
-        ////    {
-        ////        throw new ArgumentNullException(nameof(httpContext));
-        ////    }
+            return fallbacks;
+        }
 
-        ////    string extension = GetExtension(fileName);
-        ////    return await _utils.LoadContentAsync(extension, fileName, httpContext, theme);
-        ////}
+        private static ThemedServiceMatchResult GetMatch<T>(T candidate, ITheme theme)
+        {
+            Type type = candidate.GetType();
 
-        ////public async Task<IList<ContentLoaderResponse>> LoadContentAsync(string extension, string filter, HttpContext httpContext)
-        ////{
-        ////    if (extension == null)
-        ////    {
-        ////        throw new ArgumentNullException(nameof(extension));
-        ////    }
+            ThemedServiceAttribute[] tmpThemed = (ThemedServiceAttribute[]) type.GetCustomAttributes(typeof(ThemedServiceAttribute), true);
+            if (tmpThemed.Any())
+            {
+                ThemedServiceAttribute themed = tmpThemed.First();
+                if (themed != null)
+                {
+                    if (theme.GetName().Equals(themed.ThemeName))
+                    {
+                        return ThemedServiceMatchResult.Match;
+                    }
+                }
+            }
 
-        ////    if (httpContext == null)
-        ////    {
-        ////        throw new ArgumentNullException(nameof(httpContext));
-        ////    }
+            FallbackServiceAttribute[] tmpFallback = (FallbackServiceAttribute[]) type.GetCustomAttributes(typeof(FallbackServiceAttribute), true);
+            if (tmpFallback.Any())
+            {
+                return ThemedServiceMatchResult.Fallback;
+            }
 
-        ////    ITheme theme = _utils.GetTheme(httpContext);
-        ////    return await _utils.LoadContentAsync(extension, filter, httpContext, theme);
-        ////}
-
-        ////public async Task<IList<ContentLoaderResponse>> LoadContentAsync(string extension, string filter, HttpContext httpContext, ITheme theme)
-        ////{
-        ////    if (extension == null)
-        ////    {
-        ////        throw new ArgumentNullException(nameof(extension));
-        ////    }
-
-        ////    if (httpContext == null)
-        ////    {
-        ////        throw new ArgumentNullException(nameof(httpContext));
-        ////    }
-
-        ////    if (theme == null)
-        ////    {
-        ////        throw new ArgumentNullException(nameof(theme));
-        ////    }
-
-        ////    return await _utils.LoadContentAsync(extension, filter, httpContext, theme);
-        ////}
-
-
+            return ThemedServiceMatchResult.NotMatch;
+        }
 
         private HttpContext AccessHttpContext()
         {
-            IHttpContextAccessor accessor = _services.GetService<IHttpContextAccessor>();
+            IHttpContextAccessor accessor = _serviceProvider.GetService<IHttpContextAccessor>();
             if (accessor == null)
             {
-                throw new InvalidOperationException($"This method requires that '{nameof(IHttpContextAccessor)}' service is registered.");
+                throw new InvalidOperationException($"The method requires that {nameof(IHttpContextAccessor)} service is registered.");
             }
             return accessor.HttpContext;
         }
@@ -278,15 +337,21 @@ namespace Chame.Internal
         private static string GetExtension(string fileName)
         {
             FileInfo file = new FileInfo(fileName);
-            string extension = file.Extension;
-            if (!string.IsNullOrEmpty(extension))
+            if (!string.IsNullOrEmpty(file.Extension))
             {
-                if (extension.Length > 1)
+                if (file.Extension.Length > 1)
                 {
-                    return extension.Substring(1);
+                    return file.Extension.Substring(1);
                 }
             }
-            throw new ArgumentException("Unable to parse extension.", nameof(fileName));
+            throw new ArgumentException("Unable to parse file extension.", nameof(fileName));
+        }
+
+        private enum ThemedServiceMatchResult
+        {
+            Match,
+            NotMatch,
+            Fallback
         }
 
     }

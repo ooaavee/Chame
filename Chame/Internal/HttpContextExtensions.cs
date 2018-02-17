@@ -8,22 +8,22 @@ namespace Chame.Internal
 {
     internal static class HttpContextExtensions
     {
-        public static IThemeResolver ThemeResolver(this HttpContext httpContext)
+        public static IThemeResolver FindThemeResolver(this HttpContext httpContext)
         {
             return httpContext.RequestServices.GetService<IThemeResolver>();            
         }
 
-        public static ChameUtility ChameUtility(this HttpContext httpContext)
+        public static ChameUtility FindChameUtility(this HttpContext httpContext)
         {
            return httpContext.RequestServices.GetRequiredService<ChameUtility>();            
         }
 
-        public static IContentNotFoundCallback ContentNotFoundCallback(this HttpContext httpContext)
+        public static IContentNotFoundCallback FindContentNotFoundCallback(this HttpContext httpContext)
         {
             return httpContext.RequestServices.GetService<IContentNotFoundCallback>();
         }
 
-        public static IEnumerable<IContentLoader> ContentLoaders(this HttpContext httpContext)
+        public static IEnumerable<IContentLoader> FindContentLoaders(this HttpContext httpContext)
         {
             return httpContext.RequestServices.GetServices<IContentLoader>();
         }

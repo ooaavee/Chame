@@ -1,27 +1,30 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Chame.ContentLoaders;
-using Chame.Themes;
+﻿using Chame.Themes;
 using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Chame
 {
     public interface IChameService
     {
-        Task<byte[]> GetContentAsync(string fileName);
-        Task<byte[]> GetContentAsync(string fileName, ITheme theme);
-        Task<byte[]> GetContentAsync(string fileName, HttpContext httpContext);
-        Task<byte[]> GetContentAsync(string fileName, HttpContext httpContext, ITheme theme);
+        Task<byte[]> LoadContentAsync(string fileName);
+        Task<byte[]> LoadContentAsync(string fileName, ITheme theme);
+        Task<byte[]> LoadContentAsync(string fileName, HttpContext httpContext);
+        Task<byte[]> LoadContentAsync(string fileName, HttpContext httpContext, ITheme theme);
 
-        Task<byte[]> GetContentAsync(string extension, string filter);
-        Task<byte[]> GetContentAsync(string extension, string filter, HttpContext httpContext);
-        Task<byte[]> GetContentAsync(string extension, string filter, HttpContext httpContext, ITheme theme);
-        Task<byte[]> GetContentAsync(string extension, string filter, ITheme theme);
+        Task<byte[]> LoadContentAsync(string extension, string filter);
+        Task<byte[]> LoadContentAsync(string extension, string filter, HttpContext httpContext);
+        Task<byte[]> LoadContentAsync(string extension, string filter, HttpContext httpContext, ITheme theme);
+        Task<byte[]> LoadContentAsync(string extension, string filter, ITheme theme);
 
-        // TODO: Tästä vielä overload, jossa yksi string parametri fileName, josta ripataan extension ja filename on samalla filter!
-        ////Task<IList<ContentLoaderResponse>> LoadContentAsync(string fileName, HttpContext httpContext);
-        ////Task<IList<ContentLoaderResponse>> LoadContentAsync(string fileName, HttpContext httpContext, ITheme theme);
-        ////Task<IList<ContentLoaderResponse>> LoadContentAsync(string extension, string filter, HttpContext httpContext);
-        ////Task<IList<ContentLoaderResponse>> LoadContentAsync(string extension, string filter, HttpContext httpContext, ITheme theme);
+        T GetThemedService<T>();
+        T GetThemedService<T>(HttpContext httpContext, ITheme theme);
+        T GetThemedService<T>(HttpContext httpContext);
+        T GetThemedService<T>(ITheme theme);
+
+        IEnumerable<T> GetThemedServices<T>();
+        IEnumerable<T> GetThemedServices<T>(HttpContext httpContext, ITheme theme);
+        IEnumerable<T> GetThemedServices<T>(HttpContext httpContext);
+        IEnumerable<T> GetThemedServices<T>(ITheme theme);
     }
 }

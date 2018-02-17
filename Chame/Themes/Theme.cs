@@ -9,7 +9,7 @@ namespace Chame.Themes
     /// </summary>
     public class Theme : ITheme
     {
-        private static readonly char[] IllegalChars = Path.GetInvalidFileNameChars();
+        private static readonly char[] IllegalCharsInThemeName = Path.GetInvalidFileNameChars();
 
         private readonly string _name;
 
@@ -28,6 +28,11 @@ namespace Chame.Themes
             return _name;
         }
 
+        /// <summary>
+        /// Checks if the specified value would be a valid theme name.
+        /// </summary>
+        /// <param name="name">a value to check</param>
+        /// <returns>true/false</returns>
         public static bool IsValidThemeName(string name)
         {
             if (string.IsNullOrEmpty(name))
@@ -37,7 +42,7 @@ namespace Chame.Themes
 
             foreach (char c in name)
             {
-                if (IllegalChars.Contains(c))
+                if (IllegalCharsInThemeName.Contains(c))
                 {
                     return false;
                 }

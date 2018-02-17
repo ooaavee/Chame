@@ -1,11 +1,10 @@
 ﻿using Chame.Internal;
 using Chame.Themes;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Razor;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
 
 namespace Chame.Razor
 {
@@ -18,9 +17,9 @@ namespace Chame.Razor
         /// <summary>
         /// View location templates.
         /// </summary>
-        private readonly IList<string> _viewLocations;
+        private readonly IEnumerable<string> _viewLocations;
 
-        public ThemedViewLocationExpander(IList<string> viewLocations)
+        public ThemedViewLocationExpander(IEnumerable<string> viewLocations)
         {
             if (viewLocations == null)
             {
@@ -33,8 +32,9 @@ namespace Chame.Razor
         {
             HttpContext httpContext = context.ActionContext.HttpContext;
 
-            // resolve a theme that will be used when loading Razor views
-            ITheme theme = httpContext.ChameUtility().GetTheme(httpContext);
+            ChameUtility utils = httpContext.FindChameUtility();
+
+            ITheme theme = utils.GetTheme(httpContext);
 
             context.Values[Key] = theme.GetName();
         }
@@ -43,7 +43,7 @@ namespace Chame.Razor
         {
             if (context.Values.TryGetValue(Key, out string themeName))
             {
-                IEnumerable<string> themedViewLocations = _viewLocations.Select(template => string.Format(template, themeName));
+                IEnumerable<string> themedViewLocations = _viewLocations.Select(x => string.Format(x, themeName));
 
                 IEnumerable<string> newViewLocations = themedViewLocations.Concat(viewLocations);
 

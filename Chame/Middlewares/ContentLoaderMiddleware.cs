@@ -109,7 +109,7 @@ namespace Chame.Middlewares
 
             _logger.LogDebug($"A theme '{theme.GetName()}' will be used.");
 
-            context = new ContentLoadingContext(httpContext, info, theme, filter, eTag);
+            context = ContentLoadingContext.Create(httpContext, info, theme, filter, eTag);
 
             return true;
         }

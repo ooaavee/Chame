@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices.ComTypes;
+﻿using System.Collections.Generic;
+using System.Runtime.InteropServices.ComTypes;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Chame;
@@ -13,16 +14,23 @@ namespace WebSite.Controllers
     {
         private readonly IChameService _chameService;
 
-        public DemoController(IChameService chameService)
+        public DemoController(IChameService chameService, ITesti aaa)
         {
             _chameService = chameService;
+
+
+  //          var sss = app.ApplicationServices.GetServices<ITesti>();
+
+
+//            var s = app.ApplicationServices.GetService<ITesti>();
+
         }
 
         [HttpGet("demo1")]
         public async Task<ActionResult> Demo1()
         {
 
-            var data = await _chameService.GetContentAsync("indeax.html");
+            var data = await _chameService.LoadContentAsync("indeax.html");
 
 
             return View("Demo1/Demo1");

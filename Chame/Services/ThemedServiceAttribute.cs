@@ -1,18 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Chame.Themes;
+﻿using Chame.Themes;
+using System;
 
 namespace Chame.Services
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class ThemedServiceAttribute : Attribute
-    {
+    {        
         public ThemedServiceAttribute(string themeName)
         {
-            Theme = new Theme(themeName);
+            if (!Theme.IsValidThemeName(themeName))
+            {
+                throw new ArgumentException("Not a valid theme name.", nameof(themeName));
+            }
+
+            ThemeName = themeName;
         }
 
-        public ITheme Theme { get; }
+        public string ThemeName { get; }
     }
 }

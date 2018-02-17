@@ -72,6 +72,10 @@ namespace WebSite
                 {
                     options.Cookie.Name = "Chame";
                 });
+
+            services.AddSingleton<ITesti, T2>();
+            services.AddSingleton<ITesti, T1>();
+
         }
 
 
@@ -94,6 +98,26 @@ namespace WebSite
             {
                 routes.MapRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
+
+
+
+
         }
     }
+
+    public interface ITesti
+    {
+
+    }
+
+    public class T1 : ITesti
+    {
+
+    }
+
+    public class T2 : ITesti
+    {
+
+    }
+
 }

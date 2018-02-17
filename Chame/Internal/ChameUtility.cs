@@ -1,7 +1,6 @@
 ﻿using Chame.ContentLoaders;
 using Chame.Themes;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -31,20 +30,17 @@ namespace Chame.Internal
         /// <returns>theme</returns>
         public ITheme GetTheme(HttpContext httpContext)
         {
-            ITheme theme;
-
             // try to get "cached" theme
-            if (httpContext.Items.TryGetValue(HttpContextItemsKey, out object cachedTheme))
+            if (httpContext.Items.TryGetValue(HttpContextItemsKey, out var cached))
             {
-                theme = (ITheme)cachedTheme;
-                return theme;
+                return (ITheme) cached;
             }
 
             // invoke theme resolver and cache result for later usage
-            IThemeResolver resolver = httpContext.ThemeResolver();
+            IThemeResolver resolver = httpContext.FindThemeResolver();
             if (resolver != null)
             {
-                theme = resolver.GetTheme(httpContext);
+                ITheme theme = resolver.GetTheme(httpContext);
                 if (theme != null)
                 {
                     httpContext.Items[HttpContextItemsKey] = theme;
@@ -52,12 +48,11 @@ namespace Chame.Internal
                 }
             }
 
-            // try to get fallback theme cache result for later usage
-            theme = _options.FallbackTheme;
-            if (theme != null)
+            // try to get fallback theme cache result for later usage            
+            if (_options.FallbackTheme != null)
             {
-                httpContext.Items[HttpContextItemsKey] = theme;
-                return theme;
+                httpContext.Items[HttpContextItemsKey] = _options.FallbackTheme;
+                return _options.FallbackTheme;
             }
 
             _logger.LogCritical("Unable to resolve theme for the HttpContext.");
@@ -65,9 +60,9 @@ namespace Chame.Internal
         }
 
         /// <summary>
-        /// Gets content.
+        /// Loads content.
         /// </summary>
-        public async Task<byte[]> GetContentAsync(string extension, string filter, ITheme theme, HttpContext httpContext)
+        public async Task<byte[]> LoadContentAsync(string extension, string filter, ITheme theme, HttpContext httpContext)
         {
             IContentInfo info = _options.ContentModel.GetByExtension(extension);
             if (info == null)
@@ -75,11 +70,9 @@ namespace Chame.Internal
                 throw new InvalidOperationException($"'{extension}' is not supported extension, please check your {nameof(IContentModel)} implementation.");
             }
 
-            byte[] data = null;
-
-            ContentLoadingContext context = new ContentLoadingContext(httpContext, info, theme, filter, null);
-
             List<IContentLoader> loaders = GetContentLoaders(httpContext, info);
+
+            ContentLoadingContext context = ContentLoadingContext.Create(httpContext, info, theme, filter, null);
 
             List<ContentLoaderResponse> responses = await LoadContentAsync(context, loaders);
 
@@ -88,29 +81,11 @@ namespace Chame.Internal
                 ContentLoaderResponse response = BundleResponses(context, responses);
                 if (response.Status == ResponseStatus.Ok)
                 {
-                    data = response.Data;
+                    return response.Data;
                 }
             }
 
-            return data;
-        }
-
-        /// <summary>
-        /// Loads content.
-        /// </summary>
-        public async Task<IList<ContentLoaderResponse>> LoadContentAsync(string extension, string filter, HttpContext httpContext, ITheme theme)
-        {
-            IContentInfo info = _options.ContentModel.GetByExtension(extension);
-            if (info == null)
-            {
-                throw new InvalidOperationException($"'{extension}' is not supported extension, please check your {nameof(IContentModel)} implementation.");
-            }
-
-            ContentLoadingContext context = new ContentLoadingContext(httpContext, info, theme, filter, null);
-
-            List<IContentLoader> loaders = GetContentLoaders(httpContext, info);
-
-            return await LoadContentAsync(context, loaders);
+            return null;
         }
 
         /// <summary>
@@ -172,7 +147,7 @@ namespace Chame.Internal
             // if not found -> invoke IContentNotFoundCallback if available
             if (!responses.Any())
             {
-                IContentNotFoundCallback callback = context.HttpContext.ContentNotFoundCallback();
+                IContentNotFoundCallback callback = context.HttpContext.FindContentNotFoundCallback();
 
                 if (callback != null)
                 {
@@ -199,15 +174,15 @@ namespace Chame.Internal
         }
 
         /// <summary>
-        /// Gets a list of IContentLoader objects that should be used with the specified HTTP context when loading 
-        /// content defined by specified the IContentInfo object.
+        /// Gets a list of IContentLoader objects that should be used with the specified HttpContext when loading 
+        /// content, defined by specified the IContentInfo object.
         /// </summary>
         public List<IContentLoader> GetContentLoaders(HttpContext httpContext, IContentInfo contentInfo)
         {
             var loaders = new List<IContentLoader>();
 
             // get content loaders from request services and options
-            foreach (IContentLoader loader in httpContext.ContentLoaders().Concat(_options.ContentLoaders))
+            foreach (IContentLoader loader in httpContext.FindContentLoaders().Concat(_options.ContentLoaders))
             {
                 if (loader.Supports().Any(supports => supports == contentInfo.Extension || supports == ContentLoaderOptions.ContentLoaderSupportsAll))
                 {

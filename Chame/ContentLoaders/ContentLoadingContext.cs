@@ -8,38 +8,45 @@ namespace Chame.ContentLoaders
     /// </summary>
     public class ContentLoadingContext
     {
-        public ContentLoadingContext(HttpContext httpContext, IContentInfo contentInfo, ITheme theme, string filter, string eTag)
+        internal static ContentLoadingContext Create(HttpContext httpContext, IContentInfo contentInfo, ITheme theme, string filter, string eTag)
         {
-            HttpContext = httpContext;
-            ContentInfo = contentInfo;
-            Theme = theme;
-            Filter = filter;
-            ETag = eTag;
+            return new ContentLoadingContext
+            {
+                HttpContext = httpContext,
+                ContentInfo = contentInfo,
+                Theme = theme,
+                Filter = filter,
+                ETag = eTag
+            };
+        }
+
+        private ContentLoadingContext()
+        {
         }
 
         /// <summary>
         /// The current HTTP context.
         /// </summary>
-        public HttpContext HttpContext { get; }
+        public HttpContext HttpContext { get; private set; }
 
         /// <summary>
         /// Content-info
         /// </summary>
-        public IContentInfo ContentInfo { get; }
+        public IContentInfo ContentInfo { get; private set; }
 
         /// <summary>
         /// Theme
         /// </summary>
-        public ITheme Theme { get; }
+        public ITheme Theme { get; private set; }
 
         /// <summary>
         /// Filter (optional)
         /// </summary>
-        public string Filter { get; }
+        public string Filter { get; private set; }
 
         /// <summary>
         /// HTTP ETag (optional)
         /// </summary>
-        public string ETag { get; }
+        public string ETag { get; private set; }
     }
 }

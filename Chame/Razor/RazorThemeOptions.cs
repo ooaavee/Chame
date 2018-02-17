@@ -42,35 +42,46 @@ namespace Chame.Razor
                 throw new ArgumentNullException(nameof(env));
             }
 
-            IFileProvider fileProvider = new ThemedPhysicalFileProvider(root);
+
+            //
+            // Create a file provider that will load content from your drive...
+            //
+            IFileProvider fileProvider = new PhysicalFileProvider(root);
             FileProviders.Add(fileProvider);
+
 
             if (controllers != null)
             {
-                Tuple<string, string>[] viewFolders = GetViewFolders(env, controllers).ToArray();
+                ViewDefinition[] views = GetViews(env, controllers).ToArray();
 
+                //
                 // THEMED VIEWS: 
                 // /[theme name]/Views/[controller name]/[page name]/{0}.cshtml
-                foreach (Tuple<string, string> viewFolder in viewFolders)
+                //
+                foreach (ViewDefinition view in views)
                 {
-                    string controller = viewFolder.Item1;
-                    string page = viewFolder.Item2;
-                    string template = page != null ? $"/{{0}}/{ViewsFolderName}/{controller}/{page}/{{{{0}}}}.cshtml" : $"/{{0}}/{ViewsFolderName}/{controller}/{{{{0}}}}.cshtml";
+                    string template = view.View != null
+                        ? $"/{{0}}/{ViewsFolderName}/{view.Controller}/{view.View}/{{{{0}}}}.cshtml"
+                        : $"/{{0}}/{ViewsFolderName}/{view.Controller}/{{{{0}}}}.cshtml";
 
                     ViewLocationTemplates.Add(template);
                 }
 
+                //
                 // THEMED VIEWS:
                 // /[theme name]/Views/Shared/{0}.cshtml
+                //
                 ViewLocationTemplates.Add($"/{{0}}/{ViewsFolderName}/Shared/{{0}}.cshtml");
 
+                //
                 // DEFAULT VIEWS: 
                 // /Views/[controller name]/[page name]/{0}.cshtml
-                foreach (Tuple<string, string> viewFolder in viewFolders)
+                //
+                foreach (ViewDefinition view in views)
                 {
-                    string controller = viewFolder.Item1;
-                    string page = viewFolder.Item2;
-                    string template = page != null ? $"/{ViewsFolderName}/{controller}/{page}/{{{{0}}}}.cshtml" : $"/Views/{controller}/{{{{0}}}}.cshtml";
+                    string template = view.View != null
+                        ? $"/{ViewsFolderName}/{view.Controller}/{view.View}/{{{{0}}}}.cshtml"
+                        : $"/Views/{view.Controller}/{{{{0}}}}.cshtml";
 
                     ViewLocationTemplates.Add(template);
                 }
@@ -93,24 +104,30 @@ namespace Chame.Razor
             ViewLocationExpanders.Add(expander);
         }
 
-        private static IEnumerable<Tuple<string, string>> GetViewFolders(IHostingEnvironment env, IEnumerable<string> controllers)
+        private static IEnumerable<ViewDefinition> GetViews(IHostingEnvironment env, IEnumerable<string> controllers)
         {
-            IFileInfo[] viewsSubFolders = env.ContentRootFileProvider.GetDirectoryContents(ViewsFolderName).ToArray();
+            IFileInfo[] views = env.ContentRootFileProvider.GetDirectoryContents(ViewsFolderName).ToArray();
 
             foreach (string controller in controllers)
             {
-                IFileInfo controllerFolder = viewsSubFolders.FirstOrDefault(x => x.Name == controller && x.IsDirectory);
+                IFileInfo folder = views.FirstOrDefault(x => x.Name == controller && x.IsDirectory);
 
-                if (controllerFolder != null)
+                if (folder != null)
                 {
-                    foreach (string page in Directory.GetDirectories(controllerFolder.PhysicalPath))
+                    foreach (string view in Directory.GetDirectories(folder.PhysicalPath))
                     {
-                        yield return new Tuple<string, string>(controller, new DirectoryInfo(page).Name);
+                        yield return new ViewDefinition {Controller = controller, View = new DirectoryInfo(view).Name};
                     }
 
-                    yield return new Tuple<string, string>(controller, null);
+                    yield return new ViewDefinition { Controller = controller };
                 }
             }
+        }
+
+        private sealed class ViewDefinition
+        {
+            public string Controller { get; set; }
+            public string View { get; set; }
         }
     }
 }
