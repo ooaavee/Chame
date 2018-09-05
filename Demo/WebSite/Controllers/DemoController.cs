@@ -11,7 +11,7 @@ namespace WebSite.Controllers
         [HttpGet("demo1")]
         public ActionResult Demo1()
         {
-            return View("Demo1/Demo1");
+            return View("Demo1");
         }
 
         [HttpPost]

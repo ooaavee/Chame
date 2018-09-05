@@ -1,26 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Themes\ChameContent\A\css\customization.css" />
-    <None Remove="Themes\ChameContent\A\js\customization.js" />
-    <None Remove="Themes\ChameContent\B\js\customization.js" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="ClientApp\less\bootstrap.less" />
-    <Content Include="Themes\ChameContent\A\css\customization.css">
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-    <Content Include="Themes\ChameContent\A\js\customization.js">
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-    <Content Include="Themes\ChameContent\B\js\customization.js">
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -36,18 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="Themes\ChameContent\A\Views\Demo\Demo1\DemoPartialView.cshtml">
-      <Pack>$(IncludeRazorContentInPack)</Pack>
-    </Content>
-    <Content Update="Themes\ChameContent\A\Views\Shared\_Logo.cshtml">
-      <Pack>$(IncludeRazorContentInPack)</Pack>
-    </Content>
-    <Content Update="Themes\ChameContent\B\Views\Demo\Demo1\DemoPartialView.cshtml">
-      <Pack>$(IncludeRazorContentInPack)</Pack>
-    </Content>
-    <Content Update="Themes\ChameContent\B\Views\Shared\_Logo.cshtml">
-      <Pack>$(IncludeRazorContentInPack)</Pack>
-    </Content>
+    <Folder Include="Views\ChameContent\C\" />
   </ItemGroup>
 
 </Project>
