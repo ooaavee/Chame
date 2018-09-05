@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Chame", "Chame\Chame.csproj
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demo", "Demo", "{766EF9B5-7C45-4E67-8EF5-8515FD23BCA2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSiteContent", "Demo\WebSiteContent\WebSiteContent.csproj", "{BF54A291-B4A8-46CA-AEEB-9A41AC530ADC}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSite", "Demo\WebSite\WebSite.csproj", "{B34994E4-8355-44C2-8205-00DBC97779E3}"
 EndProject
 Global
@@ -21,10 +19,6 @@ Global
 		{3524EC0B-6E6F-4BF1-9FD2-4718AB5EB56D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3524EC0B-6E6F-4BF1-9FD2-4718AB5EB56D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3524EC0B-6E6F-4BF1-9FD2-4718AB5EB56D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BF54A291-B4A8-46CA-AEEB-9A41AC530ADC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BF54A291-B4A8-46CA-AEEB-9A41AC530ADC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BF54A291-B4A8-46CA-AEEB-9A41AC530ADC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BF54A291-B4A8-46CA-AEEB-9A41AC530ADC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B34994E4-8355-44C2-8205-00DBC97779E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B34994E4-8355-44C2-8205-00DBC97779E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B34994E4-8355-44C2-8205-00DBC97779E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -34,7 +28,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{BF54A291-B4A8-46CA-AEEB-9A41AC530ADC} = {766EF9B5-7C45-4E67-8EF5-8515FD23BCA2}
 		{B34994E4-8355-44C2-8205-00DBC97779E3} = {766EF9B5-7C45-4E67-8EF5-8515FD23BCA2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

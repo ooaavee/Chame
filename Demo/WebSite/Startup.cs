@@ -34,13 +34,15 @@ namespace WebSite
         public void ConfigureServices(IServiceCollection services)
         {
             // Resolve an absolute path of the'Root' directory under the 'WebSiteContent' project.
-            string contentRoot = new DirectoryInfo(_env.ContentRootPath)
-                .Parent
-                .GetDirectories()
-                .First(x => x.Name == "WebSiteContent")
-                .GetDirectories()
-                .First(x => x.Name == "Root")
-                .FullName;
+            //string contentRoot = new DirectoryInfo(_env.ContentRootPath)
+            //    .Parent
+            //    .GetDirectories()
+            //    .First(x => x.Name == "WebSiteContent")
+            //    .GetDirectories()
+            //    .First(x => x.Name == "Root")
+            //    .FullName;
+
+            string contentRoot = Path.Combine(_env.ContentRootPath, $"Themes{Path.DirectorySeparatorChar}ChameContent");
 
             // Add content loaders.
             services.AddContentLoader(x =>
